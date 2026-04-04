@@ -1,87 +1,133 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute } from "@tanstack/react-router";
 
-export const Route = createFileRoute('/')({ component: App })
+export const Route = createFileRoute("/")({
+	component: Dashboard,
+});
 
-function App() {
-  return (
-    <main className="page-wrap px-4 pb-8 pt-14">
-      <section className="island-shell rise-in relative overflow-hidden rounded-[2rem] px-6 py-10 sm:px-10 sm:py-14">
-        <div className="pointer-events-none absolute -left-20 -top-24 h-56 w-56 rounded-full bg-[radial-gradient(circle,rgba(79,184,178,0.32),transparent_66%)]" />
-        <div className="pointer-events-none absolute -bottom-20 -right-20 h-56 w-56 rounded-full bg-[radial-gradient(circle,rgba(47,106,74,0.18),transparent_66%)]" />
-        <p className="island-kicker mb-3">TanStack Start Base Template</p>
-        <h1 className="display-title mb-5 max-w-3xl text-4xl leading-[1.02] font-bold tracking-tight text-[var(--sea-ink)] sm:text-6xl">
-          Start simple, ship quickly.
-        </h1>
-        <p className="mb-8 max-w-2xl text-base text-[var(--sea-ink-soft)] sm:text-lg">
-          This base starter intentionally keeps things light: two routes, clean
-          structure, and the essentials you need to build from scratch.
-        </p>
-        <div className="flex flex-wrap gap-3">
-          <a
-            href="/about"
-            className="rounded-full border border-[rgba(50,143,151,0.3)] bg-[rgba(79,184,178,0.14)] px-5 py-2.5 text-sm font-semibold text-[var(--lagoon-deep)] no-underline transition hover:-translate-y-0.5 hover:bg-[rgba(79,184,178,0.24)]"
-          >
-            About This Starter
-          </a>
-          <a
-            href="https://tanstack.com/router"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="rounded-full border border-[rgba(23,58,64,0.2)] bg-white/50 px-5 py-2.5 text-sm font-semibold text-[var(--sea-ink)] no-underline transition hover:-translate-y-0.5 hover:border-[rgba(23,58,64,0.35)]"
-          >
-            Router Guide
-          </a>
-        </div>
-      </section>
+function Dashboard() {
+	return (
+		<div className="space-y-6">
+			{/* Welcome Section */}
+			<section className="rounded-xl border border-border bg-card p-6 shadow-sm">
+				<h1 className="text-2xl font-bold tracking-tight text-card-foreground">
+					Welcome to Litchi
+				</h1>
+				<p className="mt-2 text-muted-foreground">
+					Automated development agent system - from GitHub Issue to Pull
+					Request.
+				</p>
+			</section>
 
-      <section className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {[
-          [
-            'Type-Safe Routing',
-            'Routes and links stay in sync across every page.',
-          ],
-          [
-            'Server Functions',
-            'Call server code from your UI without creating API boilerplate.',
-          ],
-          [
-            'Streaming by Default',
-            'Ship progressively rendered responses for faster experiences.',
-          ],
-          [
-            'Tailwind Native',
-            'Design quickly with utility-first styling and reusable tokens.',
-          ],
-        ].map(([title, desc], index) => (
-          <article
-            key={title}
-            className="island-shell feature-card rise-in rounded-2xl p-5"
-            style={{ animationDelay: `${index * 90 + 80}ms` }}
-          >
-            <h2 className="mb-2 text-base font-semibold text-[var(--sea-ink)]">
-              {title}
-            </h2>
-            <p className="m-0 text-sm text-[var(--sea-ink-soft)]">{desc}</p>
-          </article>
-        ))}
-      </section>
+			{/* Stats Cards */}
+			<section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+				{[
+					{ label: "Active Sessions", value: "12", color: "text-primary" },
+					{
+						label: "Pending Issues",
+						value: "28",
+						color: "text-secondary-foreground",
+					},
+					{
+						label: "Completed PRs",
+						value: "156",
+						color: "text-sidebar-primary",
+					},
+					{
+						label: "Success Rate",
+						value: "94.2%",
+						color: "text-sidebar-accent-foreground",
+					},
+				].map((stat) => (
+					<div
+						key={stat.label}
+						className="rounded-xl border border-border bg-card p-4 shadow-sm"
+					>
+						<p className="text-sm font-medium text-muted-foreground">
+							{stat.label}
+						</p>
+						<p className={`mt-1 text-2xl font-bold ${stat.color}`}>
+							{stat.value}
+						</p>
+					</div>
+				))}
+			</section>
 
-      <section className="island-shell mt-8 rounded-2xl p-6">
-        <p className="island-kicker mb-2">Quick Start</p>
-        <ul className="m-0 list-disc space-y-2 pl-5 text-sm text-[var(--sea-ink-soft)]">
-          <li>
-            Edit <code>src/routes/index.tsx</code> to customize the home page.
-          </li>
-          <li>
-            Update <code>src/components/Header.tsx</code> and{' '}
-            <code>src/components/Footer.tsx</code> for brand links.
-          </li>
-          <li>
-            Add routes in <code>src/routes</code> and tweak visual tokens in{' '}
-            <code>src/styles.css</code>.
-          </li>
-        </ul>
-      </section>
-    </main>
-  )
+			{/* Workflow Stages */}
+			<section className="rounded-xl border border-border bg-card p-6 shadow-sm">
+				<h2 className="text-lg font-semibold text-card-foreground">
+					Workflow Stages
+				</h2>
+				<div className="mt-4 flex flex-wrap gap-2">
+					{[
+						{ name: "Clarification", icon: "📋" },
+						{ name: "Design", icon: "🎨" },
+						{ name: "TaskBreakdown", icon: "📝" },
+						{ name: "Execution", icon: "⚡" },
+						{ name: "PullRequest", icon: "🔄" },
+						{ name: "Completed", icon: "✅" },
+					].map((stage) => (
+						<div
+							key={stage.name}
+							className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2"
+						>
+							<span className="text-lg">{stage.icon}</span>
+							<span className="text-sm font-medium text-foreground">
+								{stage.name}
+							</span>
+						</div>
+					))}
+				</div>
+			</section>
+
+			{/* Recent Activity */}
+			<section className="rounded-xl border border-border bg-card p-6 shadow-sm">
+				<h2 className="text-lg font-semibold text-card-foreground">
+					Recent Activity
+				</h2>
+				<div className="mt-4 space-y-3">
+					{[
+						{
+							id: 1,
+							title: "Issue #123: Add user authentication",
+							status: "Execution",
+							time: "2 hours ago",
+						},
+						{
+							id: 2,
+							title: "Issue #122: Fix database connection",
+							status: "Completed",
+							time: "5 hours ago",
+						},
+						{
+							id: 3,
+							title: "Issue #121: Update API documentation",
+							status: "Clarification",
+							time: "1 day ago",
+						},
+					].map((activity) => (
+						<div
+							key={activity.id}
+							className="flex items-center justify-between rounded-lg border border-border bg-background p-3"
+						>
+							<div className="flex flex-col gap-1">
+								<p className="text-sm font-medium text-foreground">
+									{activity.title}
+								</p>
+								<p className="text-xs text-muted-foreground">{activity.time}</p>
+							</div>
+							<span
+								className={`rounded-full px-2 py-1 text-xs font-medium ${
+									activity.status === "Completed"
+										? "bg-sidebar-accent text-sidebar-accent-foreground"
+										: "bg-secondary text-secondary-foreground"
+								}`}
+							>
+								{activity.status}
+							</span>
+						</div>
+					))}
+				</div>
+			</section>
+		</div>
+	);
 }

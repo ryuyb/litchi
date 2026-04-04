@@ -138,29 +138,32 @@
   - 实际工时：0d（add-on 包含）
   - 完成日期：2026-04-04
 
-- [ ] **T1.3.3** 实现基础布局组件
+- [x] **T1.3.3** 实现基础布局组件
   - 验收标准：
-    - [ ] Sidebar 组件正确显示
-    - [ ] Header 组件正确显示
-    - [ ] MainLayout 响应式布局
-    - [ ] TanStack Router 嵌套布局正确
+    - [x] Sidebar 组件正确显示
+    - [x] Header 组件正确显示
+    - [x] MainLayout 响应式布局
+    - [x] TanStack Router 嵌套布局正确
   - 依赖：T1.3.2
   - 风险：低
   - 预估：1d
   - 可并行：否
+  - 实际工时：0.5d
+  - 完成日期：2026-04-04
 
-- [ ] **T1.3.4** 配置 TanStack Query + TanStack Store
+- [x] **T1.3.4** 配置 TanStack Query + TanStack Store
   - 验收标准：
     - [x] TanStack Query 配置正确（服务端状态）
-    - [ ] TanStack Store 配置正确（客户端状态）
-    - [ ] QueryClient 正确挂载到应用
-    - [ ] Store 持久化配置
+    - [x] TanStack Store 配置正确（客户端状态）
+    - [x] QueryClient 正确挂载到应用
+    - [x] Store 持久化配置
   - 注：TanStack Query 已通过 add-on 安装，TanStack Store 已通过 add-on 安装，需配置持久化
   - 依赖：T1.3.1
   - 风险：低
   - 预估：0.5d
   - 可并行：是（与 T1.3.2）
-  - 进度：70%（Query 和 Store 已安装，待配置持久化）
+  - 实际工时：0.5d
+  - 完成日期：2026-04-04
 
 - [ ] **T1.3.5** 配置 Orval API 代码生成
   - 验收标准：
