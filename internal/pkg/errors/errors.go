@@ -87,17 +87,21 @@ func Is(err error, code ErrorCode) bool {
 }
 
 // GetCode extracts the error code from an error.
+// Uses errors.As to support error chain traversal.
 func GetCode(err error) string {
-	if e, ok := err.(*Error); ok {
-		return e.Code.Code
+	var litchiErr *Error
+	if errors.As(err, &litchiErr) {
+		return litchiErr.Code.Code
 	}
 	return "UNKNOWN"
 }
 
 // GetSeverity extracts the severity level from an error.
+// Uses errors.As to support error chain traversal.
 func GetSeverity(err error) int {
-	if e, ok := err.(*Error); ok {
-		return e.Code.Severity
+	var litchiErr *Error
+	if errors.As(err, &litchiErr) {
+		return litchiErr.Code.Severity
 	}
 	return 0
 }
@@ -143,8 +147,9 @@ var (
 	ErrTaskAlreadyComplete = ErrorCode{Code: "L4TASK0002", Message: "Task already completed", Category: "DOM", Severity: 4}
 	ErrSessionNotFound     = ErrorCode{Code: "L4DOM0001", Message: "Work session not found", Category: "DOM", Severity: 4}
 	ErrIssueNotFound       = ErrorCode{Code: "L4DOM0002", Message: "Issue not found", Category: "DOM", Severity: 4}
-	ErrInvalidStage        = ErrorCode{Code: "L4DOM0003", Message: "Invalid stage transition", Category: "DOM", Severity: 4}
-	ErrInvalidTaskStatus   = ErrorCode{Code: "L4DOM0004", Message: "Invalid task status", Category: "DOM", Severity: 4}
+	ErrInvalidStage          = ErrorCode{Code: "L4DOM0003", Message: "Invalid stage", Category: "DOM", Severity: 4}
+	ErrInvalidStageTransition = ErrorCode{Code: "L4DOM0007", Message: "Invalid stage transition", Category: "DOM", Severity: 4}
+	ErrInvalidTaskStatus     = ErrorCode{Code: "L4DOM0004", Message: "Invalid task status", Category: "DOM", Severity: 4}
 	ErrInvalidComplexityScore = ErrorCode{Code: "L4DOM0005", Message: "Invalid complexity score", Category: "DOM", Severity: 4}
 	ErrInvalidClarityScore = ErrorCode{Code: "L4DOM0006", Message: "Invalid clarity score", Category: "DOM", Severity: 4}
 	ErrPermissionDenied    = ErrorCode{Code: "L4API0001", Message: "Permission denied", Category: "API", Severity: 4}
@@ -169,15 +174,17 @@ var (
 )
 
 // ToAPIError converts domain error to API error code.
+// Uses errors.As to support error chain traversal.
 func ToAPIError(err error) APIErrorCode {
-	if e, ok := err.(*Error); ok {
-		switch e.Code.Severity {
+	var litchiErr *Error
+	if errors.As(err, &litchiErr) {
+		switch litchiErr.Code.Severity {
 		case 1:
 			return APIErrInternal
 		case 2:
 			return APIErrInternal
 		case 3, 4:
-			if e.Code.Category == "API" {
+			if litchiErr.Code.Category == "API" {
 				if Is(err, ErrPermissionDenied) {
 					return APIErrForbidden
 				}

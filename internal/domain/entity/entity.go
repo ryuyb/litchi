@@ -184,6 +184,12 @@ func (c *Clarification) IsCompleted() bool {
 	return c.Status == ClarificationStatusCompleted
 }
 
+// ClearPendingQuestions clears all pending questions.
+// This is used during rollback to reset clarification state.
+func (c *Clarification) ClearPendingQuestions() {
+	c.PendingQuestions = []string{}
+}
+
 // SetClarityDimensions sets the clarity evaluation result.
 func (c *Clarification) SetClarityDimensions(dimensions valueobject.ClarityDimensions) {
 	c.ClarityDimensions = dimensions
