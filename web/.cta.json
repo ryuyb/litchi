@@ -1,0 +1,24 @@
+{
+  "projectName": "litchi",
+  "mode": "file-router",
+  "typescript": true,
+  "packageManager": "pnpm",
+  "includeExamples": false,
+  "tailwind": true,
+  "addOnOptions": {},
+  "envVarValues": {},
+  "git": false,
+  "routerOnly": false,
+  "version": 1,
+  "addOns": true,
+  "framework": "react",
+  "chosenAddOns": [
+    "biome",
+    "form",
+    "shadcn",
+    "t3env",
+    "table",
+    "tanstack-query",
+    "store"
+  ]
+}

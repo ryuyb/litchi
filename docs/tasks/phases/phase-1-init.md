@@ -111,26 +111,32 @@
 
 ## 1.3 前端初始化
 
-- [ ] **T1.3.1** 初始化 TanStack Start 项目
+- [x] **T1.3.1** 初始化 TanStack Start 项目
   - 验收标准：
-    - [ ] 项目可启动（`pnpm dev` 或 `npm run dev`）
-    - [ ] TanStack Router 路由配置正确
-    - [ ] TypeScript 配置正确
-    - [ ] SSR/SSG 基础功能可用
+    - [x] 项目可启动（`pnpm dev` 或 `npm run dev`）
+    - [x] TanStack Router 路由配置正确
+    - [x] TypeScript 配置正确
+    - [x] SSR/SSG 基础功能可用
+  - 注：通过 add-on 同时安装了 Query、Table、Form、Shadcn、T3Env
   - 依赖：无
   - 风险：低
   - 预估：0.5d
   - 可并行：是（与 1.1.*）
+  - 实际工时：0.5d
+  - 完成日期：2026-04-04
 
-- [ ] **T1.3.2** 配置 shadcn/ui + Tailwind CSS
+- [x] **T1.3.2** 配置 shadcn/ui + Tailwind CSS
   - 验收标准：
-    - [ ] UI 组件库安装成功
-    - [ ] Tailwind 配置正确，与 TanStack Start 集成
-    - [ ] 暗色主题支持
+    - [x] UI 组件库安装成功
+    - [x] Tailwind 配置正确，与 TanStack Start 集成
+    - [x] 暗色主题支持
+  - 注：通过 add-on 安装，已有 components.json、radix-ui、Tailwind CSS v4
   - 依赖：T1.3.1
   - 风险：低
   - 预估：0.5d
   - 可并行：否
+  - 实际工时：0d（add-on 包含）
+  - 完成日期：2026-04-04
 
 - [ ] **T1.3.3** 实现基础布局组件
   - 验收标准：
@@ -143,16 +149,18 @@
   - 预估：1d
   - 可并行：否
 
-- [ ] **T1.3.4** 配置 TanStack Query + Zustand
+- [ ] **T1.3.4** 配置 TanStack Query + TanStack Store
   - 验收标准：
-    - [ ] TanStack Query 配置正确（服务端状态）
-    - [ ] Zustand 配置正确（客户端状态）
+    - [x] TanStack Query 配置正确（服务端状态）
+    - [ ] TanStack Store 配置正确（客户端状态）
     - [ ] QueryClient 正确挂载到应用
-    - [ ] Zustand 持久化配置
+    - [ ] Store 持久化配置
+  - 注：TanStack Query 已通过 add-on 安装，TanStack Store 已通过 add-on 安装，需配置持久化
   - 依赖：T1.3.1
   - 风险：低
   - 预估：0.5d
   - 可并行：是（与 T1.3.2）
+  - 进度：70%（Query 和 Store 已安装，待配置持久化）
 
 - [ ] **T1.3.5** 配置 Orval API 代码生成
   - 验收标准：
@@ -170,14 +178,16 @@
 
 - [ ] **T1.3.6** 配置 TanStack Table + Form
   - 验收标准：
-    - [ ] TanStack Table 基础配置
-    - [ ] TanStack Form 基础配置
+    - [x] TanStack Table 基础配置
+    - [x] TanStack Form 基础配置
     - [ ] 与 TanStack Query 数据流集成
     - [ ] 类型安全验证（基础类型定义）
+  - 注：Table 和 Form 已通过 add-on 安装，需后续集成
   - 依赖：T1.3.4
   - 风险：低
   - 预估：0.5d
   - 可并行：否
+  - 进度：50%（安装完成，待集成）
 
 ---
 

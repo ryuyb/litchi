@@ -15,6 +15,7 @@
 - **Migrations**: golang-migrate
 
 ### Frontend (React)
+- **pnpm**
 - **Framework**: TanStack Start (SSR/SSG)
 - **Routing**: TanStack Router
 - **Data Fetching**: TanStack Query (via Orval-generated hooks)

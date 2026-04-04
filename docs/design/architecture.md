@@ -123,13 +123,16 @@
 
 | 组件 | 技术选型 | 说明 |
 |------|---------|------|
-| 框架 | React 18 | 组件化开发 |
+| 框架 | TanStack Start | 全栈 React 框架，SSR/SSG 支持 |
 | 构建工具 | Vite | 快速开发体验 |
 | UI 组件库 | shadcn/ui | 基于 Radix UI，可定制 |
-| 样式 | Tailwind CSS | 原子化 CSS |
-| 状态管理 | Zustand | 轻量状态管理 |
+| 样式 | Tailwind CSS v4 | 原子化 CSS |
+| 状态管理 | TanStack Store | 类型安全，与 TanStack 生态深度集成 |
 | 数据请求 | TanStack Query | 缓存、自动刷新 |
-| 路由 | React Router v6 | 声明式路由 |
+| 路由 | TanStack Router | 类型安全路由，内置 SSR 支持 |
+| 表格 | TanStack Table | 高性能表格 |
+| 表单 | TanStack Form | 类型安全表单 |
+| 环境变量 | T3Env | 类型安全环境变量管理 |
 
 ### 3.3 外部依赖
 
@@ -238,63 +241,69 @@ internal/
 web/
 ├── public/
 ├── src/
-│   ├── main.tsx
-│   ├── App.tsx
-│   ├── index.css
+│   ├── routes/                 # TanStack Router 文件路由
+│   │   ├── __root.tsx          # 根布局
+│   │   ├── index.tsx           # 首页（仪表盘）
+│   │   ├── issues/
+│   │   │   ├── index.tsx       # Issue 列表页
+│   │   │   └── $id.tsx         # Issue 详情页
+│   │   ├── repositories/
+│   │   │   ├── index.tsx       # 仓库列表页
+│   │   │   └── $id.tsx         # 仓库配置页
+│   │   ├── audit-logs/
+│   │   │   ├── index.tsx       # 审计日志列表页
+│   │   │   └── $id.tsx         # 审计日志详情页
+│   │   └── settings.tsx        # 设置页
 │   │
-│   ├── components/            # 组件
-│   │   ├── ui/                # shadcn/ui 组件
+│   ├── components/             # 组件
+│   │   ├── ui/                 # shadcn/ui 组件
 │   │   │   ├── button.tsx
 │   │   │   ├── card.tsx
 │   │   │   └── ...
-│   │   ├── layout/            # 布局组件
+│   │   ├── layout/             # 布局组件
 │   │   │   ├── Sidebar.tsx
 │   │   │   ├── Header.tsx
 │   │   │   └── MainLayout.tsx
-│   │   └── features/          # 业务组件
+│   │   └── features/           # 业务组件
 │   │       ├── IssueCard/
 │   │       ├── StageProgress/
 │   │       ├── TaskList/
 │   │       ├── LogViewer/
-│   │       ├── AuditLogFilter/     # 审计日志筛选组件
-│   │       ├── AuditLogTable/      # 审计日志表格组件
-│   │       └── AuditLogDetail/     # 审计日志详情组件
+│   │       ├── AuditLogFilter/
+│   │       ├── AuditLogTable/
+│   │       └── AuditLogDetail/
 │   │
-│   ├── pages/                 # 页面
-│   │   ├── Dashboard.tsx
-│   │   ├── IssueList.tsx
-│   │   ├── IssueDetail.tsx
-│   │   ├── Settings.tsx
-│   │   ├── Repositories.tsx       # 仓库列表页
-│   │   ├── RepositoryConfig.tsx   # 仓库配置页
-│   │   ├── AuditLogs.tsx          # 审计日志列表页
-│   │   └── AuditLogDetail.tsx     # 审计日志详情页
-│   │
-│   ├── hooks/                 # 自定义 Hooks
+│   ├── hooks/                  # 自定义 Hooks
 │   │   ├── useSession.ts
 │   │   ├── useWebSocket.ts
 │   │   └── useConfig.ts
 │   │
-│   ├── stores/                # Zustand 状态
+│   ├── stores/                 # TanStack Store 状态
 │   │   ├── sessionStore.ts
 │   │   └── configStore.ts
 │   │
-│   ├── services/              # API 服务
-│   │   ├── api.ts
-│   │   ├── issueService.ts
-│   │   └── sessionService.ts
+│   ├── integrations/           # TanStack 集成配置
+│   │   └── tanstack-query.ts   # QueryClient 配置
 │   │
-│   ├── types/                 # TypeScript 类型
+│   ├── services/               # API 服务（Orval 生成）
+│   │   └── api/                # 自动生成的 API 客户端
+│   │
+│   ├── types/                  # TypeScript 类型
 │   │   ├── domain.ts
 │   │   └── api.ts
 │   │
-│   └── lib/                   # 工具函数
-│       └── utils.ts
+│   ├── lib/                    # 工具函数
+│   │   └── utils.ts
+│   │
+│   ├── env.ts                  # T3Env 环境变量
+│   ├── router.tsx              # Router 实例
+│   └── styles.css              # 全局样式
 │
-├── components.json            # shadcn/ui 配置
-├── tailwind.config.js
+├── components.json             # shadcn/ui 配置
+├── orval.config.ts             # Orval API 生成配置
 ├── vite.config.ts
 ├── tsconfig.json
+├── biome.json                  # Biome 格式化配置
 └── package.json
 ```
 
