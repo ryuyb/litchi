@@ -144,6 +144,9 @@ var (
 	ErrSessionNotFound     = ErrorCode{Code: "L4DOM0001", Message: "Work session not found", Category: "DOM", Severity: 4}
 	ErrIssueNotFound       = ErrorCode{Code: "L4DOM0002", Message: "Issue not found", Category: "DOM", Severity: 4}
 	ErrInvalidStage        = ErrorCode{Code: "L4DOM0003", Message: "Invalid stage transition", Category: "DOM", Severity: 4}
+	ErrInvalidTaskStatus   = ErrorCode{Code: "L4DOM0004", Message: "Invalid task status", Category: "DOM", Severity: 4}
+	ErrInvalidComplexityScore = ErrorCode{Code: "L4DOM0005", Message: "Invalid complexity score", Category: "DOM", Severity: 4}
+	ErrInvalidClarityScore = ErrorCode{Code: "L4DOM0006", Message: "Invalid clarity score", Category: "DOM", Severity: 4}
 	ErrPermissionDenied    = ErrorCode{Code: "L4API0001", Message: "Permission denied", Category: "API", Severity: 4}
 	ErrValidationFailed    = ErrorCode{Code: "L4API0002", Message: "Validation failed", Category: "API", Severity: 4}
 	ErrBadRequest          = ErrorCode{Code: "L4API0003", Message: "Bad request", Category: "API", Severity: 4}
