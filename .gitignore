@@ -1,0 +1,113 @@
+# Litchi - Git Ignore
+
+# ==================== Go ====================
+
+# Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary
+*.test
+
+# Output files
+*.out
+/bin/
+/dist/
+
+# Go workspace
+go.work
+go.work.sum
+
+# ==================== Frontend ====================
+
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build output
+web/dist/
+web/.output/
+web/.tanstack/
+
+# Vite
+web/.vite/
+
+# Environment
+web/.env
+web/.env.local
+web/.env.*.local
+
+# ==================== IDE ====================
+
+# JetBrains
+.idea/
+*.iml
+
+# VS Code
+.vscode/
+
+# ==================== OS ====================
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+
+# Linux
+*~
+
+# ==================== Litchi ====================
+
+# Agent execution context (generated during runtime)
+.litchi/
+
+# Worktree directories (created per session)
+.worktrees/
+
+# ==================== Config & Secrets ====================
+
+# Local config overrides
+config.local.yaml
+*.local.yaml
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# ==================== Database ====================
+
+# PostgreSQL data (local dev)
+postgres_data/
+
+# ==================== Logs ====================
+
+logs/
+*.log
+
+# ==================== Misc ====================
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+
+# Coverage
+coverage.out
+*.coverprofile
+
+# Profiling
+*.prof
+*.pprof
+
+# Archives
+*.zip
+*.tar.gz

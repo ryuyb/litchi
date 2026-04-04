@@ -1,0 +1,123 @@
+# Litchi Configuration Example
+#
+# Required environment variables:
+#   DB_PASSWORD           - PostgreSQL password
+#   GITHUB_TOKEN          - GitHub personal access token
+#   GITHUB_WEBHOOK_SECRET - Webhook verification secret (for signature validation)
+#
+# Optional environment variables (for GitHub App authentication):
+#   GITHUB_APP_ID           - GitHub App ID
+#   GITHUB_PRIVATE_KEY_PATH - Path to GitHub App private key file
+#
+# Configuration values can be overridden by environment variables with LITCHI_ prefix.
+# Example: LITCHI_SERVER_PORT=9090 overrides server.port
+
+server:
+  host: "0.0.0.0"
+  port: 8080
+  mode: "debug"  # debug, release, test
+
+database:
+  host: "localhost"
+  port: 5432
+  name: "litchi"
+  user: "postgres"
+  password: "${DB_PASSWORD}"
+  sslmode: "disable"
+  max_open_conns: 100
+  max_idle_conns: 10
+
+github:
+  token: "${GITHUB_TOKEN}"
+  webhook_secret: "${GITHUB_WEBHOOK_SECRET}"
+  app_id: "${GITHUB_APP_ID}"
+  private_key_path: "${GITHUB_PRIVATE_KEY_PATH}"
+
+webhook:
+  idempotency:
+    enabled: true
+    ttl: "24h"
+    auto_cleanup: true
+    cleanup_interval: "1h"
+
+agent:
+  type: "claude-code"
+  max_concurrency: 3
+  task_retry_limit: 3
+  approval_timeout: "24h"
+
+clarity:
+  threshold: 60
+  auto_proceed_threshold: 80
+  force_clarify_threshold: 40
+
+complexity:
+  threshold: 70
+  force_design_confirm: false
+
+audit:
+  enabled: true
+  retention_days: 90
+  max_output_length: 1000
+  sensitive_operations:
+    - agent_call
+    - tool_use
+    - file_read
+    - file_write
+    - bash_execute
+    - git_operation
+    - pr_create
+    - approval_request
+    - approval_decision
+    - stage_transition
+
+failure:
+  retry:
+    max_retries: 3
+    initial_backoff: "5s"
+    max_backoff: "60s"
+    backoff_multiplier: 2.0
+    retryable_errors:
+      - test_failed
+      - build_failed
+      - timeout
+      - network_error
+      - github_rate_limit
+
+  rate_limit:
+    enabled: true
+    wait_enabled: true
+    max_wait_duration: "30m"
+    notify_threshold: 10
+
+  timeout:
+    clarification_agent: "5m"
+    design_analysis: "10m"
+    design_generation: "15m"
+    task_breakdown: "10m"
+    task_execution: "30m"
+    test_run: "10m"
+    pr_creation: "5m"
+    approval_wait: "24h"
+    session_max_duration: "72h"
+
+  queue:
+    max_length: 10
+    priority_enabled: true
+    timeout_on_queue: "1h"
+
+  test_environment:
+    skip_if_no_tests: true
+    skip_if_unavailable: false
+    check_interval: "5m"
+
+logging:
+  level: "info"
+  format: "json"
+  output: "stdout"
+
+redis:
+  enabled: false
+  addr: "localhost:6379"
+  password: ""
+  db: 0

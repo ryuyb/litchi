@@ -1,0 +1,67 @@
+package server
+
+import (
+	"context"
+	"fmt"
+	"net"
+
+	"github.com/gofiber/fiber/v3"
+	"github.com/ryuyb/litchi/internal/infrastructure/config"
+	"go.uber.org/fx"
+	"go.uber.org/zap"
+)
+
+// Params for NewApp.
+type Params struct {
+	fx.In
+
+	Logger *zap.Logger
+	Config *config.Config
+}
+
+// NewApp creates a new Fiber application.
+func NewApp(p Params) *fiber.App {
+	app := fiber.New(fiber.Config{
+		AppName: "Litchi v" + p.Config.Server.Version,
+	})
+
+	// Health check endpoint
+	app.Get("/health", func(c fiber.Ctx) error {
+		return c.JSON(fiber.Map{
+			"status":  "healthy",
+			"version": p.Config.Server.Version,
+		})
+	})
+
+	return app
+}
+
+// StartApp starts the Fiber server.
+// Uses pre-bound listener to detect port binding errors immediately.
+func StartApp(app *fiber.App, cfg *config.Config, logger *zap.Logger) fx.Hook {
+	addr := fmt.Sprintf("%s:%d", cfg.Server.Host, cfg.Server.Port)
+	return fx.Hook{
+		OnStart: func(ctx context.Context) error {
+			logger.Info("starting HTTP server", zap.String("addr", addr))
+
+			// Pre-bind the address to detect port binding errors immediately
+			ln, err := net.Listen("tcp", addr)
+			if err != nil {
+				return fmt.Errorf("failed to bind address %s: %w", addr, err)
+			}
+
+			// Start server with pre-bound listener in background
+			go func() {
+				if err := app.Listener(ln); err != nil {
+					logger.Error("HTTP server error", zap.Error(err))
+				}
+			}()
+
+			return nil
+		},
+		OnStop: func(ctx context.Context) error {
+			logger.Info("stopping HTTP server")
+			return app.ShutdownWithContext(ctx)
+		},
+	}
+}
