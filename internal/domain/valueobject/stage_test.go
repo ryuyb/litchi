@@ -673,7 +673,7 @@ func TestStageScan(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(fmtInput(tt.input), func(t *testing.T) {
+		t.Run(formatInput(tt.input), func(t *testing.T) {
 			var stage Stage
 			err := (&stage).Scan(tt.input)
 
@@ -693,7 +693,7 @@ func TestStageScan(t *testing.T) {
 	}
 }
 
-func fmtInput(input any) string {
+func formatInput(input any) string {
 	if input == nil {
 		return "nil"
 	}

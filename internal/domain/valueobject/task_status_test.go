@@ -2,7 +2,6 @@ package valueobject
 
 import (
 	"encoding/json"
-	"fmt"
 	"testing"
 
 	"github.com/ryuyb/litchi/internal/pkg/errors"
@@ -487,7 +486,7 @@ func TestTaskStatusScan(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(testFmtInput(tt.input), func(t *testing.T) {
+		t.Run(formatInput(tt.input), func(t *testing.T) {
 			var status TaskStatus
 			err := (&status).Scan(tt.input)
 
@@ -505,11 +504,4 @@ func TestTaskStatusScan(t *testing.T) {
 			}
 		})
 	}
-}
-
-func testFmtInput(input any) string {
-	if input == nil {
-		return "nil"
-	}
-	return fmt.Sprintf("%v", input)
 }
