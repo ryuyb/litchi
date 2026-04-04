@@ -59,6 +59,7 @@ Each stage supports pause/resume/rollback.
 3. **确认需求清晰**：实施前必须确认需求已完全理解，如有任何不清晰之处，立即询问用户，不要假设或猜测
 4. **询问优先**：宁可多问也不要做错，模糊的需求澄清比返工成本更低
 5. **代码注释使用英文**：所有代码中的注释必须使用英文编写
+6. **使用 any 替代 interface{}**：Go 代码中优先使用 `any` 类型别名而非 `interface{}`，保持代码简洁现代
 
 ## Compact Instructions
 

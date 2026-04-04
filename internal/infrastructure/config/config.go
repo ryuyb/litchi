@@ -1,5 +1,10 @@
 package config
 
+import (
+	"errors"
+	"fmt"
+)
+
 // Config holds all configuration for the Litchi application.
 type Config struct {
 	Server     ServerConfig     `mapstructure:"server"`
@@ -15,6 +20,20 @@ type Config struct {
 	Redis      RedisConfig      `mapstructure:"redis"`
 }
 
+// Validate validates all configuration fields.
+func (c *Config) Validate() error {
+	if err := c.Database.Validate(); err != nil {
+		return fmt.Errorf("database config: %w", err)
+	}
+	if err := c.GitHub.Validate(); err != nil {
+		return fmt.Errorf("github config: %w", err)
+	}
+	if err := c.Server.Validate(); err != nil {
+		return fmt.Errorf("server config: %w", err)
+	}
+	return nil
+}
+
 type ServerConfig struct {
 	Host    string `mapstructure:"host"`
 	Port    int    `mapstructure:"port"`
@@ -22,22 +41,64 @@ type ServerConfig struct {
 	Version string `mapstructure:"version"`
 }
 
+func (c *ServerConfig) Validate() error {
+	if c.Port < 1 || c.Port > 65535 {
+		return errors.New("port must be between 1 and 65535")
+	}
+	if c.Mode != "debug" && c.Mode != "release" && c.Mode != "test" {
+		return errors.New("mode must be one of: debug, release, test")
+	}
+	return nil
+}
+
 type DatabaseConfig struct {
-	Host         string `mapstructure:"host"`
-	Port         int    `mapstructure:"port"`
-	Name         string `mapstructure:"name"`
-	User         string `mapstructure:"user"`
-	Password     string `mapstructure:"password"`
-	SSLMode      string `mapstructure:"sslmode"`
-	MaxOpenConns int    `mapstructure:"max_open_conns"`
-	MaxIdleConns int    `mapstructure:"max_idle_conns"`
+	Host            string `mapstructure:"host"`
+	Port            int    `mapstructure:"port"`
+	Name            string `mapstructure:"name"`
+	User            string `mapstructure:"user"`
+	Password        string `mapstructure:"password"`
+	SSLMode         string `mapstructure:"sslmode"`
+	MaxOpenConns    int    `mapstructure:"max_open_conns"`
+	MaxIdleConns    int    `mapstructure:"max_idle_conns"`
+	ConnMaxLifetime string `mapstructure:"conn_max_lifetime"` // connection max lifetime, e.g. "1h"
+	ConnMaxIdleTime string `mapstructure:"conn_max_idle_time"` // connection max idle time, e.g. "10m"
+	AutoMigrate     bool   `mapstructure:"auto_migrate"`      // run migrations on startup
+}
+
+func (c *DatabaseConfig) Validate() error {
+	if c.Host == "" {
+		return errors.New("host is required")
+	}
+	if c.Name == "" {
+		return errors.New("name is required")
+	}
+	if c.User == "" {
+		return errors.New("user is required")
+	}
+	if c.Password == "" {
+		return errors.New("password is required (set DB_PASSWORD environment variable)")
+	}
+	if c.Port < 1 || c.Port > 65535 {
+		return errors.New("port must be between 1 and 65535")
+	}
+	return nil
 }
 
 type GitHubConfig struct {
-	Token           string `mapstructure:"token"`
-	WebhookSecret   string `mapstructure:"webhook_secret"`
-	AppID           string `mapstructure:"app_id"`
-	PrivateKeyPath  string `mapstructure:"private_key_path"`
+	Token          string `mapstructure:"token"`
+	WebhookSecret  string `mapstructure:"webhook_secret"`
+	AppID          string `mapstructure:"app_id"`
+	PrivateKeyPath string `mapstructure:"private_key_path"`
+}
+
+func (c *GitHubConfig) Validate() error {
+	if c.Token == "" {
+		return errors.New("token is required (set GITHUB_TOKEN environment variable)")
+	}
+	if c.WebhookSecret == "" {
+		return errors.New("webhook_secret is required (set GITHUB_WEBHOOK_SECRET environment variable)")
+	}
+	return nil
 }
 
 type WebhookConfig struct {

@@ -65,6 +65,11 @@ func NewConfig() (*Config, error) {
 		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
 	}
 
+	// Validate configuration
+	if err := cfg.Validate(); err != nil {
+		return nil, fmt.Errorf("config validation failed: %w", err)
+	}
+
 	return &cfg, nil
 }
 
@@ -84,6 +89,8 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("database.sslmode", "disable")
 	v.SetDefault("database.max_open_conns", 100)
 	v.SetDefault("database.max_idle_conns", 10)
+	v.SetDefault("database.conn_max_lifetime", "1h")
+	v.SetDefault("database.conn_max_idle_time", "10m")
 
 	// Webhook defaults
 	v.SetDefault("webhook.idempotency.enabled", true)
