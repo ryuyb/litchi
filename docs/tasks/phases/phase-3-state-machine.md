@@ -6,16 +6,22 @@
 
 ## 3.1 WorkSession 状态机
 
-- [ ] **T3.1.1** 实现阶段正向转换逻辑 ⚠️ **高风险**
+- [x] **T3.1.1** 实现阶段正向转换逻辑 ⚠️ **高风险**
   - 验收标准：
-    - [ ] 5 个正向转换规则正确
-    - [ ] 前置条件验证完整
-    - [ ] 状态变更事件发布
+    - [x] 5 个正向转换规则正确
+    - [x] 前置条件验证完整
+    - [x] 状态变更事件发布
   - 依赖：T2.4.2
   - 风险：**高**
   - 预估：1.5d
   - 可并行：否
   - 备注：正向转换是核心流程，出错影响大
+  - 实施详情：
+    - 扩展 TransitionContext 添加 AutoProceedThreshold(80)、ForceClarifyThreshold(40)、SkipClarityCheck
+    - 新建 transition_decision.go 定义 TransitionDecision 枚举和 TransitionResult 结构体
+    - 实现 EvaluateTransition 方法处理清晰度评分分级规则（自动转换/需确认/拒绝转换）
+    - 实现 5 个阶段的评估方法（evaluateClarificationToDesign 等）
+    - 添加 13 个测试场景覆盖各种边界情况
 
 - [ ] **T3.1.2** 实现阶段回退转换逻辑 ⚠️ **高风险**
   - 验收标准：

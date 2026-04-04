@@ -1,6 +1,8 @@
 package service
 
 import (
+	"fmt"
+
 	"github.com/google/uuid"
 	"github.com/ryuyb/litchi/internal/domain/aggregate"
 	"github.com/ryuyb/litchi/internal/domain/entity"
@@ -91,24 +93,56 @@ type ComplexityEvaluator interface {
 // TransitionContext provides context for stage transition decisions.
 // Contains thresholds and configuration needed for precondition validation.
 type TransitionContext struct {
-	ClarityThreshold          int // Minimum clarity score to enter design stage
-	ComplexityThreshold       int // Complexity threshold for design confirmation
+	ClarityThreshold          int  // Minimum clarity score to enter design stage (default 60)
+	AutoProceedThreshold      int  // Threshold for auto proceed without confirmation (default 80)
+	ForceClarifyThreshold     int  // Threshold for forced clarification (default 40)
+	ComplexityThreshold       int  // Complexity threshold for design confirmation
 	ForceDesignConfirm        bool // Force design confirmation regardless of complexity
-	TaskRetryLimit            int // Maximum retry count for failed tasks
+	TaskRetryLimit            int  // Maximum retry count for failed tasks
 	AllowPRRollback           bool // Allow rollback from PR stage
-	MaxPRRollbackCount        int // Maximum PR rollback count
+	MaxPRRollbackCount        int  // Maximum PR rollback count
+	SkipClarityCheck          bool // Skip clarity check (user command "开始设计")
 }
 
 // DefaultTransitionContext returns default transition configuration.
 func DefaultTransitionContext() TransitionContext {
 	return TransitionContext{
 		ClarityThreshold:          60,
+		AutoProceedThreshold:      80,
+		ForceClarifyThreshold:     40,
 		ComplexityThreshold:       70,
 		ForceDesignConfirm:        false,
 		TaskRetryLimit:            3,
 		AllowPRRollback:           true,
 		MaxPRRollbackCount:        3,
+		SkipClarityCheck:          false,
 	}
+}
+
+// Validate ensures the threshold configuration is logically consistent.
+// Thresholds must satisfy: ForceClarifyThreshold < ClarityThreshold < AutoProceedThreshold
+func (c TransitionContext) Validate() error {
+	if c.ForceClarifyThreshold >= c.ClarityThreshold {
+		return fmt.Errorf("ForceClarifyThreshold (%d) must be less than ClarityThreshold (%d)",
+			c.ForceClarifyThreshold, c.ClarityThreshold)
+	}
+	if c.ClarityThreshold >= c.AutoProceedThreshold {
+		return fmt.Errorf("ClarityThreshold (%d) must be less than AutoProceedThreshold (%d)",
+			c.ClarityThreshold, c.AutoProceedThreshold)
+	}
+	if c.ForceClarifyThreshold < 0 || c.ClarityThreshold < 0 || c.AutoProceedThreshold < 0 {
+		return fmt.Errorf("thresholds must be non-negative")
+	}
+	if c.AutoProceedThreshold > 100 {
+		return fmt.Errorf("AutoProceedThreshold (%d) cannot exceed 100", c.AutoProceedThreshold)
+	}
+	if c.TaskRetryLimit < 0 {
+		return fmt.Errorf("TaskRetryLimit (%d) must be non-negative", c.TaskRetryLimit)
+	}
+	if c.MaxPRRollbackCount < 0 {
+		return fmt.Errorf("MaxPRRollbackCount (%d) must be non-negative", c.MaxPRRollbackCount)
+	}
+	return nil
 }
 
 // StageTransitionService handles stage transitions and rollback operations.
@@ -120,35 +154,41 @@ func DefaultTransitionContext() TransitionContext {
 // - Precondition validation (using external configuration/thresholds)
 // - Transition decision support (can/cannot transition)
 // - Validation of rollback eligibility
+//
+// Method Usage Guide:
+//   - CanTransition: Quick boolean check, useful for UI conditional rendering
+//   - GetTransitionError: Get error details when transition is blocked
+//   - EvaluateTransition: Detailed evaluation with decision reason and user guidance
+//   - ValidateTransitionPreconditions: Low-level validation for programmatic use
+//
+// When to use which method:
+//   - UI needs to show/hide "Next" button → CanTransition
+//   - Display error message to user → GetTransitionError
+//   - Need decision reason and user action prompt → EvaluateTransition
+//   - Validating before programmatic transition → ValidateTransitionPreconditions
 type StageTransitionService interface {
 	// CanTransition checks if a forward transition is allowed.
-	// Validates both the stage sequence and business preconditions.
-	//
-	// Preconditions checked:
-	// - Clarification → Design: clarity score >= threshold, no pending questions
-	// - Design → TaskBreakdown: design confirmed (if required)
-	// - TaskBreakdown → Execution: tasks defined
-	// - Execution → PullRequest: all tasks completed/skipped
-	// - PullRequest → Completed: PR created
+	// Returns true if transition can proceed, false otherwise.
+	// Use this for quick checks (e.g., UI button enable/disable).
+	// For detailed reasons, use GetTransitionError or EvaluateTransition.
 	CanTransition(session *aggregate.WorkSession, target valueobject.Stage, ctx TransitionContext) bool
 
 	// GetTransitionError returns the reason why transition cannot proceed.
-	// Useful for providing user feedback on blocked transitions.
+	// Returns nil if transition is allowed.
+	// Use this to display error messages to users.
 	GetTransitionError(session *aggregate.WorkSession, target valueobject.Stage, ctx TransitionContext) error
 
 	// CanRollback checks if rollback to a target stage is allowed.
-	// Validates rollback rules and additional constraints.
-	//
-	// Additional constraints:
-	// - PR rollback count must not exceed MaxPRRollbackCount
-	// - AllowPRRollback must be true for PR stage rollback
+	// Returns true if rollback can proceed, false otherwise.
 	CanRollback(session *aggregate.WorkSession, target valueobject.Stage, ctx TransitionContext) bool
 
 	// GetRollbackError returns the reason why rollback cannot proceed.
+	// Returns nil if rollback is allowed.
 	GetRollbackError(session *aggregate.WorkSession, target valueobject.Stage, ctx TransitionContext) error
 
 	// ValidateTransitionPreconditions validates stage-specific preconditions.
 	// Returns detailed error if preconditions are not met.
+	// Use this for programmatic validation before calling WorkSession.TransitionTo.
 	ValidateTransitionPreconditions(session *aggregate.WorkSession, target valueobject.Stage, ctx TransitionContext) error
 
 	// ValidateRollbackPreconditions validates rollback-specific preconditions.
@@ -156,6 +196,22 @@ type StageTransitionService interface {
 
 	// GetAllowedRollbackTargets returns all valid rollback targets for a session.
 	GetAllowedRollbackTargets(session *aggregate.WorkSession, ctx TransitionContext) []valueobject.Stage
+
+	// EvaluateTransition evaluates transition decision based on clarity score rules.
+	// Returns TransitionResult with:
+	//   - Decision: Allow / NeedConfirmation / Denied
+	//   - Reason: Why the decision was made
+	//   - RequiredAction: What the user needs to do (if any)
+	//   - ClarityScore: The clarity score (if applicable)
+	//   - CanForce: Whether user can force proceed with "开始设计" command
+	//
+	// Use this when you need detailed decision information and user guidance,
+	// especially for Clarification → Design where clarity score determines the decision:
+	//   - >= 80: Auto proceed without confirmation
+	//   - 60-79: Auto proceed but design needs confirmation
+	//   - 40-59: Need user confirmation to proceed
+	//   - < 40: Denied, must continue clarification (can force with "开始设计")
+	EvaluateTransition(session *aggregate.WorkSession, target valueobject.Stage, ctx TransitionContext) TransitionResult
 }
 
 // --- T2.4.3 TaskScheduler ---
