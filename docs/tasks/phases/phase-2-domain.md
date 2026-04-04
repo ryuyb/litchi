@@ -6,12 +6,12 @@
 
 ## 2.1 值对象
 
-- [ ] **T2.1.1** 实现 Stage 阶段枚举
+- [x] **T2.1.1** 实现 Stage 阶段枚举
   - 验收标准：
-    - [ ] 包含所有 6 个阶段（Clarification/Design/TaskBreakdown/Execution/PullRequest/Completed）
-    - [ ] 支持 String() 方法
-    - [ ] 支持 Parse() 方法
-    - [ ] 支持数据库序列化
+    - [x] 包含所有 6 个阶段（Clarification/Design/TaskBreakdown/Execution/PullRequest/Completed）
+    - [x] 支持 String() 方法
+    - [x] 支持 Parse() 方法
+    - [x] 支持数据库序列化
   - 依赖：T1.1.1
   - 风险：低
   - 预估：0.5d
