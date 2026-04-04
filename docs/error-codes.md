@@ -89,7 +89,10 @@ err := errors.New(errors.ErrSessionNotFound).
     WithDetail("session ID: abc-123").
     WithContext("repository", "org/repo")
 
-// 包装现有错误
+// 包装现有错误（数据库操作失败）
+err := errors.Wrap(errors.ErrDatabaseOperation, originalErr)
+
+// 包装现有错误（数据库连接失败）
 err := errors.Wrap(errors.ErrDatabaseConnection, originalErr)
 
 // 判断错误类型

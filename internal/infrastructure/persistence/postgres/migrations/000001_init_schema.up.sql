@@ -29,6 +29,8 @@ CREATE TABLE issues (
     body TEXT,
     repository VARCHAR(255) NOT NULL REFERENCES repositories(name),
     author VARCHAR(255) NOT NULL,        -- GitHub username of issue author
+    labels JSONB DEFAULT '[]',           -- Issue labels
+    url VARCHAR(500),                    -- Full GitHub URL
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     UNIQUE(repository, number)
 );

@@ -21,13 +21,15 @@ type Repository struct {
 
 // Issue represents a GitHub issue entity.
 type Issue struct {
-	ID         uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
-	Number     int64     `gorm:"not null;index"`                  // GitHub issue number
-	Title      string    `gorm:"type:varchar(500);not null"`
-	Body       string    `gorm:"type:text"`
-	Repository string    `gorm:"type:varchar(255);not null;index"` // references repositories.name
-	Author     string    `gorm:"type:varchar(255);not null;index"` // GitHub username
-	CreatedAt  time.Time `gorm:"autoCreateTime"`
+	ID         uuid.UUID      `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
+	Number     int64          `gorm:"not null;index"`                  // GitHub issue number
+	Title      string         `gorm:"type:varchar(500);not null"`
+	Body       string         `gorm:"type:text"`
+	Repository string         `gorm:"type:varchar(255);not null;index"` // references repositories.name
+	Author     string         `gorm:"type:varchar(255);not null;index"` // GitHub username
+	Labels     datatypes.JSON `gorm:"type:jsonb;default:'[]'"`          // Issue labels
+	URL        string         `gorm:"type:varchar(500)"`                // Full GitHub URL
+	CreatedAt  time.Time      `gorm:"autoCreateTime"`
 }
 
 // WorkSession represents the aggregate root for automation workflow.

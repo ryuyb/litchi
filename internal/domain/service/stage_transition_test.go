@@ -8,6 +8,7 @@ import (
 	"github.com/ryuyb/litchi/internal/domain/entity"
 	"github.com/ryuyb/litchi/internal/domain/valueobject"
 	"github.com/ryuyb/litchi/internal/pkg/errors"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestStageTransitionService_CanTransition(t *testing.T) {
@@ -323,8 +324,8 @@ func TestStageTransitionService_PRCompletion(t *testing.T) {
 }
 
 func TestStageTransitionService_WithCustomScheduler(t *testing.T) {
-	// Test that custom scheduler can be injected
-	mockScheduler := &mockTaskScheduler{}
+	// Test that custom scheduler can be injected using generated mock
+	mockScheduler := NewMockTaskScheduler(t)
 	service := NewDefaultStageTransitionService(mockScheduler)
 	ctx := DefaultTransitionContext()
 
@@ -336,46 +337,16 @@ func TestStageTransitionService_WithCustomScheduler(t *testing.T) {
 	task := entity.NewTask("Task", []uuid.UUID{}, 1)
 	session.SetTasks([]*entity.Task{task})
 
+	// Setup mock expectation - ValidateDependencies will return an error
+	mockScheduler.EXPECT().
+		ValidateDependencies(mock.Anything).
+		Return(errors.New(errors.ErrValidationFailed).WithDetail("mock scheduler error"))
+
 	// The mock scheduler should be used
 	err := service.ValidateTransitionPreconditions(session, valueobject.StageExecution, ctx)
 	if err == nil {
 		t.Error("expected error from mock scheduler")
 	}
-}
-
-// mockTaskScheduler is a mock implementation for testing dependency injection
-type mockTaskScheduler struct{}
-
-func (m *mockTaskScheduler) GetExecutionOrder(tasks []*entity.Task) ([]*entity.Task, error) {
-	return nil, nil
-}
-
-func (m *mockTaskScheduler) GetNextExecutable(tasks []*entity.Task, completedIDs []uuid.UUID, maxRetryLimit int) *entity.Task {
-	return nil
-}
-
-func (m *mockTaskScheduler) GetParallelTasks(tasks []*entity.Task, completedIDs []uuid.UUID) []*entity.Task {
-	return nil
-}
-
-func (m *mockTaskScheduler) GetBlockedTasks(tasks []*entity.Task, completedIDs []uuid.UUID) []*entity.Task {
-	return nil
-}
-
-func (m *mockTaskScheduler) GetDependencyGraph(tasks []*entity.Task) map[uuid.UUID][]uuid.UUID {
-	return nil
-}
-
-func (m *mockTaskScheduler) CanRetryTask(task *entity.Task, completedIDs []uuid.UUID, maxRetryLimit int) bool {
-	return false
-}
-
-func (m *mockTaskScheduler) GetExecutionPlan(tasks []*entity.Task) ([][]*entity.Task, error) {
-	return nil, nil
-}
-
-func (m *mockTaskScheduler) ValidateDependencies(tasks []*entity.Task) error {
-	return errors.New(errors.ErrValidationFailed).WithDetail("mock scheduler error")
 }
 
 // Helper functions
@@ -400,13 +371,6 @@ func createMockClarityDimensions(score int) valueobject.ClarityDimensions {
 
 	cd, _ := valueobject.NewClarityDimensions(completeness, clarity, consistency, feasibility, testability)
 	return cd
-}
-
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
 }
 
 func createMockComplexityScore(value int) valueobject.ComplexityScore {

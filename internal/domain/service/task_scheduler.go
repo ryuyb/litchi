@@ -30,8 +30,11 @@ func (s *DefaultTaskScheduler) GetExecutionOrder(tasks []*entity.Task) ([]*entit
 		return nil, err
 	}
 
-	// Build dependency graph and in-degree in single pass
-	_, inDegree := s.buildGraphAndInDegree(tasks)
+	// Build reverse dependency graph: task.ID -> tasks that depend on it
+	// This allows O(1) lookup of dependents during topological sort
+	reverseGraph := s.GetDependencyGraph(tasks)
+	inDegree := s.buildInDegree(tasks)
+	taskMap := s.buildTaskMap(tasks)
 
 	// Kahn's algorithm for topological sort:
 	// 1. Find all tasks with no dependencies (in-degree = 0)
@@ -47,15 +50,12 @@ func (s *DefaultTaskScheduler) GetExecutionOrder(tasks []*entity.Task) ([]*entit
 		queue = queue[1:]
 		result = append(result, current)
 
-		// Reduce in-degree for tasks that depend on current
-		for _, task := range tasks {
-			for _, depID := range task.Dependencies {
-				if depID == current.ID {
-					inDegree[task.ID]--
-					if inDegree[task.ID] == 0 {
-						queue = append(queue, task)
-					}
-				}
+		// Reduce in-degree for tasks that depend on current (O(k) where k = number of dependents)
+		dependents := reverseGraph[current.ID]
+		for _, depTaskID := range dependents {
+			inDegree[depTaskID]--
+			if inDegree[depTaskID] == 0 {
+				queue = append(queue, taskMap[depTaskID])
 			}
 		}
 	}
@@ -256,22 +256,6 @@ func (s *DefaultTaskScheduler) ValidateDependencies(tasks []*entity.Task) error 
 
 // --- Helper methods ---
 
-// buildGraphAndInDegree builds both dependency graph and in-degree map in a single pass.
-// This is more efficient than building them separately.
-func (s *DefaultTaskScheduler) buildGraphAndInDegree(tasks []*entity.Task) (
-	map[uuid.UUID][]uuid.UUID,
-	map[uuid.UUID]int,
-) {
-	graph := make(map[uuid.UUID][]uuid.UUID, len(tasks))
-	inDegree := make(map[uuid.UUID]int, len(tasks))
-
-	for _, task := range tasks {
-		graph[task.ID] = task.Dependencies
-		inDegree[task.ID] = len(task.Dependencies)
-	}
-	return graph, inDegree
-}
-
 // buildTaskMap creates a map for quick task lookup by ID.
 func (s *DefaultTaskScheduler) buildTaskMap(tasks []*entity.Task) map[uuid.UUID]*entity.Task {
 	taskMap := make(map[uuid.UUID]*entity.Task)
@@ -279,6 +263,15 @@ func (s *DefaultTaskScheduler) buildTaskMap(tasks []*entity.Task) map[uuid.UUID]
 		taskMap[task.ID] = task
 	}
 	return taskMap
+}
+
+// buildInDegree creates an in-degree map for topological sort.
+func (s *DefaultTaskScheduler) buildInDegree(tasks []*entity.Task) map[uuid.UUID]int {
+	inDegree := make(map[uuid.UUID]int, len(tasks))
+	for _, task := range tasks {
+		inDegree[task.ID] = len(task.Dependencies)
+	}
+	return inDegree
 }
 
 // buildIDSet creates a set from UUID slice for O(1) lookup.

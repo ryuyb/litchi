@@ -114,6 +114,7 @@ func GetSeverity(err error) int {
 // Critical errors (Severity 1) - System level
 var (
 	ErrDatabaseConnection   = ErrorCode{Code: "L1SYS0001", Message: "Database connection failed", Category: "SYS", Severity: 1}
+	ErrDatabaseOperation    = ErrorCode{Code: "L1SYS0005", Message: "Database operation failed", Category: "SYS", Severity: 1}
 	ErrConfigLoadFailed     = ErrorCode{Code: "L1SYS0002", Message: "Configuration load failed", Category: "SYS", Severity: 1}
 	ErrServerStartFailed    = ErrorCode{Code: "L1SYS0003", Message: "Server startup failed", Category: "SYS", Severity: 1}
 	ErrMigrationFailed      = ErrorCode{Code: "L1SYS0004", Message: "Database migration failed", Category: "SYS", Severity: 1}
