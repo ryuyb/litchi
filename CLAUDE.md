@@ -62,6 +62,7 @@ Each stage supports pause/resume/rollback.
 5. **代码注释使用英文**：所有代码中的注释必须使用英文编写
 6. **使用 any 替代 interface{}**：Go 代码中优先使用 `any` 类型别名而非 `interface{}`，保持代码简洁现代
 7. **总结无需展示代码**：总结工作时无需展示详细代码片段，如果需要查看代码，用户会自己去查看
+8. **跳过集成测试**：如果没有修改 `internal/infrastructure/persistence/postgres/repositories` 目录下的代码，运行测试时添加 `-short` 标志以跳过集成测试（需要 testcontainers）
 
 ## Compact Instructions
 

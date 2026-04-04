@@ -5,6 +5,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/ryuyb/litchi/internal/domain/entity"
+	"github.com/ryuyb/litchi/internal/domain/event"
 	"github.com/ryuyb/litchi/internal/domain/valueobject"
 	"github.com/ryuyb/litchi/internal/pkg/errors"
 )
@@ -81,8 +82,7 @@ type WorkSession struct {
 	PRRollbackCount int              `json:"prRollbackCount"`    // Number of PR stage rollbacks
 
 	// Domain events (collected for publishing)
-	// TODO(T2.6.1): Replace with typed event slice. Currently uses []any for temporary storage.
-	events []any
+	events []event.DomainEvent
 }
 
 // NewWorkSession creates a new WorkSession from a GitHub issue.
@@ -93,8 +93,10 @@ func NewWorkSession(issue *entity.Issue) (*WorkSession, error) {
 	}
 
 	now := time.Now()
-	return &WorkSession{
-		ID:             uuid.New(),
+	sessionID := uuid.New()
+
+	ws := &WorkSession{
+		ID:             sessionID,
 		CreatedAt:      now,
 		UpdatedAt:      now,
 		Issue:          issue,
@@ -103,8 +105,18 @@ func NewWorkSession(issue *entity.Issue) (*WorkSession, error) {
 		SessionStatus:  SessionStatusActive,
 		Tasks:          []*entity.Task{},
 		PRRollbackCount: 0,
-		events:         []any{},
-	}, nil
+		events:         []event.DomainEvent{},
+	}
+
+	// Emit WorkSessionStarted event
+	ws.recordEvent(event.NewWorkSessionStarted(
+		sessionID,
+		issue.Number,
+		issue.Repository,
+		issue.Title,
+	))
+
+	return ws, nil
 }
 
 // Validate validates the WorkSession aggregate invariants.
@@ -242,11 +254,12 @@ func (ws *WorkSession) TransitionTo(target valueobject.Stage) error {
 	}
 
 	// Perform transition
+	fromStage := ws.CurrentStage
 	ws.CurrentStage = target
 	ws.UpdatedAt = time.Now()
 
-	// Record event (will be typed properly in T2.6.1)
-	ws.recordEvent("StageTransitioned", ws.ID, ws.CurrentStage, target)
+	// Record event
+	ws.recordEvent(event.NewStageTransitioned(ws.ID, fromStage, target))
 
 	return nil
 }
@@ -345,7 +358,24 @@ func (ws *WorkSession) RollbackTo(target valueobject.Stage, reason string, userI
 	}
 
 	// Record event
-	ws.recordEvent("StageRolledBack", ws.ID, fromStage, target)
+	ws.recordEvent(event.NewStageRolledBack(ws.ID, fromStage, target, reason, userInitiated))
+
+	// Record specialized PR rollback events for fine-grained tracking
+	if fromStage == valueobject.StagePullRequest && ws.PRNumber != nil {
+		deprecatedBranch := ""
+		if ws.Execution != nil {
+			deprecatedBranch = ws.Execution.Branch.Name
+		}
+
+		switch target {
+		case valueobject.StageExecution:
+			ws.recordEvent(event.NewPRRolledBackToExecution(ws.ID, *ws.PRNumber, reason))
+		case valueobject.StageDesign:
+			ws.recordEvent(event.NewPRRolledBackToDesign(ws.ID, *ws.PRNumber, reason, deprecatedBranch))
+		case valueobject.StageClarification:
+			ws.recordEvent(event.NewPRRolledBackToClarification(ws.ID, *ws.PRNumber, reason, deprecatedBranch))
+		}
+	}
 
 	return nil
 }
@@ -353,7 +383,8 @@ func (ws *WorkSession) RollbackTo(target valueobject.Stage, reason string, userI
 // --- Session Control Methods ---
 
 // Pause pauses the active session.
-func (ws *WorkSession) Pause() error {
+// The reason parameter records why the session was paused (e.g., "user_request", "system_maintenance").
+func (ws *WorkSession) Pause(reason string) error {
 	if !ws.SessionStatus.CanPause() {
 		return errors.New(errors.ErrValidationFailed).WithDetail(
 			"cannot pause session with status: " + string(ws.SessionStatus),
@@ -363,7 +394,7 @@ func (ws *WorkSession) Pause() error {
 	ws.SessionStatus = SessionStatusPaused
 	ws.UpdatedAt = time.Now()
 
-	ws.recordEvent("WorkSessionPaused", ws.ID)
+	ws.recordEvent(event.NewWorkSessionPaused(ws.ID, reason))
 
 	return nil
 }
@@ -376,10 +407,13 @@ func (ws *WorkSession) Resume() error {
 		)
 	}
 
+	// Record the stage the session was in when paused
+	previousStage := ws.CurrentStage
+
 	ws.SessionStatus = SessionStatusActive
 	ws.UpdatedAt = time.Now()
 
-	ws.recordEvent("WorkSessionResumed", ws.ID)
+	ws.recordEvent(event.NewWorkSessionResumed(ws.ID, previousStage))
 
 	return nil
 }
@@ -395,7 +429,7 @@ func (ws *WorkSession) Terminate(reason string) error {
 	ws.SessionStatus = SessionStatusTerminated
 	ws.UpdatedAt = time.Now()
 
-	ws.recordEvent("WorkSessionTerminated", ws.ID, reason)
+	ws.recordEvent(event.NewWorkSessionTerminated(ws.ID, reason))
 
 	return nil
 }
@@ -411,7 +445,12 @@ func (ws *WorkSession) Complete() error {
 	ws.SessionStatus = SessionStatusCompleted
 	ws.UpdatedAt = time.Now()
 
-	ws.recordEvent("WorkSessionCompleted", ws.ID)
+	// PRNumber should be set at this point
+	prNumber := 0
+	if ws.PRNumber != nil {
+		prNumber = *ws.PRNumber
+	}
+	ws.recordEvent(event.NewWorkSessionCompleted(ws.ID, prNumber))
 
 	return nil
 }
@@ -430,7 +469,7 @@ func (ws *WorkSession) SetTasks(tasks []*entity.Task) {
 	ws.Tasks = tasks
 	ws.UpdatedAt = time.Now()
 
-	ws.recordEvent("TaskListCreated", ws.ID, len(tasks))
+	ws.recordEvent(event.NewTaskListCreated(ws.ID, len(tasks)))
 }
 
 // StartExecution initializes the execution phase.
@@ -452,7 +491,14 @@ func (ws *WorkSession) SetPRNumber(prNumber int) {
 	ws.PRNumber = &prNumber
 	ws.UpdatedAt = time.Now()
 
-	ws.recordEvent("PullRequestCreated", ws.ID, prNumber)
+	// Get branch and title from execution context
+	branch := ""
+	if ws.Execution != nil {
+		branch = ws.Execution.Branch.Name
+	}
+	title := ws.Issue.Title
+
+	ws.recordEvent(event.NewPullRequestCreated(ws.ID, prNumber, branch, title))
 }
 
 // --- Task Status Methods ---
@@ -500,7 +546,7 @@ func (ws *WorkSession) StartTask(taskID uuid.UUID) error {
 	}
 	ws.UpdatedAt = time.Now()
 
-	ws.recordEvent("TaskStarted", ws.ID, taskID)
+	ws.recordEvent(event.NewTaskStarted(ws.ID, taskID, task.Description))
 
 	return nil
 }
@@ -521,7 +567,7 @@ func (ws *WorkSession) CompleteTask(taskID uuid.UUID, result valueobject.Executi
 	}
 	ws.UpdatedAt = time.Now()
 
-	ws.recordEvent("TaskCompleted", ws.ID, taskID)
+	ws.recordEvent(event.NewTaskCompleted(ws.ID, taskID))
 
 	return nil
 }
@@ -542,7 +588,7 @@ func (ws *WorkSession) FailTask(taskID uuid.UUID, reason, suggestion string) err
 	}
 	ws.UpdatedAt = time.Now()
 
-	ws.recordEvent("TaskFailed", ws.ID, taskID, reason)
+	ws.recordEvent(event.NewTaskFailed(ws.ID, taskID, reason, suggestion))
 
 	return nil
 }
@@ -560,7 +606,7 @@ func (ws *WorkSession) SkipTask(taskID uuid.UUID, reason string) error {
 
 	ws.UpdatedAt = time.Now()
 
-	ws.recordEvent("TaskSkipped", ws.ID, taskID, reason)
+	ws.recordEvent(event.NewTaskSkipped(ws.ID, taskID, reason))
 
 	return nil
 }
@@ -572,6 +618,9 @@ func (ws *WorkSession) RetryTask(taskID uuid.UUID, maxRetryLimit int) error {
 		return errors.New(errors.ErrValidationFailed).WithDetail("task not found")
 	}
 
+	// Record retry count before increment
+	retryCount := task.RetryCount
+
 	if err := task.Retry(maxRetryLimit); err != nil {
 		return err
 	}
@@ -580,6 +629,9 @@ func (ws *WorkSession) RetryTask(taskID uuid.UUID, maxRetryLimit int) error {
 		ws.Execution.ClearFailedTask()
 	}
 	ws.UpdatedAt = time.Now()
+
+	// Record TaskRetryStarted event
+	ws.recordEvent(event.NewTaskRetryStarted(ws.ID, taskID, retryCount+1))
 
 	return nil
 }
@@ -662,12 +714,13 @@ func (ws *WorkSession) AddClarificationQuestion(question string) {
 		ws.Clarification.AddQuestion(question)
 		ws.UpdatedAt = time.Now()
 
-		ws.recordEvent("QuestionAsked", ws.ID, question)
+		ws.recordEvent(event.NewQuestionAsked(ws.ID, question))
 	}
 }
 
 // AnswerClarificationQuestion records an answer to a pending question.
-func (ws *WorkSession) AnswerClarificationQuestion(question, answer string) error {
+// The actor parameter identifies who answered the question (Issue author or admin).
+func (ws *WorkSession) AnswerClarificationQuestion(question, answer, actor string) error {
 	if ws.Clarification == nil {
 		return errors.New(errors.ErrValidationFailed).WithDetail("clarification not initialized")
 	}
@@ -679,7 +732,7 @@ func (ws *WorkSession) AnswerClarificationQuestion(question, answer string) erro
 
 	ws.UpdatedAt = time.Now()
 
-	ws.recordEvent("QuestionAnswered", ws.ID, question)
+	ws.recordEvent(event.NewQuestionAnswered(ws.ID, question, answer, actor))
 
 	return nil
 }
@@ -714,7 +767,10 @@ func (ws *WorkSession) CompleteClarification() error {
 	ws.Clarification.Complete()
 	ws.UpdatedAt = time.Now()
 
-	ws.recordEvent("ClarificationCompleted", ws.ID)
+	// Get clarity score for event
+	clarityScore := ws.Clarification.GetClarityScore()
+
+	ws.recordEvent(event.NewClarificationCompleted(ws.ID, clarityScore))
 
 	return nil
 }
@@ -727,24 +783,26 @@ func (ws *WorkSession) ConfirmDesign() error {
 		return errors.New(errors.ErrValidationFailed).WithDetail("design not initialized")
 	}
 
+	version := ws.Design.CurrentVersion
 	ws.Design.Confirm()
 	ws.UpdatedAt = time.Now()
 
-	ws.recordEvent("DesignApproved", ws.ID)
+	ws.recordEvent(event.NewDesignApproved(ws.ID, version))
 
 	return nil
 }
 
 // RejectDesign marks the design as rejected.
-func (ws *WorkSession) RejectDesign() error {
+func (ws *WorkSession) RejectDesign(reason string) error {
 	if ws.Design == nil {
 		return errors.New(errors.ErrValidationFailed).WithDetail("design not initialized")
 	}
 
+	version := ws.Design.CurrentVersion
 	ws.Design.Reject()
 	ws.UpdatedAt = time.Now()
 
-	ws.recordEvent("DesignRejected", ws.ID)
+	ws.recordEvent(event.NewDesignRejected(ws.ID, version, reason))
 
 	return nil
 }
@@ -755,7 +813,7 @@ func (ws *WorkSession) AddDesignVersion(content, reason string) {
 		ws.Design.AddVersion(content, reason)
 		ws.UpdatedAt = time.Now()
 
-		ws.recordEvent("DesignCreated", ws.ID, ws.Design.CurrentVersion)
+		ws.recordEvent(event.NewDesignCreated(ws.ID, ws.Design.CurrentVersion, reason))
 	}
 }
 
@@ -819,34 +877,18 @@ func (ws *WorkSession) GetPRNumber() *int {
 // --- Domain Events ---
 
 // GetEvents returns all collected domain events.
-func (ws *WorkSession) GetEvents() []any {
+func (ws *WorkSession) GetEvents() []event.DomainEvent {
 	return ws.events
 }
 
 // ClearEvents clears all collected events (after publishing).
 func (ws *WorkSession) ClearEvents() {
-	ws.events = []any{}
+	ws.events = []event.DomainEvent{}
 }
 
 // recordEvent records a domain event (internal helper).
-//
-// TODO(T2.6.1): Replace map[string]any with properly typed domain events.
-// Current implementation uses untyped map for temporary storage, which lacks compile-time
-// type safety. After T2.6.1, this will use concrete event types like:
-//   - WorkSessionStarted
-//   - StageTransitioned
-//   - TaskCompleted
-//   - etc.
-//
-// For now, event handlers must perform runtime type assertions on event data.
-func (ws *WorkSession) recordEvent(eventType string, args ...any) {
-	event := map[string]any{
-		"type":      eventType,
-		"sessionId": ws.ID,
-		"timestamp": time.Now(),
-		"args":      args,
-	}
-	ws.events = append(ws.events, event)
+func (ws *WorkSession) recordEvent(e event.DomainEvent) {
+	ws.events = append(ws.events, e)
 }
 
 // --- Helper Methods ---

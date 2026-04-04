@@ -156,7 +156,7 @@ func TestWorkSessionPauseResumeTerminate(t *testing.T) {
 	session, _ := NewWorkSession(entity.NewIssue(123, "Test", "Body", "owner/repo", "user"))
 
 	// Pause from active
-	err := session.Pause()
+	err := session.Pause("user_request")
 	if err != nil {
 		t.Errorf("Pause unexpected error: %v", err)
 	}
@@ -165,7 +165,7 @@ func TestWorkSessionPauseResumeTerminate(t *testing.T) {
 	}
 
 	// Pause again should fail
-	err = session.Pause()
+	err = session.Pause("user_request")
 	if err == nil {
 		t.Errorf("Pause when already paused should fail")
 	}
@@ -195,7 +195,7 @@ func TestWorkSessionPauseResumeTerminate(t *testing.T) {
 	}
 
 	// Operations on terminated session should fail
-	err = session.Pause()
+	err = session.Pause("user_request")
 	if err == nil {
 		t.Errorf("Pause on terminated session should fail")
 	}
@@ -507,7 +507,7 @@ func TestWorkSessionClarification(t *testing.T) {
 	}
 
 	// Answer question
-	err := session.AnswerClarificationQuestion("What is the expected behavior?", "It should work correctly")
+	err := session.AnswerClarificationQuestion("What is the expected behavior?", "It should work correctly", "test-user")
 	if err != nil {
 		t.Errorf("AnswerClarificationQuestion failed: %v", err)
 	}
@@ -559,7 +559,7 @@ func TestWorkSessionDesignManagement(t *testing.T) {
 	}
 
 	// Reject design
-	err = session.RejectDesign()
+	err = session.RejectDesign("Design needs more work")
 	if err != nil {
 		t.Errorf("RejectDesign failed: %v", err)
 	}
