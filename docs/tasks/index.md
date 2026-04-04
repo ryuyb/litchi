@@ -33,7 +33,7 @@
 | T1.3.2 | 配置 shadcn/ui + Tailwind CSS | T1.3.1 | 低 | 0.5d | 否 |
 | T1.3.3 | 实现基础布局组件 | T1.3.2 | 低 | 1d | 否 |
 | T1.3.4 | 配置 TanStack Query + Zustand | T1.3.1 | 低 | 0.5d | 是 |
-| T1.3.5 | 配置 Orval API 代码生成 | T1.3.1 | 低 | 0.5d | 是 |
+| T1.3.5 | 配置 Orval API 代码生成（骨架） | T1.3.1 | 低 | 0.5d | 是 |
 | T1.3.6 | 配置 TanStack Table + Form | T1.3.4 | 低 | 0.5d | 否 |
 
 **阶段工时**: 9.5d

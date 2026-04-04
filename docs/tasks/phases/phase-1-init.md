@@ -165,32 +165,34 @@
   - 实际工时：0.5d
   - 完成日期：2026-04-04
 
-- [ ] **T1.3.5** 配置 Orval API 代码生成
+- [x] **T1.3.5** 配置 Orval API 代码生成（骨架配置）
   - 验收标准：
-    - [ ] Orval 配置文件正确（orval.config.ts）
-    - [ ] 配置 Swagger/OpenAPI 文档源路径（指向后端生成的 swagger.json）
-    - [ ] 配置生成 TanStack Query hooks
-    - [ ] 配置生成 TypeScript 类型定义
-    - [ ] 配置输出目录和代码格式
-    - [ ] 配置 npm script：`orval:generate`
-    - [ ] 注：实际生成在阶段六 T6.0.1 完成后执行
+    - [x] Orval 配置文件正确（orval.config.ts）
+    - [x] 使用手写 swagger.json 作为临时输入（仅包含基础类型定义，无实际 API）
+    - [x] 配置生成 TanStack Query hooks（client: react-query）
+    - [x] 配置生成 TypeScript 类型定义（schemas 目录）
+    - [x] 配置输出目录和代码格式（src/api/）
+    - [x] 配置 npm script：`orval:generate`
+    - [x] 手写 swagger.json 放置在 web/swagger.json
+  - 注：骨架配置，手写临时 swagger.json。待 T6.0.1 完成后替换为后端生成的正式文档。
   - 依赖：T1.3.1
   - 风险：低
   - 预估：0.5d
   - 可并行：是（与 T1.3.2）
+  - 完成日期：2026-04-04
 
-- [ ] **T1.3.6** 配置 TanStack Table + Form
+- [x] **T1.3.6** 配置 TanStack Table + Form
   - 验收标准：
     - [x] TanStack Table 基础配置
     - [x] TanStack Form 基础配置
-    - [ ] 与 TanStack Query 数据流集成
-    - [ ] 类型安全验证（基础类型定义）
-  - 注：Table 和 Form 已通过 add-on 安装，需后续集成
+    - [x] 与 TanStack Query 数据流集成
+    - [x] 类型安全验证（基础类型定义）
+  - 注：Table 和 Form 已通过 add-on 安装，已完成集成
   - 依赖：T1.3.4
   - 风险：低
   - 预估：0.5d
   - 可并行：否
-  - 进度：50%（安装完成，待集成）
+  - 完成日期：2026-04-04
 
 ---
 

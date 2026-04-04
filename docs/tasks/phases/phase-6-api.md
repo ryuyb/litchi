@@ -14,10 +14,14 @@
     - [ ] Swagger UI 可访问（/swagger/*）
     - [ ] 文档自动更新（随 API 变化）
     - [ ] 导出 swagger.json 供 Orval 使用
+    - [ ] 替换 T1.3.5 手写的临时 swagger.json
+    - [ ] 更新前端 Orval 配置指向新文档路径
+    - [ ] 执行 `orval:generate` 重新生成 API 客户端代码
   - 依赖：T5.1.*
   - 风险：低
   - 预估：0.5d
   - 可并行：否
+  - 备注：完成后需通知前端重新执行 Orval 生成
 
 ---
 

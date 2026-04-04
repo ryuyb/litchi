@@ -1,0 +1,730 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Litchi API",
+    "description": "Automated development agent system - from GitHub Issue to Pull Request",
+    "version": "0.1.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8080/api/v1",
+      "description": "Development server"
+    }
+  ],
+  "paths": {
+    "/sessions": {
+      "get": {
+        "tags": ["sessions"],
+        "summary": "List work sessions",
+        "description": "Get a paginated list of work sessions",
+        "operationId": "listSessions",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/WorkSession"
+                      }
+                    },
+                    "total": {
+                      "type": "integer"
+                    },
+                    "page": {
+                      "type": "integer"
+                    },
+                    "pageSize": {
+                      "type": "integer"
+                    },
+                    "totalPages": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sessions/{id}": {
+      "get": {
+        "tags": ["sessions"],
+        "summary": "Get work session by ID",
+        "description": "Retrieve a single work session by its ID",
+        "operationId": "getSession",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkSession"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Session not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Stage": {
+        "type": "string",
+        "enum": [
+          "clarification",
+          "design",
+          "task_breakdown",
+          "execution",
+          "pull_request",
+          "completed"
+        ],
+        "description": "Workflow stage enum"
+      },
+      "TaskStatus": {
+        "type": "string",
+        "enum": [
+          "pending",
+          "running",
+          "completed",
+          "failed",
+          "skipped",
+          "retrying"
+        ],
+        "description": "Task status enum"
+      },
+      "ActorRole": {
+        "type": "string",
+        "enum": ["admin", "issue_author"],
+        "description": "Actor role enum"
+      },
+      "OperationType": {
+        "type": "string",
+        "enum": [
+          "session_start",
+          "session_pause",
+          "session_resume",
+          "session_terminate",
+          "stage_transition",
+          "agent_call",
+          "tool_use",
+          "file_read",
+          "file_write",
+          "bash_execute",
+          "git_operation",
+          "pr_create",
+          "approval_request",
+          "approval_decision"
+        ],
+        "description": "Audit log operation type enum"
+      },
+      "ClarityCheckItem": {
+        "type": "object",
+        "properties": {
+          "score": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "passed": {
+            "type": "boolean"
+          },
+          "detail": {
+            "type": "string"
+          }
+        }
+      },
+      "ClarityDimension": {
+        "type": "object",
+        "properties": {
+          "score": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "maxScore": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "checks": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/ClarityCheckItem"
+            }
+          }
+        }
+      },
+      "ClarityDimensions": {
+        "type": "object",
+        "properties": {
+          "completeness": {
+            "$ref": "#/components/schemas/ClarityDimension"
+          },
+          "clarity": {
+            "$ref": "#/components/schemas/ClarityDimension"
+          },
+          "consistency": {
+            "$ref": "#/components/schemas/ClarityDimension"
+          },
+          "feasibility": {
+            "$ref": "#/components/schemas/ClarityDimension"
+          },
+          "testability": {
+            "$ref": "#/components/schemas/ClarityDimension"
+          },
+          "totalScore": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "grade": {
+            "type": "string",
+            "enum": ["高清晰度", "中清晰度", "低清晰度", "不清晰"]
+          },
+          "canAutoProceed": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ConversationTurn": {
+        "type": "object",
+        "properties": {
+          "role": {
+            "type": "string",
+            "enum": ["agent", "user"]
+          },
+          "content": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Issue": {
+        "type": "object",
+        "required": ["id", "number", "title", "repository", "author"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "number": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "body": {
+            "type": "string"
+          },
+          "repository": {
+            "type": "string",
+            "pattern": "^[^/]+/[^/]+$"
+          },
+          "author": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Clarification": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "confirmedPoints": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "pendingQuestions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "history": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ConversationTurn"
+            }
+          },
+          "status": {
+            "type": "string",
+            "enum": ["in_progress", "completed"]
+          },
+          "clarityScore": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "clarityDimensions": {
+            "$ref": "#/components/schemas/ClarityDimensions"
+          }
+        }
+      },
+      "DesignVersion": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "content": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Design": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "versions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DesignVersion"
+            }
+          },
+          "currentVersion": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "complexityScore": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "requireConfirmation": {
+            "type": "boolean"
+          },
+          "confirmed": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ExecutionResult": {
+        "type": "object",
+        "properties": {
+          "output": {
+            "type": "string"
+          },
+          "testResults": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "passed": {
+                  "type": "boolean"
+                },
+                "duration": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        }
+      },
+      "Task": {
+        "type": "object",
+        "required": ["id", "description", "status"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/TaskStatus"
+          },
+          "dependencies": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "executionResult": {
+            "$ref": "#/components/schemas/ExecutionResult"
+          },
+          "retryCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "failureReason": {
+            "type": "string"
+          },
+          "suggestion": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "FailedTask": {
+        "type": "object",
+        "properties": {
+          "taskId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "suggestion": {
+            "type": "string"
+          }
+        }
+      },
+      "DeprecatedBranch": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "deprecatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "prNumber": {
+            "type": "integer"
+          },
+          "rollbackToStage": {
+            "$ref": "#/components/schemas/Stage"
+          }
+        }
+      },
+      "Execution": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "worktreePath": {
+            "type": "string"
+          },
+          "branch": {
+            "type": "string"
+          },
+          "completedTasks": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "currentTask": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "failedTask": {
+            "$ref": "#/components/schemas/FailedTask"
+          },
+          "fixTasks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Task"
+            }
+          },
+          "rollbackHistory": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeprecatedBranch"
+            }
+          }
+        }
+      },
+      "WorkSession": {
+        "type": "object",
+        "required": ["id", "stage", "issue"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "stage": {
+            "$ref": "#/components/schemas/Stage"
+          },
+          "issue": {
+            "$ref": "#/components/schemas/Issue"
+          },
+          "clarification": {
+            "$ref": "#/components/schemas/Clarification"
+          },
+          "design": {
+            "$ref": "#/components/schemas/Design"
+          },
+          "tasks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Task"
+            }
+          },
+          "execution": {
+            "$ref": "#/components/schemas/Execution"
+          },
+          "paused": {
+            "type": "boolean"
+          },
+          "terminated": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Repository": {
+        "type": "object",
+        "required": ["id", "name"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "pattern": "^[^/]+/[^/]+$"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "config": {
+            "type": "object",
+            "properties": {
+              "maxConcurrency": {
+                "type": "integer"
+              },
+              "complexityThreshold": {
+                "type": "integer"
+              },
+              "forceDesignConfirm": {
+                "type": "boolean"
+              },
+              "defaultModel": {
+                "type": "string"
+              },
+              "taskRetryLimit": {
+                "type": "integer"
+              }
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "AuditLog": {
+        "type": "object",
+        "required": ["id", "timestamp", "operation", "result"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "sessionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "repository": {
+            "type": "string"
+          },
+          "issueNumber": {
+            "type": "integer"
+          },
+          "actor": {
+            "type": "string"
+          },
+          "actorRole": {
+            "$ref": "#/components/schemas/ActorRole"
+          },
+          "operation": {
+            "$ref": "#/components/schemas/OperationType"
+          },
+          "resourceType": {
+            "type": "string"
+          },
+          "resourceId": {
+            "type": "string"
+          },
+          "parameters": {
+            "type": "object"
+          },
+          "result": {
+            "type": "string",
+            "enum": ["success", "failed", "denied"]
+          },
+          "duration": {
+            "type": "integer",
+            "description": "Duration in milliseconds"
+          },
+          "output": {
+            "type": "string"
+          },
+          "error": {
+            "type": "string"
+          }
+        }
+      },
+      "PaginationParams": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "integer",
+            "minimum": 1,
+            "default": 1
+          },
+          "pageSize": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 20
+          }
+        }
+      },
+      "PaginatedResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {}
+          },
+          "total": {
+            "type": "integer"
+          },
+          "page": {
+            "type": "integer"
+          },
+          "pageSize": {
+            "type": "integer"
+          },
+          "totalPages": {
+            "type": "integer"
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "details": {
+            "type": "object"
+          }
+        }
+      }
+    }
+  }
+}
