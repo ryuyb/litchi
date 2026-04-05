@@ -122,11 +122,14 @@ var (
 
 // High severity errors (Severity 2) - Agent level
 var (
+	ErrAgentInvalidRequest   = ErrorCode{Code: "L2AGE0000", Message: "Invalid agent request", Category: "AGE", Severity: 2}
 	ErrAgentProcessCrash     = ErrorCode{Code: "L2AGE0001", Message: "Agent process crashed", Category: "AGE", Severity: 2}
 	ErrAgentContextLost      = ErrorCode{Code: "L2AGE0002", Message: "Agent session context lost", Category: "AGE", Severity: 2}
 	ErrAgentExecutionFail    = ErrorCode{Code: "L2AGE0003", Message: "Agent execution failed", Category: "AGE", Severity: 2}
 	ErrAgentTimeout          = ErrorCode{Code: "L2AGE0004", Message: "Agent execution timeout", Category: "AGE", Severity: 2}
 	ErrAgentPermissionDenied = ErrorCode{Code: "L2AGE0005", Message: "Agent permission denied", Category: "AGE", Severity: 2}
+	ErrAgentNotRunning       = ErrorCode{Code: "L2AGE0006", Message: "Agent not running for session", Category: "AGE", Severity: 2}
+	ErrAgentAlreadyRunning   = ErrorCode{Code: "L2AGE0007", Message: "Agent already running for session", Category: "AGE", Severity: 2}
 )
 
 // Medium severity errors (Severity 3) - External services

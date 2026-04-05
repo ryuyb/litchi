@@ -95,164 +95,253 @@
 ```go
 // internal/domain/service/agent_runner.go
 
+// AgentStage represents the execution stage type for Agent operations.
+type AgentStage string
+
+const (
+    AgentStageClarification  AgentStage = "clarification"
+    AgentStageDesign         AgentStage = "design"
+    AgentStageTaskBreakdown  AgentStage = "task_breakdown"
+    AgentStageTaskExecution  AgentStage = "task_execution"
+    AgentStagePRCreation     AgentStage = "pr_creation"
+)
+
 type AgentRunner interface {
-    // 执行任务
-    Execute(ctx context.Context, req *ExecuteRequest) (*ExecuteResult, error)
+    // Execute executes an Agent task and returns the result.
+    Execute(ctx context.Context, req *AgentRequest) (*AgentResponse, error)
     
-    // 分析代码库
-    AnalyzeCodebase(ctx context.Context, req *AnalyzeRequest) (*CodeAnalysis, error)
+    // ExecuteWithRetry executes a task with automatic retry on failure.
+    ExecuteWithRetry(ctx context.Context, req *AgentRequest, policy RetryPolicy) (*AgentResponse, error)
     
-    // 生成设计方案
-    GenerateDesign(ctx context.Context, req *DesignRequest) (*DesignOutput, error)
+    // ValidateRequest validates the request parameters.
+    ValidateRequest(req *AgentRequest) error
     
-    // 需求澄清对话
-    Clarify(ctx context.Context, req *ClarifyRequest) (*ClarifyOutput, error)
+    // PrepareContext prepares execution context from cache.
+    PrepareContext(ctx context.Context, sessionID uuid.UUID, worktreePath string) (*AgentContext, error)
     
-    // 恢复中断的会话
-    Resume(ctx context.Context, req *ResumeRequest) (*ExecuteResult, error)
+    // SaveContext saves execution context to cache.
+    SaveContext(ctx context.Context, worktreePath string, cache *AgentContextCache) error
+    
+    // Cancel cancels the running execution for a session.
+    Cancel(sessionID uuid.UUID) error
+    
+    // GetStatus retrieves the current execution status.
+    GetStatus(sessionID uuid.UUID) (*AgentStatus, error)
+    
+    // IsRunning checks if Agent is currently executing for a session.
+    IsRunning(sessionID uuid.UUID) bool
+    
+    // Shutdown gracefully shuts down the executor and cleans up resources.
+    Shutdown(ctx context.Context) error
 }
 ```
 
+**设计理念**：
+
+采用通用 `Execute` 方法 + `AgentStage` 参数的设计，而非按阶段细分具体方法（如 `Clarify`, `GenerateDesign` 等）。这种设计的优势：
+
+1. **灵活性**：新增阶段只需添加常量，无需修改接口
+2. **一致性**：所有阶段使用统一的请求/响应结构，便于中间件和拦截器处理
+3. **可扩展性**：通过 `AgentRequest.Context` 传递阶段特定的上下文，避免接口膨胀
+
 **接口方法说明**：
 
-| 方法 | 用途 | 调用阶段 |
+| 方法 | 用途 | 调用时机 |
 |------|------|---------|
-| Execute | 执行具体任务 | Execution |
-| AnalyzeCodebase | 分析代码库结构、依赖关系 | Design |
-| GenerateDesign | 生成设计方案并评估复杂度 | Design |
-| Clarify | 需求澄清对话 | Clarification |
-| Resume | 恢复中断的会话 | 服务重启、用户指令继续 |
-```
+| Execute | 执行 Agent 任务 | 各阶段核心执行 |
+| ExecuteWithRetry | 带重试的执行 | 需要自动重试的场景 |
+| ValidateRequest | 验证请求参数 | 执行前校验 |
+| PrepareContext | 从缓存准备上下文 | 恢复执行、上下文加载 |
+| SaveContext | 保存上下文到缓存 | 状态持久化 |
+| Cancel | 取消正在执行的任务 | 用户取消、超时 |
+| GetStatus | 获取执行状态 | 状态查询、监控 |
+| IsRunning | 检查是否在执行 | 并发控制 |
+| Shutdown | 关闭执行器 | 服务停止 |
 
 ### 3.2 请求/响应结构
 
 ```go
-// ExecuteRequest - 任务执行请求
-type ExecuteRequest struct {
-    SessionID      uuid.UUID        // WorkSession ID，用于 --session-id
-    WorktreePath   string           // Git Worktree 路径
-    Task           *Task            // 待执行任务
-    PermissionMode PermissionMode   // 权限模式
-    AllowedTools   []string         // 允许的工具
-    MaxBudgetUSD   float64          // 最大预算
-    Model          string           // 模型选择
-    Context        string           // 上下文信息（设计方案等）
+// AgentRequest - Agent 执行请求
+type AgentRequest struct {
+    SessionID      uuid.UUID       // WorkSession ID，用于 --session-id
+    Stage          AgentStage      // 执行阶段
+    WorktreePath   string          // Git Worktree 路径
+    Prompt         string          // 执行提示/任务描述
+    Context        *AgentContext   // 执行上下文
+    Timeout        time.Duration   // 执行超时
+    AllowedTools   []string        // 允许的工具
+    MaxRetries     int             // 最大重试次数
 }
 
-type PermissionMode string
-
-const (
-    PermissionDefault      PermissionMode = "default"
-    PermissionAcceptEdits  PermissionMode = "acceptEdits"
-    PermissionDontAsk      PermissionMode = "dontAsk"
-    PermissionPlan         PermissionMode = "plan"
-)
-
-// ExecuteResult - 执行结果
-type ExecuteResult struct {
-    Success      bool            // 是否成功
-    Output       string          // 输出内容
-    TestResults  []TestResult    // 测试结果
-    FilesChanged []string        // 变更的文件列表
-    Duration     time.Duration   // 执行耗时
-    TokenUsage   TokenUsage      // Token 使用量
-    CostUSD      float64         // 费用
-    Error        *AgentError     // 错误信息（如有）
+// AgentContext - 执行上下文
+type AgentContext struct {
+    IssueTitle      string          // Issue 标题
+    IssueBody       string          // Issue 内容
+    Repository      string          // 仓库名称
+    Branch          string          // 当前分支
+    DesignContent   string          // 设计文档内容
+    Tasks           []TaskContext   // 任务列表上下文
+    ClarifiedPoints []string        // 已澄清的需求点
+    History         []HistoryEntry  // 执行历史
 }
 
-type AgentError struct {
-    Type        ErrorType       // 错误类型
-    Message     string          // 错误消息
-    Suggestion  string          // 解决建议
-    Retryable   bool            // 是否可重试
+// TaskContext - 任务上下文
+type TaskContext struct {
+    ID           uuid.UUID   // 任务 ID
+    Description  string      // 任务描述
+    Status       string      // 任务状态
+    Dependencies []uuid.UUID // 依赖任务 ID
 }
 
-type ErrorType string
-
-const (
-    // 执行相关错误
-    ErrorTypeTestFailed      ErrorType = "test_failed"
-    ErrorTypeBuildFailed     ErrorType = "build_failed"
-    ErrorTypeTimeout         ErrorType = "timeout"
-    ErrorTypeBudgetExceeded  ErrorType = "budget_exceeded"
-    ErrorTypePermissionDenied ErrorType = "permission_denied"
-
-    // Agent 系统错误
-    ErrorTypeAgentCrashed    ErrorType = "agent_crashed"      // 进程异常终止
-    ErrorTypeOutputParseFail ErrorType = "output_parse_fail"   // 输出解析失败
-    ErrorTypeSessionLost     ErrorType = "session_lost"       // 会话上下文丢失
-    ErrorTypeToolBlocked     ErrorType = "tool_blocked"       // 工具权限被拒绝
-
-    // 外部服务错误
-    ErrorTypeGitHubRateLimit ErrorType = "github_rate_limit"  // GitHub API 限流
-    ErrorTypeGitHubError     ErrorType = "github_api_error"   // GitHub API 其他错误
-    ErrorTypeNetworkError    ErrorType = "network_error"      // 网络连接错误
-    ErrorTypeGitError        ErrorType = "git_error"          // Git 操作错误
-
-    // 环境错误
-    ErrorTypeTestEnvUnavailable ErrorType = "test_env_unavailable" // 测试环境不可用
-    ErrorTypeWorktreeError      ErrorType = "worktree_error"      // Worktree 操作错误
-
-    // 通用错误
-    ErrorTypeAPIError        ErrorType = "api_error"
-    ErrorTypeUnknown         ErrorType = "unknown"
-)
-
-// SeverityLevel 错误严重程度
-type SeverityLevel string
-
-const (
-    SeverityCritical SeverityLevel = "critical"  // 系统级故障
-    SeverityHigh     SeverityLevel = "high"      // 会话阻塞
-    SeverityMedium   SeverityLevel = "medium"    // 阶段阻塞
-    SeverityLow      SeverityLevel = "low"       // 任务临时失败
-)
-
-// RecoveryCategory 错误可恢复性
-type RecoveryCategory string
-
-const (
-    RecoveryAuto     RecoveryCategory = "auto"       // 自动恢复
-    RecoverySemiAuto RecoveryCategory = "semi_auto"  // 半自动恢复
-    RecoveryManual   RecoveryCategory = "manual"     // 需人工干预
-    RecoveryNone     RecoveryCategory = "none"       // 不可恢复
-)
-
-// DesignRequest - 设计方案请求
-type DesignRequest struct {
-    SessionID        uuid.UUID
-    WorktreePath     string
-    Issue            *Issue            // Issue 信息
-    ClarifiedNeeds   []string          // 已澄清的需求
-    CodeAnalysis     *CodeAnalysis     // 代码分析结果
-    Model            string            // 模型
-    OutputSchema     *json.Schema      // 输出 JSON Schema
+// HistoryEntry - 执行历史条目
+type HistoryEntry struct {
+    Timestamp time.Time  // 时间戳
+    Stage     AgentStage // 执行阶段
+    Action    string    // 执行动作
+    Result    string    // 执行结果
 }
 
-// DesignOutput - 设计方案输出
-type DesignOutput struct {
-    DesignContent    string            // 设计方案内容
-    ComplexityScore  int               // 复杂度评分
-    EstimatedFiles   []string          // 预估涉及文件
-    EstimatedLOC     int               // 预估代码行数
-    ModulesAffected  []string          // 涉及模块
-    BreakingChanges  bool              // 是否有破坏性变更
-    TestDifficulty   string            // 测试难度
+// AgentResponse - Agent 执行响应
+type AgentResponse struct {
+    SessionID     uuid.UUID        // WorkSession ID
+    Stage         AgentStage       // 执行阶段
+    Success       bool             // 是否成功
+    Output        string           // 原始输出
+    Result        AgentResult      // 结构化结果
+    Duration      time.Duration    // 执行时长
+    TokensUsed    int              // Token 使用量
+    ToolCalls     []ToolCallRecord // 工具调用记录
+    Error         *AgentErrorInfo  // 错误信息
+    NeedsApproval bool             // 是否需要审批
 }
 
-// ClarifyRequest - 澄清请求
-type ClarifyRequest struct {
-    SessionID    uuid.UUID
-    Issue        *Issue
-    History      []ConversationTurn   // 对话历史
-    NewAnswer    string               // 用户回答（如有）
+// AgentResult - 结构化结果
+type AgentResult struct {
+    Type           string            // 结果类型
+    Content        string            // 结果内容
+    StructuredData map[string]any    // 结构化数据
+    FilesChanged   []FileChange      // 文件变更
+    TestsRun       []TestResult      // 测试结果
 }
 
-// ClarifyOutput - 澄清输出
-type ClarifyOutput struct {
-    Questions        []string        // 待回答问题
-    ConfirmedPoints  []string        // 已确认需求点
-    ReadyForDesign   bool            // 是否可进入设计阶段
+// FileChange - 文件变更记录
+type FileChange struct {
+    Path         string // 文件路径
+    Action       string // 操作类型 (create, modify, delete)
+    LinesAdded   int    // 新增行数
+    LinesDeleted int    // 删除行数
+}
+
+// TestResult - 测试结果
+type TestResult struct {
+    Name     string        // 测试名称
+    Status   string        // 测试状态 (passed, failed, skipped)
+    Message  string        // 错误消息
+    Duration time.Duration // 执行时长
+}
+
+// ToolCallRecord - 工具调用记录
+type ToolCallRecord struct {
+    Timestamp   time.Time // 调用时间
+    ToolName    string    // 工具名称
+    Input       string    // 输入参数
+    Output      string    // 输出结果
+    Success     bool      // 是否成功
+    Blocked     bool      // 是否被拦截
+    BlockReason string    // 拦截原因
+}
+
+// AgentErrorInfo - 错误信息
+type AgentErrorInfo struct {
+    Code        string // 错误码
+    Category    string // 错误类别
+    Message     string // 错误消息
+    Detail      string // 详细信息
+    Recoverable bool   // 是否可恢复
+    Retryable   bool   // 是否可重试
+    RetryCount  int    // 重试次数
+}
+
+// AgentStatus - 执行状态
+type AgentStatus struct {
+    SessionID    uuid.UUID  // WorkSession ID
+    Status       string     // 状态 (idle, running, paused, cancelled, completed, failed)
+    CurrentStage AgentStage // 当前阶段
+    StartTime    time.Time  // 开始时间
+    Progress     float64    // 进度 (0-100)
+    Message      string     // 状态消息
+}
+
+// AgentContextCache - 上下文缓存（用于持久化）
+type AgentContextCache struct {
+    SessionID        uuid.UUID   // WorkSession ID
+    CurrentStage     string      // 当前阶段
+    Status           string      // 会话状态
+    PauseReason      *string     // 暂停原因
+    ClarifiedPoints  []string    // 已澄清需求点
+    DesignVersion    int         // 设计版本
+    ComplexityScore  *int        // 复杂度评分
+    CurrentTaskID    *uuid.UUID  // 当前任务 ID
+    CompletedTaskIDs []uuid.UUID // 已完成任务 ID
+    Branch           string      // 分支名
+    WorktreePath     string      // Worktree 路径
+    UpdatedAt        time.Time   // 更新时间
+}
+```
+
+### 3.3 按阶段的使用方式
+
+虽然使用通用 `Execute` 方法，但不同阶段的调用参数有所不同：
+
+| 阶段 | Stage 参数 | Prompt 内容 | Context 关键字段 |
+|------|-----------|-------------|-----------------|
+| Clarification | `clarification` | Issue 分析提示 | IssueTitle, IssueBody |
+| Design | `design` | 设计生成提示 | IssueTitle, ClarifiedPoints |
+| TaskBreakdown | `task_breakdown` | 任务拆分提示 | DesignContent |
+| Execution | `task_execution` | 任务执行提示 | DesignContent, Tasks |
+| PRCreation | `pr_creation` | PR 创建提示 | Branch, Tasks |
+
+**调用示例**：
+
+```go
+// 澄清阶段
+clarifyReq := &service.AgentRequest{
+    SessionID:    session.ID,
+    Stage:        service.AgentStageClarification,
+    WorktreePath: session.Execution.WorktreePath,
+    Prompt:       "分析以下 Issue 并提出澄清问题...",
+    Context: &service.AgentContext{
+        IssueTitle: session.Issue.Title,
+        IssueBody:  session.Issue.Body,
+    },
+    Timeout: 10 * time.Minute,
+}
+
+// 设计阶段
+designReq := &service.AgentRequest{
+    SessionID:    session.ID,
+    Stage:        service.AgentStageDesign,
+    WorktreePath: session.Execution.WorktreePath,
+    Prompt:       "根据已澄清的需求生成设计方案...",
+    Context: &service.AgentContext{
+        IssueTitle:      session.Issue.Title,
+        ClarifiedPoints: session.Clarification.ConfirmedPoints,
+    },
+    Timeout: 15 * time.Minute,
+}
+
+// 执行阶段
+execReq := &service.AgentRequest{
+    SessionID:    session.ID,
+    Stage:        service.AgentStageTaskExecution,
+    WorktreePath: session.Execution.WorktreePath,
+    Prompt:       "实现以下任务...",
+    Context: &service.AgentContext{
+        DesignContent: session.Design.CurrentVersion.Content,
+        Tasks:         taskContexts,
+    },
+    Timeout:      30 * time.Minute,
+    AllowedTools: []string{"Read", "Write", "Edit", "Bash", "Glob", "Grep"},
 }
 ```
 
@@ -292,42 +381,57 @@ func NewClaudeCodeAgent(config *ClaudeConfig) *ClaudeCodeAgent {
 ### 4.2 Execute 实现
 
 ```go
-func (a *ClaudeCodeAgent) Execute(ctx context.Context, req *ExecuteRequest) (*ExecuteResult, error) {
-    // 1. 构建命令参数
-    args := a.buildExecuteArgs(req)
-    
-    // 2. 执行命令
-    output, err := a.executor.Run(ctx, args)
-    if err != nil {
-        return nil, a.parseError(err)
-    }
-    
-    // 3. 解析输出
-    result, err := a.parser.ParseExecuteOutput(output)
-    if err != nil {
+func (a *ClaudeCodeAgent) Execute(ctx context.Context, req *service.AgentRequest) (*service.AgentResponse, error) {
+    // 1. 验证请求
+    if err := a.ValidateRequest(req); err != nil {
         return nil, err
     }
     
-    // 4. 提取变更文件
-    result.FilesChanged = a.extractChangedFiles(req.WorktreePath)
-    
-    return result, nil
-}
-
-func (a *ClaudeCodeAgent) buildExecuteArgs(req *ExecuteRequest) []string {
-    args := []string{
-        "-p",                              // 非交互模式
-        "--output-format", "stream-json",  // 流式 JSON 输出
-        "-w", req.WorktreePath,            // Worktree 路径
-        "--session-id", req.SessionID.String(), // 会话 ID
+    // 2. 检查是否已在执行
+    if a.IsRunning(req.SessionID) {
+        return nil, errors.New(errors.ErrAgentAlreadyRunning)
     }
     
-    // 权限模式
-    args = append(args, "--permission-mode", string(req.PermissionMode))
+    // 3. 获取允许的工具（根据阶段）
+    if len(req.AllowedTools) == 0 {
+        req.AllowedTools = a.permissionCtrl.GetAllowedTools(req.Stage)
+    }
     
-    // 模型
-    if req.Model != "" {
-        args = append(args, "--model", req.Model)
+    // 4. 构建命令
+    cmd := a.commandBuilder.BuildCommand(req)
+    
+    // 5. 执行进程
+    result, err := a.processExecutor.Execute(ctx, cmd, req.SessionID)
+    if err != nil {
+        return a.buildErrorResponse(req, result, err), err
+    }
+    
+    // 6. 解析输出
+    response, err := a.outputParser.Parse(result.Stdout, req.Stage)
+    if err != nil {
+        // 解析失败，返回原始输出
+        response = &service.AgentResponse{
+            SessionID: req.SessionID,
+            Stage:     req.Stage,
+            Success:   result.ExitCode == 0,
+            Output:    result.Stdout,
+            Duration:  result.Duration,
+        }
+    }
+    
+    response.SessionID = req.SessionID
+    response.Stage = req.Stage
+    response.Duration = result.Duration
+    
+    return response, nil
+}
+
+func (a *ClaudeCodeAgent) buildExecuteArgs(req *service.AgentRequest) []string {
+    args := []string{
+        "-p",                              // 非交互模式
+        "--output-format", "json",         // JSON 输出
+        "-w", req.WorktreePath,            // Worktree 路径
+        "--session-id", req.SessionID.String(), // 会话 ID
     }
     
     // 允许的工具
@@ -336,138 +440,104 @@ func (a *ClaudeCodeAgent) buildExecuteArgs(req *ExecuteRequest) []string {
         args = append(args, req.AllowedTools...)
     }
     
-    // 预算
-    if req.MaxBudgetUSD > 0 {
-        args = append(args, "--max-budget-usd", fmt.Sprintf("%.2f", req.MaxBudgetUSD))
-    }
+    // 禁止危险工具
+    args = append(args, "--disallowedTools")
+    args = append(args, permission.DefaultDangerousTools...)
     
     // 任务描述作为 prompt
-    args = append(args, a.buildTaskPrompt(req))
+    args = append(args, req.Prompt)
     
     return args
 }
+```
 
-func (a *ClaudeCodeAgent) buildTaskPrompt(req *ExecuteRequest) string {
-    prompt := fmt.Sprintf(`
-## 任务
-%s
+### 4.3 ExecuteWithRetry 实现
 
-## 上下文
-%s
-
-## 要求
-1. 实现任务描述的功能
-2. 运行相关测试验证
-3. 如果测试失败，尝试修复
-4. 输出变更的文件列表和测试结果
-
-## 输出格式
-请以 JSON 格式输出：
-{
-  "success": true/false,
-  "output": "...",
-  "testResults": [...],
-  "filesChanged": [...]
-}
-`, req.Task.Description, req.Context)
-    
-    return prompt
+```go
+func (a *ClaudeCodeAgent) ExecuteWithRetry(
+    ctx context.Context, 
+    req *service.AgentRequest, 
+    policy valueobject.RetryPolicy,
+) (*service.AgentResponse, error) {
+    return a.retryHandler.ExecuteWithRetry(ctx, req, policy, a.Execute)
 }
 ```
 
-### 4.3 GenerateDesign 实现
+### 4.4 上下文管理实现
 
 ```go
-func (a *ClaudeCodeAgent) GenerateDesign(ctx context.Context, req *DesignRequest) (*DesignOutput, error) {
-    // JSON Schema 验证输出格式
-    schema := `{
-        "type": "object",
-        "properties": {
-            "designContent": {"type": "string"},
-            "complexityScore": {"type": "integer", "minimum": 0, "maximum": 100},
-            "estimatedFiles": {"type": "array", "items": {"type": "string"}},
-            "estimatedLOC": {"type": "integer"},
-            "modulesAffected": {"type": "array", "items": {"type": "string"}},
-            "breakingChanges": {"type": "boolean"},
-            "testDifficulty": {"type": "string", "enum": ["simple", "medium", "complex"]}
-        },
-        "required": ["designContent", "complexityScore"]
-    }`
-    
-    args := []string{
-        "-p",
-        "--output-format", "json",
-        "--json-schema", schema,
-        "-w", req.WorktreePath,
-        "--session-id", req.SessionID.String(),
-    }
-    
-    if req.Model != "" {
-        args = append(args, "--model", req.Model)
-    }
-    
-    // 使用设计 Agent
-    args = append(args, "--agent", "design")
-    
-    // 设计 prompt
-    args = append(args, a.buildDesignPrompt(req))
-    
-    output, err := a.executor.Run(ctx, args)
+// PrepareContext 从缓存准备执行上下文
+func (a *ClaudeCodeAgent) PrepareContext(
+    ctx context.Context, 
+    sessionID uuid.UUID, 
+    worktreePath string,
+) (*service.AgentContext, error) {
+    cache, err := a.cacheRepo.Load(ctx, worktreePath)
     if err != nil {
-        return nil, err
+        a.logger.Warn("failed to load cache, using empty context",
+            zap.String("sessionId", sessionID.String()),
+            zap.Error(err))
+        return &service.AgentContext{}, nil
     }
     
-    return a.parser.ParseDesignOutput(output)
+    return a.cacheToContext(cache), nil
+}
+
+// SaveContext 保存执行上下文到缓存
+func (a *ClaudeCodeAgent) SaveContext(
+    ctx context.Context, 
+    worktreePath string, 
+    cache *service.AgentContextCache,
+) error {
+    infraCache := a.domainToInfraCache(cache)
+    return a.cacheRepo.Save(ctx, worktreePath, infraCache)
 }
 ```
 
-### 4.4 Clarify 实现
+### 4.5 生命周期管理实现
 
 ```go
-func (a *ClaudeCodeAgent) Clarify(ctx context.Context, req *ClarifyRequest) (*ClarifyOutput, error) {
-    args := []string{
-        "-p",
-        "--output-format", "json",
-        "--session-id", req.SessionID.String(),
-        "--agent", "clarification",
+// Cancel 取消正在执行的任务
+func (a *ClaudeCodeAgent) Cancel(sessionID uuid.UUID) error {
+    if !a.IsRunning(sessionID) {
+        return errors.New(errors.ErrAgentNotRunning)
     }
     
-    // 有新回答时恢复会话
-    if req.NewAnswer != "" {
-        args = append(args, "-c")  // continue
-    }
-    
-    args = append(args, a.buildClarifyPrompt(req))
-    
-    output, err := a.executor.Run(ctx, args)
-    if err != nil {
-        return nil, err
-    }
-    
-    return a.parser.ParseClarifyOutput(output)
+    return a.processExecutor.Cancel(sessionID)
 }
-```
 
-### 4.5 Resume 实现
-
-```go
-func (a *ClaudeCodeAgent) Resume(ctx context.Context, req *ResumeRequest) (*ExecuteResult, error) {
-    args := []string{
-        "-p",
-        "--output-format", "stream-json",
-        "-r", req.SessionID.String(),  // resume by session ID
-        "--session-id", req.SessionID.String(),
+// GetStatus 获取执行状态
+func (a *ClaudeCodeAgent) GetStatus(sessionID uuid.UUID) (*service.AgentStatus, error) {
+    a.mu.RLock()
+    state, exists := a.runningSessions[sessionID]
+    a.mu.RUnlock()
+    
+    if !exists {
+        return &service.AgentStatus{
+            SessionID: sessionID,
+            Status:    "idle",
+        }, nil
     }
     
-    // 添加继续执行的指令
-    args = append(args, req.Instruction)
-    
-    output, err := a.executor.Run(ctx, args)
-    if err != nil {
-        return nil, err
-    }
-    
-    return a.parser.ParseExecuteOutput(output)
+    return &service.AgentStatus{
+        SessionID:    state.SessionID,
+        Status:       state.Status,
+        CurrentStage: state.Stage,
+        StartTime:    state.StartTime,
+        Progress:     state.Progress,
+        Message:      state.Message,
+    }, nil
+}
+
+// IsRunning 检查是否正在执行
+func (a *ClaudeCodeAgent) IsRunning(sessionID uuid.UUID) bool {
+    return a.processExecutor.IsRunning(sessionID)
+}
+
+// Shutdown 关闭执行器
+func (a *ClaudeCodeAgent) Shutdown(ctx context.Context) error {
+    a.logger.Info("shutting down claude agent")
+    return a.processExecutor.Shutdown(ctx)
 }
 ```
 
@@ -827,22 +897,32 @@ func (a *ClaudeCodeAgent) runWithAgent(ctx context.Context, agentName string, ar
 
 ```go
 func (s *ClarificationService) ProcessIssue(ctx context.Context, session *WorkSession) error {
-    req := &agent.ClarifyRequest{
-        SessionID: session.ID,
-        Issue:     session.Issue,
-        History:   session.Clarification.ConversationTurns,
+    req := &service.AgentRequest{
+        SessionID:    session.ID,
+        Stage:        service.AgentStageClarification,
+        WorktreePath: session.Execution.WorktreePath,
+        Prompt:       s.buildClarificationPrompt(session.Issue),
+        Context: &service.AgentContext{
+            IssueTitle: session.Issue.Title,
+            IssueBody:  session.Issue.Body,
+        },
+        Timeout: 10 * time.Minute,
     }
     
-    output, err := s.agentRunner.Clarify(ctx, req)
+    response, err := s.agentRunner.Execute(ctx, req)
     if err != nil {
         return err
     }
     
-    // 更新 Clarification 实体
-    session.Clarification.PendingQuestions = output.Questions
-    session.Clarification.ConfirmedPoints = output.ConfirmedPoints
+    // 解析响应，提取澄清问题
+    questions := s.extractQuestions(response.Result)
+    confirmedPoints := s.extractConfirmedPoints(response.Result)
     
-    if output.ReadyForDesign {
+    // 更新 Clarification 实体
+    session.Clarification.PendingQuestions = questions
+    session.Clarification.ConfirmedPoints = confirmedPoints
+    
+    if response.Result.StructuredData["readyForDesign"] == true {
         // 触发进入设计阶段
         s.eventDispatcher.Dispatch(ClarificationCompleted{SessionID: session.ID})
     }
@@ -855,43 +935,37 @@ func (s *ClarificationService) ProcessIssue(ctx context.Context, session *WorkSe
 
 ```go
 func (s *DesignService) GenerateDesign(ctx context.Context, session *WorkSession) error {
-    // 先分析代码库
-    analyzeReq := &agent.AnalyzeRequest{
+    req := &service.AgentRequest{
+        SessionID:    session.ID,
+        Stage:        service.AgentStageDesign,
         WorktreePath: session.Execution.WorktreePath,
-        Issue:        session.Issue,
+        Prompt:       s.buildDesignPrompt(session),
+        Context: &service.AgentContext{
+            IssueTitle:      session.Issue.Title,
+            IssueBody:       session.Issue.Body,
+            ClarifiedPoints: session.Clarification.ConfirmedPoints,
+        },
+        Timeout: 15 * time.Minute,
     }
     
-    analysis, err := s.agentRunner.AnalyzeCodebase(ctx, analyzeReq)
+    response, err := s.agentRunner.Execute(ctx, req)
     if err != nil {
         return err
     }
     
-    // 生成设计方案
-    designReq := &agent.DesignRequest{
-        SessionID:      session.ID,
-        WorktreePath:   session.Execution.WorktreePath,
-        Issue:          session.Issue,
-        ClarifiedNeeds: session.Clarification.ConfirmedPoints,
-        CodeAnalysis:   analysis,
-        Model:          s.selectModel(session), // 按复杂度选模型
-    }
-    
-    output, err := s.agentRunner.GenerateDesign(ctx, designReq)
-    if err != nil {
-        return err
-    }
+    // 从结构化数据中提取设计内容
+    designContent := response.Result.Content
+    complexityScore := response.Result.StructuredData["complexityScore"].(int)
     
     // 创建 Design 实体和版本
-    session.Design.CreateVersion(output.DesignContent, "初始设计")
-    session.Design.ComplexityScore = output.ComplexityScore
+    session.Design.CreateVersion(designContent, "初始设计")
+    session.Design.ComplexityScore = complexityScore
     
     // 判断是否需要人工确认
-    if output.ComplexityScore > s.config.ComplexityThreshold || s.config.ForceDesignConfirm {
+    if complexityScore > s.config.ComplexityThreshold || s.config.ForceDesignConfirm {
         session.Design.RequireConfirmation = true
-        // 发布等待审批事件
         s.eventDispatcher.Dispatch(DesignCreated{SessionID: session.ID})
     } else {
-        // 自动批准
         session.Design.Confirm()
         s.eventDispatcher.Dispatch(DesignApproved{SessionID: session.ID})
     }
@@ -904,54 +978,46 @@ func (s *DesignService) GenerateDesign(ctx context.Context, session *WorkSession
 
 ```go
 func (s *TaskService) ExecuteTask(ctx context.Context, session *WorkSession, task *Task) error {
-    // 获取工具权限策略
-    policy := toolPolicy.GetToolPolicy(StageExecution, task.RequiresApproval)
-    
-    req := &agent.ExecuteRequest{
-        SessionID:      session.ID,
-        WorktreePath:   session.Execution.WorktreePath,
-        Task:           task,
-        PermissionMode: agent.PermissionAcceptEdits, // 自动接受编辑
-        AllowedTools:   policy.AllowedTools,
-        MaxBudgetUSD:   s.config.MaxBudgetPerTask,
-        Model:          s.config.DefaultModel,
-        Context:        s.buildContext(session),
+    // 构建任务上下文
+    taskContexts := make([]service.TaskContext, len(session.Tasks))
+    for i, t := range session.Tasks {
+        taskContexts[i] = service.TaskContext{
+            ID:           t.ID,
+            Description:  t.Description,
+            Status:       string(t.Status),
+            Dependencies: t.Dependencies,
+        }
     }
     
-    // 流式执行，实时监控
-    events, err := s.streamExecutor.RunStream(ctx, s.buildArgs(req))
+    req := &service.AgentRequest{
+        SessionID:    session.ID,
+        Stage:        service.AgentStageTaskExecution,
+        WorktreePath: session.Execution.WorktreePath,
+        Prompt:       s.buildTaskPrompt(task),
+        Context: &service.AgentContext{
+            DesignContent: session.Design.CurrentVersion.Content,
+            Tasks:         taskContexts,
+            Branch:        session.Execution.Branch,
+        },
+        Timeout:      30 * time.Minute,
+        AllowedTools: []string{"Read", "Write", "Edit", "Bash", "Glob", "Grep"},
+    }
+    
+    response, err := s.agentRunner.ExecuteWithRetry(ctx, req, s.retryPolicy)
     if err != nil {
         return err
     }
     
-    // 处理事件流
-    for event := range events {
-        s.handleEvent(session, task, event)
+    // 处理执行结果
+    if response.Success {
+        task.MarkCompleted()
+        s.eventDispatcher.Dispatch(TaskCompleted{SessionID: session.ID, TaskID: task.ID})
+    } else {
+        task.MarkFailed(response.Error.Message)
+        s.eventDispatcher.Dispatch(TaskFailed{SessionID: session.ID, TaskID: task.ID})
     }
     
     return nil
-}
-
-func (s *TaskService) handleEvent(session *WorkSession, task *Task, event StreamEvent) {
-    switch event.Type {
-    case "tool_use":
-        // 记录工具使用
-        s.logger.Info("tool used", zap.String("tool", event.Data))
-        
-    case "message":
-        // 更新进度
-        s.websocketPusher.Push(session.ID, event)
-        
-    case "error":
-        // 处理错误
-        task.MarkFailed(event.Data)
-        s.eventDispatcher.Dispatch(TaskFailed{SessionID: session.ID, TaskID: task.ID})
-        
-    case "complete":
-        // 完成
-        task.MarkCompleted()
-        s.eventDispatcher.Dispatch(TaskCompleted{SessionID: session.ID, TaskID: task.ID})
-    }
 }
 ```
 
@@ -964,12 +1030,23 @@ func (s *RecoveryService) ResumeSession(ctx context.Context, sessionID uuid.UUID
         return err
     }
     
-    req := &agent.ResumeRequest{
-        SessionID:   sessionID,
-        Instruction: "继续执行中断的任务",
+    // 准备上下文
+    context, err := s.agentRunner.PrepareContext(ctx, sessionID, session.Execution.WorktreePath)
+    if err != nil {
+        return err
     }
     
-    result, err := s.agentRunner.Resume(ctx, req)
+    // 构建恢复请求
+    req := &service.AgentRequest{
+        SessionID:    sessionID,
+        Stage:        service.AgentStageTaskExecution,
+        WorktreePath: session.Execution.WorktreePath,
+        Prompt:       "继续执行中断的任务",
+        Context:      context,
+        Timeout:      30 * time.Minute,
+    }
+    
+    result, err := s.agentRunner.Execute(ctx, req)
     if err != nil {
         return err
     }
@@ -977,8 +1054,8 @@ func (s *RecoveryService) ResumeSession(ctx context.Context, sessionID uuid.UUID
     // 根据结果更新状态
     if result.Success {
         session.CurrentTask.MarkCompleted()
-    } else {
-        session.CurrentTask.MarkFailed(result.Error.Message, result.Error.Suggestion)
+    } else if result.Error != nil {
+        session.CurrentTask.MarkFailed(result.Error.Message)
     }
     
     return s.sessionRepo.Save(ctx, session)
