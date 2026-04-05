@@ -157,3 +157,31 @@ type AuditLogRepository interface {
 	// This is used for data retention/cleanup.
 	DeleteBeforeTime(ctx context.Context, before time.Time) (int64, error)
 }
+
+// WebhookDeliveryRepository defines the repository interface for webhook delivery deduplication.
+type WebhookDeliveryRepository interface {
+	// TryAcquire atomically acquires processing rights for a delivery.
+	// Returns true if this handler should process the webhook (new delivery_id).
+	// Returns false if already processed or being processed by another handler.
+	// payloadHash is optional SHA256 hash for audit/verification purposes.
+	TryAcquire(ctx context.Context, deliveryID, eventType, repository, payloadHash string) (bool, error)
+
+	// Create creates a new webhook delivery record with final result.
+	// Uses ON CONFLICT DO NOTHING - silently ignores if delivery_id exists.
+	// Returns true if record was created (RowsAffected == 1).
+	Create(ctx context.Context, delivery *entity.WebhookDelivery) error
+
+	// FindByDeliveryID finds a delivery by its GitHub delivery ID.
+	// Returns nil if not found.
+	FindByDeliveryID(ctx context.Context, deliveryID string) (*entity.WebhookDelivery, error)
+
+	// UpdateResult updates the processing result of a delivery.
+	UpdateResult(ctx context.Context, deliveryID string, result, message string) error
+
+	// DeleteExpired deletes all expired delivery records.
+	// Returns the number of deleted records.
+	DeleteExpired(ctx context.Context) (int64, error)
+
+	// Count counts total delivery records (for monitoring).
+	Count(ctx context.Context) (int64, error)
+}

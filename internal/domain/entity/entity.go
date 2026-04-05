@@ -722,3 +722,79 @@ func (r *Repository) GetEffectiveConfig(globalConfig RepoConfig) RepoConfig {
 
 	return effective
 }
+
+// ProcessResult constants for WebhookDelivery.
+const (
+	ProcessResultSuccess    = "success"    // Webhook processed successfully
+	ProcessResultIgnored    = "ignored"    // Webhook ignored (e.g., unsupported event)
+	ProcessResultError      = "error"      // Webhook processing failed
+	ProcessResultProcessing = "processing" // Webhook is being processed
+)
+
+// WebhookDelivery represents a webhook delivery record for idempotency.
+// It tracks GitHub webhook deliveries to prevent duplicate processing.
+type WebhookDelivery struct {
+	ID             uuid.UUID `json:"id"`             // Unique identifier
+	DeliveryID     string    `json:"deliveryId"`     // X-GitHub-Delivery header (unique)
+	EventType      string    `json:"eventType"`      // X-GitHub-Event header
+	Repository     string    `json:"repository"`     // Repository full name
+	PayloadHash    string    `json:"payloadHash"`    // SHA256 hash of payload (optional)
+	Processed      bool      `json:"processed"`      // Whether the webhook was processed
+	ProcessResult  string    `json:"processResult"`  // success, ignored, error
+	ProcessMessage string    `json:"processMessage"` // Processing message or error
+	CreatedAt      time.Time `json:"createdAt"`      // Record creation time
+	ExpiresAt      time.Time `json:"expiresAt"`      // TTL expiration time
+}
+
+// IsValidProcessResult checks if the process result is valid.
+func IsValidProcessResult(result string) bool {
+	switch result {
+	case ProcessResultSuccess, ProcessResultIgnored, ProcessResultError, ProcessResultProcessing:
+		return true
+	default:
+		return false
+	}
+}
+
+// NewWebhookDelivery creates a new WebhookDelivery entity.
+func NewWebhookDelivery(deliveryID, eventType, repository string) *WebhookDelivery {
+	return &WebhookDelivery{
+		ID:         uuid.New(),
+		DeliveryID: deliveryID,
+		EventType:  eventType,
+		Repository: repository,
+		Processed:  false,
+		CreatedAt:  time.Now(),
+	}
+}
+
+// SetProcessed marks the delivery as processed.
+func (d *WebhookDelivery) SetProcessed(result, message string) {
+	d.Processed = true
+	d.ProcessResult = result
+	d.ProcessMessage = message
+}
+
+// SetExpiresAt sets the expiration time.
+func (d *WebhookDelivery) SetExpiresAt(ttl time.Duration) {
+	d.ExpiresAt = time.Now().Add(ttl)
+}
+
+// IsExpired returns true if the delivery record has expired.
+// Returns false if ExpiresAt is not set (zero value).
+func (d *WebhookDelivery) IsExpired() bool {
+	if d.ExpiresAt.IsZero() {
+		return false // No expiration time set, not considered expired
+	}
+	return time.Now().After(d.ExpiresAt)
+}
+
+// IsSuccess returns true if the webhook was processed successfully.
+func (d *WebhookDelivery) IsSuccess() bool {
+	return d.ProcessResult == ProcessResultSuccess
+}
+
+// IsError returns true if the webhook processing resulted in error.
+func (d *WebhookDelivery) IsError() bool {
+	return d.ProcessResult == ProcessResultError
+}
