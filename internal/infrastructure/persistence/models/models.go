@@ -182,6 +182,7 @@ type ExecutionValidationResult struct {
 	FormatSuccess    *bool  `gorm:"type:boolean"`
 	FormatOutput     string `gorm:"type:text"`
 	FormatDurationMs *int64 `gorm:"type:bigint"`
+	FormatToolName   string `gorm:"type:varchar(100)"` // tool name for formatting
 
 	// Lint results
 	LintSuccess     *bool  `gorm:"type:boolean"`
@@ -189,13 +190,16 @@ type ExecutionValidationResult struct {
 	LintIssuesFound *int   `gorm:"type:int"`
 	LintIssuesFixed *int   `gorm:"type:int"`
 	LintDurationMs  *int64 `gorm:"type:bigint"`
+	LintToolName    string `gorm:"type:varchar(100)"` // tool name for linting
 
 	// Test results
-	TestSuccess    *bool  `gorm:"type:boolean"`
-	TestOutput     string `gorm:"type:text"`
-	TestPassed     *int   `gorm:"type:int"`
-	TestFailed     *int   `gorm:"type:int"`
-	TestDurationMs *int64 `gorm:"type:bigint"`
+	TestSuccess    *bool          `gorm:"type:boolean"`
+	TestOutput     string         `gorm:"type:text"`
+	TestPassed     *int           `gorm:"type:int"`
+	TestFailed     *int           `gorm:"type:int"`
+	TestDurationMs *int64         `gorm:"type:bigint"`
+	TestToolName   string         `gorm:"type:varchar(100)"` // tool name for testing
+	TestFailures   datatypes.JSON `gorm:"type:jsonb;default:'[]'"` // test failure details
 
 	// Overall result
 	OverallStatus string         `gorm:"type:varchar(50);not null;index"` // passed, failed, warned, skipped

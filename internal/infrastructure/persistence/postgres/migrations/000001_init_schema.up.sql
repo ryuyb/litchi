@@ -202,6 +202,7 @@ CREATE TABLE execution_validation_results (
     format_success BOOLEAN,
     format_output TEXT,
     format_duration_ms BIGINT,
+    format_tool_name VARCHAR(100),  -- tool name for formatting
 
     -- Lint results
     lint_success BOOLEAN,
@@ -209,6 +210,7 @@ CREATE TABLE execution_validation_results (
     lint_issues_found INT,
     lint_issues_fixed INT,
     lint_duration_ms BIGINT,
+    lint_tool_name VARCHAR(100),  -- tool name for linting
 
     -- Test results
     test_success BOOLEAN,
@@ -216,6 +218,8 @@ CREATE TABLE execution_validation_results (
     test_passed INT,
     test_failed INT,
     test_duration_ms BIGINT,
+    test_tool_name VARCHAR(100),  -- tool name for testing
+    test_failures JSONB DEFAULT '[]',  -- test failure details
 
     -- Overall result
     overall_status VARCHAR(50) NOT NULL,  -- passed / failed / warned / skipped

@@ -27,6 +27,7 @@
       "Bash(go test*)",
       "Bash(go vet*)",
       "Bash(go run*)",
+      "Bash(go doc*)",
       "Bash(cd web && pnpm dev)",
       "Bash(cd web && pnpm build)",
       "Bash(cd web && pnpm test)",
@@ -42,5 +43,8 @@
       "mcp__tavily__tavily-search",
       "mcp__tavily__tavily-extract"
     ]
+  },
+  "enabledPlugins": {
+    "cc-skills-golang@samber": true
   }
 }
