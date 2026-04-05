@@ -11,7 +11,7 @@ import (
 func init() {
 	fxutil.RegisterModule(fxutil.ModuleInfo{
 		Name:     "repositories",
-		Provides: []string{"repository.AuditLogRepository", "repository.WebhookDeliveryRepository"},
+		Provides: []string{"repository.AuditLogRepository", "repository.WebhookDeliveryRepository", "repository.RepositoryRepository"},
 		Invokes:  []string{},
 		Depends:  []string{"*gorm.DB", "*zap.Logger", "*config.Config"},
 	})
@@ -29,6 +29,11 @@ var RepositoriesModule = fx.Module("repositories",
 		fx.Annotate(
 			repositories.NewWebhookDeliveryRepository,
 			fx.As(new(repository.WebhookDeliveryRepository)),
+		),
+		// Provide RepositoryRepository with proper interface binding
+		fx.Annotate(
+			repositories.NewRepositoryRepo,
+			fx.As(new(repository.RepositoryRepository)),
 		),
 	),
 )

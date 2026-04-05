@@ -5,6 +5,7 @@ import (
 	"context"
 
 	"github.com/ryuyb/litchi/internal/domain/entity"
+	"github.com/ryuyb/litchi/internal/domain/repository"
 	"github.com/ryuyb/litchi/internal/infrastructure/persistence/converter"
 	"github.com/ryuyb/litchi/internal/infrastructure/persistence/models"
 	"gorm.io/gorm"
@@ -119,11 +120,4 @@ func (r *RepositoryRepo) ExistsByName(ctx context.Context, name string) (bool, e
 }
 
 // Ensure RepositoryRepo implements repository.RepositoryRepository interface.
-var _ interface {
-	FindByName(ctx context.Context, name string) (*entity.Repository, error)
-	Save(ctx context.Context, repo *entity.Repository) error
-	Delete(ctx context.Context, name string) error
-	FindAll(ctx context.Context) ([]*entity.Repository, error)
-	FindEnabled(ctx context.Context) ([]*entity.Repository, error)
-	ExistsByName(ctx context.Context, name string) (bool, error)
-} = (*RepositoryRepo)(nil)
+var _ repository.RepositoryRepository = (*RepositoryRepo)(nil)

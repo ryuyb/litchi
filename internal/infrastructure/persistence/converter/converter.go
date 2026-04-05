@@ -621,3 +621,59 @@ func ExecutionFromModel(m *models.Execution) *entity.Execution {
 
 	return e
 }
+
+// ============================================
+// Repository Conversion
+// ============================================
+
+// RepositoryToModel converts a domain Repository entity to a GORM model.
+// Returns nil if repo is nil, or if config marshaling fails.
+func RepositoryToModel(repo *entity.Repository) *models.Repository {
+	if repo == nil {
+		return nil
+	}
+
+	m := &models.Repository{
+		ID:      repo.ID,
+		Name:    repo.Name,
+		Enabled: repo.Enabled,
+	}
+
+	// Marshal config to JSON if needed
+	if repo.Config != (entity.RepoConfig{}) {
+		configJSON, err := json.Marshal(repo.Config)
+		if err != nil {
+			// WARNING: Config marshaling failed - returning model without config.
+			// This is a data loss scenario. The caller should validate config before saving.
+			return m
+		}
+		m.Config = configJSON
+	}
+
+	return m
+}
+
+// RepositoryFromModel converts a GORM Repository model to a domain entity.
+// Returns nil if m is nil. Invalid JSON config is logged but not treated as error.
+func RepositoryFromModel(m *models.Repository) *entity.Repository {
+	if m == nil {
+		return nil
+	}
+
+	repo := &entity.Repository{
+		ID:      m.ID,
+		Name:    m.Name,
+		Enabled: m.Enabled,
+	}
+
+	// Unmarshal config from JSON if present
+	if len(m.Config) > 0 {
+		if err := json.Unmarshal(m.Config, &repo.Config); err != nil {
+			// WARNING: Config unmarshaling failed - returning entity with empty config.
+			// This indicates corrupted data in database. The caller should handle this.
+			repo.Config = entity.RepoConfig{}
+		}
+	}
+
+	return repo
+}

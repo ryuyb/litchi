@@ -783,6 +783,18 @@ func (ws *WorkSession) GetCompletedTaskIDs() []uuid.UUID {
 	return ids
 }
 
+// CompletedTaskIDSet returns a set of completed task IDs for efficient lookup.
+// This is a public wrapper for dependency checking.
+func (ws *WorkSession) CompletedTaskIDSet() map[uuid.UUID]bool {
+	return ws.getCompletedTaskSet()
+}
+
+// AreDependenciesSatisfiedForTask checks if all dependencies for a task are completed.
+// This is a public wrapper for dependency checking.
+func (ws *WorkSession) AreDependenciesSatisfiedForTask(task *entity.Task) bool {
+	return ws.areDependenciesSatisfied(task, ws.getCompletedTaskSet())
+}
+
 // HasFailedTask checks if there's a failed task blocking execution.
 func (ws *WorkSession) HasFailedTask() bool {
 	for _, task := range ws.Tasks {

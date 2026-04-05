@@ -185,3 +185,27 @@ type WebhookDeliveryRepository interface {
 	// Count counts total delivery records (for monitoring).
 	Count(ctx context.Context) (int64, error)
 }
+
+// RepositoryRepository defines the repository interface for Repository entity.
+// It manages repository configuration and enables/disables repositories for processing.
+type RepositoryRepository interface {
+	// FindByName finds a repository by its name (owner/repo format).
+	// Returns nil if not found (no error).
+	FindByName(ctx context.Context, name string) (*entity.Repository, error)
+
+	// Save saves a repository configuration.
+	// It creates a new repository if ID is not set, or updates existing one.
+	Save(ctx context.Context, repo *entity.Repository) error
+
+	// Delete deletes a repository by its name.
+	Delete(ctx context.Context, name string) error
+
+	// FindAll finds all repository configurations.
+	FindAll(ctx context.Context) ([]*entity.Repository, error)
+
+	// FindEnabled finds all enabled repositories.
+	FindEnabled(ctx context.Context) ([]*entity.Repository, error)
+
+	// ExistsByName checks if a repository exists by name.
+	ExistsByName(ctx context.Context, name string) (bool, error)
+}

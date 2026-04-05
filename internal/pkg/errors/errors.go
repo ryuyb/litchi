@@ -195,6 +195,15 @@ var (
 
 	// Git naming convention errors
 	ErrGitBranchNamingViolation = ErrorCode{Code: "L4GIT0001", Message: "Git branch naming convention violation", Category: "GIT", Severity: 4}
+
+	// PR operation errors
+	ErrPRCreateFailed    = ErrorCode{Code: "L4PR0001", Message: "PR creation failed", Category: "DOM", Severity: 4}
+	ErrPRUpdateFailed    = ErrorCode{Code: "L4PR0002", Message: "PR update failed", Category: "DOM", Severity: 4}
+	ErrPRNotFound        = ErrorCode{Code: "L4PR0003", Message: "PR not found", Category: "DOM", Severity: 4}
+	ErrPRConflict        = ErrorCode{Code: "L4PR0004", Message: "PR has merge conflicts", Category: "DOM", Severity: 4}
+	ErrPRAlreadyExists   = ErrorCode{Code: "L4PR0005", Message: "PR already exists for this branch", Category: "DOM", Severity: 4}
+	ErrPRMergeFailed     = ErrorCode{Code: "L4PR0006", Message: "PR merge failed", Category: "DOM", Severity: 4}
+	ErrPRReviewRequired  = ErrorCode{Code: "L4PR0007", Message: "PR requires review approval", Category: "DOM", Severity: 4}
 )
 
 // API response error codes (for HTTP responses)
