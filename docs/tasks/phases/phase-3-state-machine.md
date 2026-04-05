@@ -62,25 +62,38 @@
 
 ## 3.2 Task 状态机
 
-- [ ] **T3.2.1** 实现 Task 状态转换
+- [x] **T3.2.1** 实现 Task 状态转换
   - 验收标准：
-    - [ ] Pending→InProgress→Completed/Failed/Skipped 转换正确
-    - [ ] 非法转换拦截
-    - [ ] 状态变更事件发布
+    - [x] Pending→InProgress→Completed/Failed/Skipped 转换正确
+    - [x] 非法转换拦截
+    - [x] 状态变更事件发布
   - 依赖：T2.2.4
   - 风险：中
   - 预估：1d
   - 可并行：否
+  - 实施详情：
+    - 创建 TaskTransitionService 处理状态转换和事件发布
+    - 实现 StartTask/CompleteTask/FailTask/SkipTask/RetryTask 方法
+    - 添加 EventDispatcher 接口定义（同步/异步分发）
+    - 实现 TaskTransitionResult 结构体包含转换结果和事件
+    - 编写 task_transition_test.go 覆盖所有转换场景和事件发布验证
 
-- [ ] **T3.2.2** 实现 Task 重试逻辑
+- [x] **T3.2.2** 实现 Task 重试逻辑
   - 验收标准：
-    - [ ] 重试次数限制正确（默认 3 次）
-    - [ ] 退避策略正确
-    - [ ] 最终失败处理正确
+    - [x] 重试次数限制正确（默认 3 次）
+    - [x] 退避策略正确
+    - [x] 最终失败处理正确
   - 依赖：T3.2.1
   - 风险：中
   - 预估：1d
   - 可并行：否
+  - 实施详情：
+    - 创建 retry_policy.go 定义 BackoffStrategy/BackoffConfig/RetryPolicy
+    - 实现三种退避策略：Exponential（默认）、Linear、Constant
+    - 定义 RetryContext 和 RetryRecord 跟踪重试历史和延迟计算
+    - 实现 FinalFailureHandling 定义四种最终失败处理：PauseSession/SkipTask/Rollback/Terminate
+    - 添加 HandleFinalFailure 方法处理重试耗尽后的决策
+    - 编写 retry_policy_test.go 覆盖退避计算和重试策略验证
 
 ---
 

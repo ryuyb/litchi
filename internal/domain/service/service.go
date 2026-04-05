@@ -6,8 +6,34 @@ import (
 	"github.com/google/uuid"
 	"github.com/ryuyb/litchi/internal/domain/aggregate"
 	"github.com/ryuyb/litchi/internal/domain/entity"
+	"github.com/ryuyb/litchi/internal/domain/event"
 	"github.com/ryuyb/litchi/internal/domain/valueobject"
 )
+
+// --- Event Dispatcher Interface ---
+
+// EventDispatcher is the interface for dispatching domain events.
+// Implementations can be synchronous (immediate) or asynchronous (queued).
+// This is a domain service interface - implementation will be in infrastructure layer.
+type EventDispatcher interface {
+	// Dispatch sends an event to all registered handlers.
+	Dispatch(event event.DomainEvent)
+
+	// DispatchBatch sends multiple events in a single batch.
+	// Useful for atomic operations that generate multiple events.
+	DispatchBatch(events []event.DomainEvent)
+
+	// RegisterHandler adds a handler for a specific event type.
+	// Handlers are called synchronously during Dispatch.
+	RegisterHandler(eventType string, handler EventHandler)
+
+	// RegisterGlobalHandler adds a handler that receives all events.
+	// Useful for logging, auditing, or monitoring.
+	RegisterGlobalHandler(handler EventHandler)
+}
+
+// EventHandler is a function that processes a domain event.
+type EventHandler func(event event.DomainEvent)
 
 // --- T2.4.1 ComplexityEvaluator ---
 
