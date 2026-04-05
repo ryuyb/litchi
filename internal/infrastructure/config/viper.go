@@ -98,6 +98,15 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("webhook.idempotency.auto_cleanup", true)
 	v.SetDefault("webhook.idempotency.cleanup_interval", "1h")
 
+	// Git defaults
+	v.SetDefault("git.worktree_base_path", "/var/litchi/worktrees")
+	v.SetDefault("git.worktree_auto_clean", true)
+	v.SetDefault("git.branch_naming_pattern", "issue-{number}-{slug}")
+	v.SetDefault("git.default_base_branch", "main")
+	v.SetDefault("git.commit_sign_off", true)
+	v.SetDefault("git.git_binary_path", "git")
+	v.SetDefault("git.command_timeout", "5m")
+
 	// Agent defaults
 	v.SetDefault("agent.type", "claude-code")
 	v.SetDefault("agent.max_concurrency", 3)

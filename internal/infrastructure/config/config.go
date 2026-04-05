@@ -3,6 +3,7 @@ package config
 import (
 	"errors"
 	"fmt"
+	"time"
 )
 
 // Config holds all configuration for the Litchi application.
@@ -10,6 +11,7 @@ type Config struct {
 	Server     ServerConfig     `mapstructure:"server"`
 	Database   DatabaseConfig   `mapstructure:"database"`
 	GitHub     GitHubConfig     `mapstructure:"github"`
+	Git        GitConfig        `mapstructure:"git"`
 	Webhook    WebhookConfig    `mapstructure:"webhook"`
 	Agent      AgentConfig      `mapstructure:"agent"`
 	Clarity    ClarityConfig    `mapstructure:"clarity"`
@@ -27,6 +29,9 @@ func (c *Config) Validate() error {
 	}
 	if err := c.GitHub.Validate(); err != nil {
 		return fmt.Errorf("github config: %w", err)
+	}
+	if err := c.Git.Validate(); err != nil {
+		return fmt.Errorf("git config: %w", err)
 	}
 	if err := c.Server.Validate(); err != nil {
 		return fmt.Errorf("server config: %w", err)
@@ -98,6 +103,44 @@ func (c *GitHubConfig) Validate() error {
 	if c.WebhookSecret == "" {
 		return errors.New("webhook_secret is required (set GITHUB_WEBHOOK_SECRET environment variable)")
 	}
+	return nil
+}
+
+// GitConfig holds Git-related configuration.
+type GitConfig struct {
+	WorktreeBasePath    string `mapstructure:"worktree_base_path"`    // Base path for worktrees (default: /var/litchi/worktrees)
+	WorktreeAutoClean   bool   `mapstructure:"worktree_auto_clean"`   // Auto-clean worktrees on session end
+	BranchNamingPattern string `mapstructure:"branch_naming_pattern"` // Branch naming pattern (default: issue-{number}-{slug})
+	DefaultBaseBranch   string `mapstructure:"default_base_branch"`   // Default base branch (default: main)
+	CommitSignOff       bool   `mapstructure:"commit_sign_off"`       // Add Signed-off-by trailer
+	GitBinaryPath       string `mapstructure:"git_binary_path"`       // Git binary path (default: git)
+	CommandTimeout      string `mapstructure:"command_timeout"`       // Git command timeout (default: 5m)
+}
+
+// Validate validates Git configuration.
+func (c *GitConfig) Validate() error {
+	// Set defaults if empty
+	if c.WorktreeBasePath == "" {
+		c.WorktreeBasePath = "/var/litchi/worktrees"
+	}
+	if c.DefaultBaseBranch == "" {
+		c.DefaultBaseBranch = "main"
+	}
+	if c.BranchNamingPattern == "" {
+		c.BranchNamingPattern = "issue-{number}-{slug}"
+	}
+	if c.GitBinaryPath == "" {
+		c.GitBinaryPath = "git"
+	}
+	if c.CommandTimeout == "" {
+		c.CommandTimeout = "5m"
+	}
+
+	// Validate command timeout format (default already set above)
+	if _, err := time.ParseDuration(c.CommandTimeout); err != nil {
+		return fmt.Errorf("invalid git.command_timeout: %w", err)
+	}
+
 	return nil
 }
 

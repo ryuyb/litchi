@@ -135,10 +135,42 @@ var (
 	ErrGitHubAuthFailed   = ErrorCode{Code: "L3GIT0002", Message: "GitHub authentication failed", Category: "GIT", Severity: 3}
 	ErrGitHubAPIError     = ErrorCode{Code: "L3GIT0003", Message: "GitHub API error", Category: "GIT", Severity: 3}
 	ErrWebhookInvalidSig  = ErrorCode{Code: "L3GIT0004", Message: "Webhook signature verification failed", Category: "GIT", Severity: 3}
+
+	// Git branch operation errors (L3GIT0005-L3GIT0010)
+	ErrGitBranchCreateFailed = ErrorCode{Code: "L3GIT0005", Message: "Git branch creation failed", Category: "GIT", Severity: 3}
+	ErrGitBranchNotFound     = ErrorCode{Code: "L3GIT0006", Message: "Git branch not found", Category: "GIT", Severity: 3}
+	ErrGitBranchDeleteFailed = ErrorCode{Code: "L3GIT0007", Message: "Git branch deletion failed", Category: "GIT", Severity: 3}
+	ErrGitBranchSwitchFailed = ErrorCode{Code: "L3GIT0008", Message: "Git branch switch failed", Category: "GIT", Severity: 3}
+	ErrGitBranchNameInvalid  = ErrorCode{Code: "L3GIT0009", Message: "Git branch name invalid", Category: "GIT", Severity: 3}
+	ErrGitBranchExists       = ErrorCode{Code: "L3GIT0010", Message: "Git branch already exists", Category: "GIT", Severity: 3}
+
+	// Git worktree operation errors (L3GIT0011-L3GIT0015)
+	ErrGitWorktreeCreateFailed = ErrorCode{Code: "L3GIT0011", Message: "Git worktree creation failed", Category: "GIT", Severity: 3}
+	ErrGitWorktreeNotFound     = ErrorCode{Code: "L3GIT0012", Message: "Git worktree not found", Category: "GIT", Severity: 3}
+	ErrGitWorktreeDeleteFailed = ErrorCode{Code: "L3GIT0013", Message: "Git worktree deletion failed", Category: "GIT", Severity: 3}
+	ErrGitWorktreeLocked       = ErrorCode{Code: "L3GIT0014", Message: "Git worktree is locked", Category: "GIT", Severity: 3}
+	ErrGitWorktreePathExists   = ErrorCode{Code: "L3GIT0015", Message: "Git worktree path already exists", Category: "GIT", Severity: 3}
+
+	// Git commit operation errors (L3GIT0016-L3GIT0021)
+	ErrGitCommitFailed     = ErrorCode{Code: "L3GIT0016", Message: "Git commit failed", Category: "GIT", Severity: 3}
+	ErrGitPushFailed       = ErrorCode{Code: "L3GIT0017", Message: "Git push failed", Category: "GIT", Severity: 3}
+	ErrGitAddFailed        = ErrorCode{Code: "L3GIT0018", Message: "Git add failed", Category: "GIT", Severity: 3}
+	ErrGitNothingToCommit  = ErrorCode{Code: "L3GIT0019", Message: "Git nothing to commit", Category: "GIT", Severity: 3}
+	ErrGitMergeConflict    = ErrorCode{Code: "L3GIT0020", Message: "Git merge conflict detected", Category: "GIT", Severity: 3}
+	ErrGitConflictDetected = ErrorCode{Code: "L3GIT0021", Message: "Git conflict detected", Category: "GIT", Severity: 3}
+
+	// Git general errors (L3GIT0022-L3GIT0028)
+	ErrGitRepoNotFound      = ErrorCode{Code: "L3GIT0022", Message: "Git repository not found", Category: "GIT", Severity: 3}
+	ErrGitRepoOpenFailed    = ErrorCode{Code: "L3GIT0023", Message: "Git repository open failed", Category: "GIT", Severity: 3}
+	ErrGitCloneFailed       = ErrorCode{Code: "L3GIT0024", Message: "Git clone failed", Category: "GIT", Severity: 3}
+	ErrGitFetchFailed       = ErrorCode{Code: "L3GIT0025", Message: "Git fetch failed", Category: "GIT", Severity: 3}
+	ErrGitCommandFailed     = ErrorCode{Code: "L3GIT0026", Message: "Git command execution failed", Category: "GIT", Severity: 3}
+	ErrGitAuthentication    = ErrorCode{Code: "L3GIT0027", Message: "Git authentication failed", Category: "GIT", Severity: 3}
+	ErrGitOperationFailed   = ErrorCode{Code: "L3GIT0028", Message: "Git operation failed", Category: "GIT", Severity: 3}
+
 	ErrNetworkTimeout     = ErrorCode{Code: "L3NET0001", Message: "Network timeout", Category: "NET", Severity: 3}
 	ErrNetworkConnection  = ErrorCode{Code: "L3NET0002", Message: "Network connection failed", Category: "NET", Severity: 3}
 	ErrTestEnvUnavailable = ErrorCode{Code: "L3ENV0001", Message: "Test environment unavailable", Category: "ENV", Severity: 3}
-	ErrGitOperationFailed = ErrorCode{Code: "L3ENV0002", Message: "Git operation failed", Category: "ENV", Severity: 3}
 )
 
 // Low severity errors (Severity 4) - Business logic
@@ -157,6 +189,9 @@ var (
 	ErrPermissionDenied       = ErrorCode{Code: "L4API0001", Message: "Permission denied", Category: "API", Severity: 4}
 	ErrValidationFailed       = ErrorCode{Code: "L4API0002", Message: "Validation failed", Category: "API", Severity: 4}
 	ErrBadRequest             = ErrorCode{Code: "L4API0003", Message: "Bad request", Category: "API", Severity: 4}
+
+	// Git naming convention errors
+	ErrGitBranchNamingViolation = ErrorCode{Code: "L4GIT0001", Message: "Git branch naming convention violation", Category: "GIT", Severity: 4}
 )
 
 // API response error codes (for HTTP responses)
