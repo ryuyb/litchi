@@ -49,6 +49,9 @@ CREATE TABLE work_sessions (
     -- stages: clarification, design, task_breakdown, execution, pull_request, completed
     status VARCHAR(50) NOT NULL DEFAULT 'active',
     -- status: active, paused, terminated, completed
+    version INT NOT NULL DEFAULT 1,             -- optimistic lock version
+    pause_context JSONB,                        -- current pause context (nullable)
+    pause_history JSONB DEFAULT '[]',           -- history of pause/resume records
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -56,6 +59,7 @@ CREATE TABLE work_sessions (
 CREATE INDEX idx_work_sessions_issue_id ON work_sessions(issue_id);
 CREATE INDEX idx_work_sessions_status ON work_sessions(status);
 CREATE INDEX idx_work_sessions_current_stage ON work_sessions(current_stage);
+CREATE INDEX idx_work_sessions_version ON work_sessions(id, version);
 
 -- ============================================
 -- 4. clarifications table (clarification entity)

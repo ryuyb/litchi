@@ -146,6 +146,7 @@ func (r *workSessionRepository) Create(ctx context.Context, session *aggregate.W
 }
 
 // Update updates an existing WorkSession in the database.
+// Implements optimistic locking: uses version check to detect concurrent modifications.
 func (r *workSessionRepository) Update(ctx context.Context, session *aggregate.WorkSession) error {
 	if session == nil {
 		return litchierrors.New(litchierrors.ErrValidationFailed).WithDetail("session cannot be nil")
@@ -158,153 +159,34 @@ func (r *workSessionRepository) Update(ctx context.Context, session *aggregate.W
 
 	// Use transaction to update session with all related entities
 	err = r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		// Update WorkSession basic fields
-		result := tx.Model(&models.WorkSession{}).
-			Where("id = ?", session.ID).
-			Updates(map[string]any{
-				"current_stage": model.CurrentStage,
-				"status":        model.Status,
-				"updated_at":    model.UpdatedAt,
-			})
-
-		if result.Error != nil {
-			return fmt.Errorf("failed to update work session: %w", result.Error)
+		// Update WorkSession base fields with optimistic lock
+		if err := r.updateWorkSessionBase(tx, session, model); err != nil {
+			return err
 		}
 
-		if result.RowsAffected == 0 {
-			return litchierrors.New(litchierrors.ErrSessionNotFound).WithDetail(
-				"session not found: " + session.ID.String(),
-			)
+		// Update Issue
+		if err := r.updateIssue(tx, model.Issue); err != nil {
+			return err
 		}
 
-		// Update Issue (if exists)
-		if model.Issue != nil {
-			if err := tx.Save(model.Issue).Error; err != nil {
-				return fmt.Errorf("failed to update issue: %w", err)
-			}
+		// Update Clarification
+		if err := r.updateClarification(tx, session.ID, model.Clarification); err != nil {
+			return err
 		}
 
-		// Update or create Clarification
-		if model.Clarification != nil {
-			var existing models.Clarification
-			err := tx.Where("session_id = ?", session.ID).First(&existing).Error
-			if errors.Is(err, gorm.ErrRecordNotFound) {
-				// Create new
-				model.Clarification.SessionID = session.ID
-				if err := tx.Create(model.Clarification).Error; err != nil {
-					return fmt.Errorf("failed to create clarification: %w", err)
-				}
-			} else if err != nil {
-				return fmt.Errorf("failed to query clarification: %w", err)
-			} else {
-				// Update existing
-				model.Clarification.ID = existing.ID
-				if err := tx.Save(model.Clarification).Error; err != nil {
-					return fmt.Errorf("failed to update clarification: %w", err)
-				}
-			}
+		// Update Design
+		if err := r.updateDesign(tx, session.ID, model.Design); err != nil {
+			return err
 		}
 
-		// Update or create Design
-		if model.Design != nil {
-			var existing models.Design
-			err := tx.Where("session_id = ?", session.ID).First(&existing).Error
-			if errors.Is(err, gorm.ErrRecordNotFound) {
-				// Create new
-				model.Design.SessionID = session.ID
-				if err := tx.Create(model.Design).Error; err != nil {
-					return fmt.Errorf("failed to create design: %w", err)
-				}
-				// Create design versions
-				if len(model.Design.Versions) > 0 {
-					for i := range model.Design.Versions {
-						model.Design.Versions[i].DesignID = model.Design.ID
-					}
-					if err := tx.Create(&model.Design.Versions).Error; err != nil {
-						return fmt.Errorf("failed to create design versions: %w", err)
-					}
-				}
-			} else if err != nil {
-				return fmt.Errorf("failed to query design: %w", err)
-			} else {
-				// Update existing
-				model.Design.ID = existing.ID
-				if err := tx.Save(model.Design).Error; err != nil {
-					return fmt.Errorf("failed to update design: %w", err)
-				}
-				// Add new versions (append, not replace)
-				if len(model.Design.Versions) > 0 {
-					for i := range model.Design.Versions {
-						model.Design.Versions[i].DesignID = model.Design.ID
-					}
-					if err := tx.Create(&model.Design.Versions).Error; err != nil {
-						return fmt.Errorf("failed to create new design versions: %w", err)
-					}
-				}
-			}
+		// Update Execution
+		if err := r.updateExecution(tx, session.ID, model.Execution); err != nil {
+			return err
 		}
 
-		// Update or create Execution
-		if model.Execution != nil {
-			var existing models.Execution
-			err := tx.Where("session_id = ?", session.ID).First(&existing).Error
-			if errors.Is(err, gorm.ErrRecordNotFound) {
-				// Create new
-				model.Execution.SessionID = session.ID
-				if err := tx.Create(model.Execution).Error; err != nil {
-					return fmt.Errorf("failed to create execution: %w", err)
-				}
-			} else if err != nil {
-				return fmt.Errorf("failed to query execution: %w", err)
-			} else {
-				// Update existing
-				model.Execution.ID = existing.ID
-				if err := tx.Save(model.Execution).Error; err != nil {
-					return fmt.Errorf("failed to update execution: %w", err)
-				}
-			}
-		}
-
-		// Update or create Tasks
-		if len(model.Tasks) > 0 {
-			// Get existing task IDs for this session
-			var existingTaskIDs []uuid.UUID
-			if err := tx.Model(&models.Task{}).
-				Where("session_id = ?", session.ID).
-				Pluck("id", &existingTaskIDs).Error; err != nil {
-				return fmt.Errorf("failed to query existing tasks: %w", err)
-			}
-
-			existingSet := make(map[uuid.UUID]bool)
-			for _, id := range existingTaskIDs {
-				existingSet[id] = true
-			}
-
-			// Create or update each task
-			for i := range model.Tasks {
-				task := &model.Tasks[i]
-				task.SessionID = session.ID
-
-				if existingSet[task.ID] {
-					// Update existing task
-					if err := tx.Save(task).Error; err != nil {
-						return fmt.Errorf("failed to update task %s: %w", task.ID, err)
-					}
-				} else {
-					// Create new task
-					if err := tx.Create(task).Error; err != nil {
-						return fmt.Errorf("failed to create task %s: %w", task.ID, err)
-					}
-				}
-
-				// Update task dependencies (many-to-many)
-				// GORM's Association mode will handle the junction table
-				if len(task.Dependencies) > 0 {
-					if err := tx.Model(task).Association("Dependencies").Replace(task.Dependencies); err != nil {
-						return fmt.Errorf("failed to update task dependencies for %s: %w", task.ID, err)
-					}
-				}
-			}
+		// Update Tasks
+		if err := r.updateTasks(tx, session.ID, model.Tasks); err != nil {
+			return err
 		}
 
 		return nil
@@ -322,6 +204,207 @@ func (r *workSessionRepository) Update(ctx context.Context, session *aggregate.W
 		zap.String("session_id", session.ID.String()),
 	)
 
+	return nil
+}
+
+// updateWorkSessionBase updates the WorkSession base fields with optimistic lock.
+// Returns ErrVersionConflict if concurrent modification detected.
+func (r *workSessionRepository) updateWorkSessionBase(tx *gorm.DB, session *aggregate.WorkSession, model *models.WorkSession) error {
+	result := tx.Model(&models.WorkSession{}).
+		Where("id = ? AND version = ?", session.ID, session.Version).
+		Updates(map[string]any{
+			"current_stage": model.CurrentStage,
+			"status":        model.Status,
+			"version":       session.Version + 1,
+			"pause_context": model.PauseContext,
+			"pause_history": model.PauseHistory,
+			"updated_at":    model.UpdatedAt,
+		})
+
+	if result.Error != nil {
+		return fmt.Errorf("failed to update work session: %w", result.Error)
+	}
+
+	if result.RowsAffected == 0 {
+		// Check if session exists to determine error type
+		var exists int64
+		if err := tx.Model(&models.WorkSession{}).
+			Where("id = ?", session.ID).
+			Count(&exists).Error; err != nil {
+			return fmt.Errorf("failed to check session existence: %w", err)
+		}
+		if exists == 0 {
+			return litchierrors.New(litchierrors.ErrSessionNotFound).WithDetail(
+				"session not found: " + session.ID.String(),
+			)
+		}
+		// Session exists but version mismatch - concurrent update
+		return litchierrors.New(litchierrors.ErrVersionConflict).WithDetail(
+			fmt.Sprintf("session version conflict: expected %d, actual is different", session.Version),
+		).WithContext("session_id", session.ID.String()).WithContext("expected_version", session.Version)
+	}
+
+	// Update session's version after successful update
+	session.Version = session.Version + 1
+	return nil
+}
+
+// updateIssue updates the Issue entity.
+func (r *workSessionRepository) updateIssue(tx *gorm.DB, issue *models.Issue) error {
+	if issue == nil {
+		return nil
+	}
+	if err := tx.Save(issue).Error; err != nil {
+		return fmt.Errorf("failed to update issue: %w", err)
+	}
+	return nil
+}
+
+// updateClarification creates or updates the Clarification entity.
+func (r *workSessionRepository) updateClarification(tx *gorm.DB, sessionID uuid.UUID, clarification *models.Clarification) error {
+	if clarification == nil {
+		return nil
+	}
+
+	var existing models.Clarification
+	err := tx.Where("session_id = ?", sessionID).First(&existing).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		// Create new
+		clarification.SessionID = sessionID
+		if err := tx.Create(clarification).Error; err != nil {
+			return fmt.Errorf("failed to create clarification: %w", err)
+		}
+		return nil
+	}
+	if err != nil {
+		return fmt.Errorf("failed to query clarification: %w", err)
+	}
+
+	// Update existing
+	clarification.ID = existing.ID
+	if err := tx.Save(clarification).Error; err != nil {
+		return fmt.Errorf("failed to update clarification: %w", err)
+	}
+	return nil
+}
+
+// updateDesign creates or updates the Design entity including its versions.
+func (r *workSessionRepository) updateDesign(tx *gorm.DB, sessionID uuid.UUID, design *models.Design) error {
+	if design == nil {
+		return nil
+	}
+
+	var existing models.Design
+	err := tx.Where("session_id = ?", sessionID).First(&existing).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		// Create new
+		design.SessionID = sessionID
+		if err := tx.Create(design).Error; err != nil {
+			return fmt.Errorf("failed to create design: %w", err)
+		}
+		// Create design versions
+		if len(design.Versions) > 0 {
+			for i := range design.Versions {
+				design.Versions[i].DesignID = design.ID
+			}
+			if err := tx.Create(&design.Versions).Error; err != nil {
+				return fmt.Errorf("failed to create design versions: %w", err)
+			}
+		}
+		return nil
+	}
+	if err != nil {
+		return fmt.Errorf("failed to query design: %w", err)
+	}
+
+	// Update existing
+	design.ID = existing.ID
+	if err := tx.Save(design).Error; err != nil {
+		return fmt.Errorf("failed to update design: %w", err)
+	}
+	// Add new versions (append, not replace)
+	if len(design.Versions) > 0 {
+		for i := range design.Versions {
+			design.Versions[i].DesignID = design.ID
+		}
+		if err := tx.Create(&design.Versions).Error; err != nil {
+			return fmt.Errorf("failed to create new design versions: %w", err)
+		}
+	}
+	return nil
+}
+
+// updateExecution creates or updates the Execution entity.
+func (r *workSessionRepository) updateExecution(tx *gorm.DB, sessionID uuid.UUID, execution *models.Execution) error {
+	if execution == nil {
+		return nil
+	}
+
+	var existing models.Execution
+	err := tx.Where("session_id = ?", sessionID).First(&existing).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		// Create new
+		execution.SessionID = sessionID
+		if err := tx.Create(execution).Error; err != nil {
+			return fmt.Errorf("failed to create execution: %w", err)
+		}
+		return nil
+	}
+	if err != nil {
+		return fmt.Errorf("failed to query execution: %w", err)
+	}
+
+	// Update existing
+	execution.ID = existing.ID
+	if err := tx.Save(execution).Error; err != nil {
+		return fmt.Errorf("failed to update execution: %w", err)
+	}
+	return nil
+}
+
+// updateTasks creates or updates the Task entities.
+func (r *workSessionRepository) updateTasks(tx *gorm.DB, sessionID uuid.UUID, tasks []models.Task) error {
+	if len(tasks) == 0 {
+		return nil
+	}
+
+	// Get existing task IDs for this session
+	var existingTaskIDs []uuid.UUID
+	if err := tx.Model(&models.Task{}).
+		Where("session_id = ?", sessionID).
+		Pluck("id", &existingTaskIDs).Error; err != nil {
+		return fmt.Errorf("failed to query existing tasks: %w", err)
+	}
+
+	existingSet := make(map[uuid.UUID]bool)
+	for _, id := range existingTaskIDs {
+		existingSet[id] = true
+	}
+
+	// Create or update each task
+	for i := range tasks {
+		task := &tasks[i]
+		task.SessionID = sessionID
+
+		if existingSet[task.ID] {
+			// Update existing task
+			if err := tx.Save(task).Error; err != nil {
+				return fmt.Errorf("failed to update task %s: %w", task.ID, err)
+			}
+		} else {
+			// Create new task
+			if err := tx.Create(task).Error; err != nil {
+				return fmt.Errorf("failed to create task %s: %w", task.ID, err)
+			}
+		}
+
+		// Update task dependencies (many-to-many)
+		if len(task.Dependencies) > 0 {
+			if err := tx.Model(task).Association("Dependencies").Replace(task.Dependencies); err != nil {
+				return fmt.Errorf("failed to update task dependencies for %s: %w", task.ID, err)
+			}
+		}
+	}
 	return nil
 }
 

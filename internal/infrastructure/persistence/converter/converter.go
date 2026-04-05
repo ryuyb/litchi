@@ -4,6 +4,7 @@ package converter
 
 import (
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -27,6 +28,7 @@ func WorkSessionToModel(session *aggregate.WorkSession) (*models.WorkSession, er
 		ID:           session.ID,
 		CurrentStage: session.CurrentStage.String(),
 		Status:       string(session.SessionStatus),
+		Version:      session.Version,
 		CreatedAt:    session.CreatedAt,
 		UpdatedAt:    session.UpdatedAt,
 	}
@@ -34,27 +36,65 @@ func WorkSessionToModel(session *aggregate.WorkSession) (*models.WorkSession, er
 	// Convert Issue
 	if session.Issue != nil {
 		m.IssueID = session.Issue.ID
-		m.Issue = IssueToModel(session.Issue)
+		issueModel, err := IssueToModel(session.Issue)
+		if err != nil {
+			return nil, err
+		}
+		m.Issue = issueModel
 	}
 
 	// Convert Clarification
 	if session.Clarification != nil {
-		m.Clarification = ClarificationToModel(session.Clarification, session.ID)
+		clarificationModel, err := ClarificationToModel(session.Clarification, session.ID)
+		if err != nil {
+			return nil, err
+		}
+		m.Clarification = clarificationModel
 	}
 
 	// Convert Design
 	if session.Design != nil {
-		m.Design = DesignToModel(session.Design, session.ID)
+		designModel, err := DesignToModel(session.Design, session.ID)
+		if err != nil {
+			return nil, err
+		}
+		m.Design = designModel
 	}
 
 	// Convert Tasks
 	if session.Tasks != nil {
-		m.Tasks = TasksToModels(session.Tasks, session.ID)
+		tasksModels, err := TasksToModels(session.Tasks, session.ID)
+		if err != nil {
+			return nil, err
+		}
+		m.Tasks = tasksModels
 	}
 
 	// Convert Execution
 	if session.Execution != nil {
-		m.Execution = ExecutionToModel(session.Execution, session.ID)
+		executionModel, err := ExecutionToModel(session.Execution, session.ID)
+		if err != nil {
+			return nil, err
+		}
+		m.Execution = executionModel
+	}
+
+	// Convert PauseContext (nullable)
+	if session.PauseContext != nil {
+		pauseContextJSON, err := json.Marshal(session.PauseContext)
+		if err != nil {
+			return nil, fmt.Errorf("failed to marshal pause context: %w", err)
+		}
+		m.PauseContext = pauseContextJSON
+	}
+
+	// Convert PauseHistory
+	if session.PauseHistory != nil {
+		pauseHistoryJSON, err := json.Marshal(session.PauseHistory)
+		if err != nil {
+			return nil, fmt.Errorf("failed to marshal pause history: %w", err)
+		}
+		m.PauseHistory = pauseHistoryJSON
 	}
 
 	return m, nil
@@ -78,7 +118,9 @@ func WorkSessionFromModel(m *models.WorkSession) (*aggregate.WorkSession, error)
 		UpdatedAt:       m.UpdatedAt,
 		CurrentStage:    stage,
 		SessionStatus:   aggregate.SessionStatus(m.Status),
+		Version:         m.Version,
 		PRRollbackCount: 0, // Will be set from Execution if available
+		PauseHistory:    []valueobject.PauseRecord{}, // Initialize empty
 	}
 
 	// Convert Issue
@@ -108,6 +150,24 @@ func WorkSessionFromModel(m *models.WorkSession) (*aggregate.WorkSession, error)
 		session.PRRollbackCount = countPRRollbacks(session.Execution.RollbackHistory)
 	}
 
+	// Unmarshal PauseContext (nullable)
+	if len(m.PauseContext) > 0 {
+		var pauseContext valueobject.PauseContext
+		if err := json.Unmarshal(m.PauseContext, &pauseContext); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal pause context: %w", err)
+		}
+		session.PauseContext = &pauseContext
+	}
+
+	// Unmarshal PauseHistory
+	if len(m.PauseHistory) > 0 {
+		var pauseHistory []valueobject.PauseRecord
+		if err := json.Unmarshal(m.PauseHistory, &pauseHistory); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal pause history: %w", err)
+		}
+		session.PauseHistory = pauseHistory
+	}
+
 	return session, nil
 }
 
@@ -127,12 +187,15 @@ func countPRRollbacks(history []valueobject.RollbackRecord) int {
 // ============================================
 
 // IssueToModel converts a domain Issue entity to a GORM model.
-func IssueToModel(issue *entity.Issue) *models.Issue {
+func IssueToModel(issue *entity.Issue) (*models.Issue, error) {
 	if issue == nil {
-		return nil
+		return nil, nil
 	}
 
-	labelsJSON, _ := json.Marshal(issue.Labels)
+	labelsJSON, err := json.Marshal(issue.Labels)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal labels: %w", err)
+	}
 
 	return &models.Issue{
 		ID:         issue.ID,
@@ -144,7 +207,7 @@ func IssueToModel(issue *entity.Issue) *models.Issue {
 		Labels:     labelsJSON,
 		URL:        issue.URL,
 		CreatedAt:  issue.CreatedAt,
-	}
+	}, nil
 }
 
 // IssueFromModel converts a GORM Issue model to a domain entity.
@@ -181,15 +244,27 @@ func IssueFromModel(m *models.Issue) *entity.Issue {
 // ============================================
 
 // ClarificationToModel converts a domain Clarification entity to a GORM model.
-func ClarificationToModel(c *entity.Clarification, sessionID uuid.UUID) *models.Clarification {
+func ClarificationToModel(c *entity.Clarification, sessionID uuid.UUID) (*models.Clarification, error) {
 	if c == nil {
-		return nil
+		return nil, nil
 	}
 
-	confirmedPointsJSON, _ := json.Marshal(c.ConfirmedPoints)
-	pendingQuestionsJSON, _ := json.Marshal(c.PendingQuestions)
-	historyJSON, _ := json.Marshal(c.History)
-	clarityDimensionsJSON, _ := json.Marshal(c.ClarityDimensions)
+	confirmedPointsJSON, err := json.Marshal(c.ConfirmedPoints)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal confirmed points: %w", err)
+	}
+	pendingQuestionsJSON, err := json.Marshal(c.PendingQuestions)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal pending questions: %w", err)
+	}
+	historyJSON, err := json.Marshal(c.History)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal history: %w", err)
+	}
+	clarityDimensionsJSON, err := json.Marshal(c.ClarityDimensions)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal clarity dimensions: %w", err)
+	}
 
 	var clarityScore *int
 	if c.ClarityDimensions.TotalScore() > 0 {
@@ -208,7 +283,7 @@ func ClarificationToModel(c *entity.Clarification, sessionID uuid.UUID) *models.
 		ClarityDimensions:   clarityDimensionsJSON,
 		CreatedAt:           time.Now(),
 		UpdatedAt:           time.Now(),
-	}
+	}, nil
 }
 
 // ClarificationFromModel converts a GORM Clarification model to a domain entity.
@@ -250,9 +325,9 @@ func ClarificationFromModel(m *models.Clarification) *entity.Clarification {
 // ============================================
 
 // DesignToModel converts a domain Design entity to a GORM model.
-func DesignToModel(d *entity.Design, sessionID uuid.UUID) *models.Design {
+func DesignToModel(d *entity.Design, sessionID uuid.UUID) (*models.Design, error) {
 	if d == nil {
-		return nil
+		return nil, nil
 	}
 
 	var complexityScore *int
@@ -277,7 +352,7 @@ func DesignToModel(d *entity.Design, sessionID uuid.UUID) *models.Design {
 		m.Versions = DesignVersionsToModels(d.Versions, m.ID)
 	}
 
-	return m
+	return m, nil
 }
 
 // DesignFromModel converts a GORM Design model to a domain entity.
@@ -351,16 +426,16 @@ func DesignVersionsFromModels(models []models.DesignVersion) []valueobject.Desig
 // ============================================
 
 // TasksToModels converts a slice of domain Task entities to GORM models.
-func TasksToModels(tasks []*entity.Task, sessionID uuid.UUID) []models.Task {
+func TasksToModels(tasks []*entity.Task, sessionID uuid.UUID) ([]models.Task, error) {
 	if tasks == nil {
-		return nil
+		return nil, nil
 	}
 
 	result := make([]models.Task, len(tasks))
 	for i, t := range tasks {
 		result[i] = TaskToModel(t, sessionID)
 	}
-	return result
+	return result, nil
 }
 
 // TasksFromModels converts a slice of GORM Task models to domain entities.
@@ -438,15 +513,27 @@ func TaskFromModel(m *models.Task) *entity.Task {
 // ============================================
 
 // ExecutionToModel converts a domain Execution entity to a GORM model.
-func ExecutionToModel(e *entity.Execution, sessionID uuid.UUID) *models.Execution {
+func ExecutionToModel(e *entity.Execution, sessionID uuid.UUID) (*models.Execution, error) {
 	if e == nil {
-		return nil
+		return nil, nil
 	}
 
-	deprecatedBranchesJSON, _ := json.Marshal(e.DeprecatedBranches)
-	failedTaskJSON, _ := json.Marshal(e.FailedTask)
-	fixTasksJSON, _ := json.Marshal(e.FixTasks)
-	rollbackHistoryJSON, _ := json.Marshal(e.RollbackHistory)
+	deprecatedBranchesJSON, err := json.Marshal(e.DeprecatedBranches)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal deprecated branches: %w", err)
+	}
+	failedTaskJSON, err := json.Marshal(e.FailedTask)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal failed task: %w", err)
+	}
+	fixTasksJSON, err := json.Marshal(e.FixTasks)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal fix tasks: %w", err)
+	}
+	rollbackHistoryJSON, err := json.Marshal(e.RollbackHistory)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal rollback history: %w", err)
+	}
 
 	var currentTaskID *uuid.UUID
 	if e.CurrentTaskID != nil {
@@ -476,7 +563,7 @@ func ExecutionToModel(e *entity.Execution, sessionID uuid.UUID) *models.Executio
 		}
 	}
 
-	return m
+	return m, nil
 }
 
 // ExecutionFromModel converts a GORM Execution model to a domain entity.

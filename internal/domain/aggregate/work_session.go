@@ -81,6 +81,9 @@ type WorkSession struct {
 	PRNumber        *int              `json:"prNumber,omitempty"` // PR number after creation
 	PRRollbackCount int               `json:"prRollbackCount"`    // Number of PR stage rollbacks
 
+	// Optimistic lock version (T3.3.1)
+	Version int `json:"version"`
+
 	// Pause context tracking (T3.1.3)
 	PauseContext *valueobject.PauseContext `json:"pauseContext,omitempty"`
 	PauseHistory []valueobject.PauseRecord `json:"pauseHistory"`
@@ -109,6 +112,7 @@ func NewWorkSession(issue *entity.Issue) (*WorkSession, error) {
 		SessionStatus:   SessionStatusActive,
 		Tasks:           []*entity.Task{},
 		PRRollbackCount: 0,
+		Version:         1, // Initial version for optimistic lock
 		events:          []event.DomainEvent{},
 	}
 
@@ -484,6 +488,38 @@ func (ws *WorkSession) GetPauseContext() *valueobject.PauseContext {
 // GetPauseHistory returns the pause history for audit purposes.
 func (ws *WorkSession) GetPauseHistory() []valueobject.PauseRecord {
 	return ws.PauseHistory
+}
+
+// ClearStalePauseContext clears a stale pause context when the session
+// is in an inconsistent state (active but has pause context).
+// This is a recovery method for fixing inconsistent state.
+func (ws *WorkSession) ClearStalePauseContext() error {
+	if ws.PauseContext == nil {
+		return nil // Nothing to clear
+	}
+	if ws.SessionStatus == SessionStatusPaused {
+		return errors.New(errors.ErrValidationFailed).WithDetail(
+			"cannot clear pause context while session is paused",
+		)
+	}
+
+	ws.PauseContext = nil
+	ws.UpdatedAt = time.Now()
+
+	return nil
+}
+
+// ClearCurrentTask clears the currently executing task.
+// This is a recovery method for fixing inconsistent state when
+// the current task ID references a task that doesn't exist or
+// is not in progress status.
+func (ws *WorkSession) ClearCurrentTask() error {
+	if ws.Execution == nil {
+		return nil // No execution context
+	}
+	ws.Execution.ClearCurrentTask()
+	ws.UpdatedAt = time.Now()
+	return nil
 }
 
 // Terminate terminates the session.

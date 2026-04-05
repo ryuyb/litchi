@@ -153,6 +153,7 @@ var (
 	ErrInvalidTaskStatus      = ErrorCode{Code: "L4DOM0004", Message: "Invalid task status", Category: "DOM", Severity: 4}
 	ErrInvalidComplexityScore = ErrorCode{Code: "L4DOM0005", Message: "Invalid complexity score", Category: "DOM", Severity: 4}
 	ErrInvalidClarityScore    = ErrorCode{Code: "L4DOM0006", Message: "Invalid clarity score", Category: "DOM", Severity: 4}
+	ErrVersionConflict        = ErrorCode{Code: "L4DOM0008", Message: "Version conflict (optimistic lock)", Category: "DOM", Severity: 4}
 	ErrPermissionDenied       = ErrorCode{Code: "L4API0001", Message: "Permission denied", Category: "API", Severity: 4}
 	ErrValidationFailed       = ErrorCode{Code: "L4API0002", Message: "Validation failed", Category: "API", Severity: 4}
 	ErrBadRequest             = ErrorCode{Code: "L4API0003", Message: "Bad request", Category: "API", Severity: 4}
@@ -195,6 +196,9 @@ func ToAPIError(err error) APIErrorCode {
 			}
 			if Is(err, ErrSessionNotFound) || Is(err, ErrIssueNotFound) {
 				return APIErrNotFound
+			}
+			if Is(err, ErrVersionConflict) {
+				return APIErrConflict
 			}
 			return APIErrBadRequest
 		}

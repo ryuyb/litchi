@@ -34,12 +34,15 @@ type Issue struct {
 
 // WorkSession represents the aggregate root for automation workflow.
 type WorkSession struct {
-	ID           uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
-	IssueID      uuid.UUID `gorm:"type:uuid;not null;index"`
-	CurrentStage string    `gorm:"type:varchar(50);not null;default:'clarification';index"` // clarification, design, task_breakdown, execution, pull_request, completed
-	Status       string    `gorm:"type:varchar(50);not null;default:'active';index"`        // active, paused, terminated, completed
-	CreatedAt    time.Time `gorm:"autoCreateTime"`
-	UpdatedAt    time.Time `gorm:"autoUpdateTime"`
+	ID           uuid.UUID      `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
+	IssueID      uuid.UUID      `gorm:"type:uuid;not null;index"`
+	CurrentStage string         `gorm:"type:varchar(50);not null;default:'clarification';index"` // clarification, design, task_breakdown, execution, pull_request, completed
+	Status       string         `gorm:"type:varchar(50);not null;default:'active';index"`        // active, paused, terminated, completed
+	Version      int            `gorm:"type:int;not null;default:1"`                             // optimistic lock version
+	PauseContext datatypes.JSON `gorm:"type:jsonb"`                                              // current pause context (nullable)
+	PauseHistory datatypes.JSON `gorm:"type:jsonb;default:'[]'"`                                 // history of pause/resume records
+	CreatedAt    time.Time      `gorm:"autoCreateTime"`
+	UpdatedAt    time.Time      `gorm:"autoUpdateTime"`
 
 	// Relations
 	Issue         *Issue         `gorm:"foreignKey:IssueID;constraint:OnDelete:CASCADE"`

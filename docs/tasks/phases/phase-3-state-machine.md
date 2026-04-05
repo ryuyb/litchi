@@ -99,36 +99,53 @@
 
 ## 3.3 状态持久化
 
-- [ ] **T3.3.1** 实现数据库状态持久化
+- [x] **T3.3.1** 实现数据库状态持久化
   - 验收标准：
-    - [ ] 状态变更正确写入数据库
-    - [ ] 事务保证一致性
-    - [ ] 支持乐观锁
+    - [x] 状态变更正确写入数据库
+    - [x] 事务保证一致性
+    - [x] 支持乐观锁
   - 依赖：T2.5.1
   - 风险：中
   - 预估：1d
   - 可并行：否
+  - 实施详情：
+    - 修改 migrations/000001_init_schema.up.sql 添加 version、pause_context、pause_history 字段
+    - 修改 models.go 添加 Version、PauseContext、PauseHistory 字段
+    - 修改 converter.go 添加 PauseContext/PauseHistory JSON 序列化
+    - 修改 work_session_repo.go 实现乐观锁更新（WHERE version = ? 检查 + version+1）
+    - 添加 ErrVersionConflict 错误码，返回 409 Conflict
 
-- [ ] **T3.3.2** 实现文件缓存持久化
+- [x] **T3.3.2** 实现文件缓存持久化
   - 验收标准：
-    - [ ] 正确读写执行上下文到文件
-    - [ ] 文件格式正确（JSON/YAML）
-    - [ ] 缓存失效处理
+    - [x] 正确读写执行上下文到文件
+    - [x] 文件格式正确（JSON）
+    - [x] 缓存失效处理（文件不存在返回 nil）
   - 依赖：T2.5.1
   - 风险：低
   - 预估：0.5d
   - 可并行：是（与 T3.3.1）
+  - 实施详情：
+    - 创建 internal/domain/repository/cache.go 定义 CacheRepository 接口和缓存数据结构
+    - 创建 internal/infrastructure/cache/file_cache.go 实现 FileCacheRepository
+    - 实现 Save/Load/Delete 方法，使用 JSON 格式存储到 {worktreePath}/.litchi/context.json
+    - 创建 internal/infrastructure/cache/module.go 定义 Fx 模块
+    - 编写 file_cache_test.go 覆盖所有场景（读写、不存在、删除、完整缓存结构）
 
-- [ ] **T3.3.3** 实现状态一致性检查和修复 ⚠️ **高风险**
+- [x] **T3.3.3** 实现状态一致性检查和修复
   - 验收标准：
-    - [ ] 可检测不一致状态
-    - [ ] 可自动修复常见问题
-    - [ ] 检查报告生成
+    - [x] 可检测不一致状态
+    - [x] 可自动修复常见问题
+    - [x] 检查报告生成
   - 依赖：T3.3.1, T3.3.2
   - 风险：**高**
   - 预估：1.5d
   - 可并行：否
-  - 备注：状态一致性检查逻辑复杂
+  - 实施详情：
+    - 创建 internal/domain/service/consistency_checker.go 定义 ConsistencyChecker 接口、IssueType、Severity、ConsistencyReport
+    - 创建 internal/application/service/consistency_service.go 实现 Check、CheckAndRepair、Repair 方法
+    - 实现 5 类检查规则：CacheMismatch、StatusMismatch、TaskProgress、PauseContextStale、DesignMissing
+    - 实现自动修复逻辑：regenerate_cache、set_status_completed、clear_pause_context、clear_current_task_id
+    - 编写 consistency_service_test.go 覆盖所有检查和修复场景（10 个测试用例）
 
 ---
 
