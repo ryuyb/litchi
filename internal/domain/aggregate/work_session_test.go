@@ -651,6 +651,96 @@ func TestWorkSessionQueryMethods(t *testing.T) {
 	}
 }
 
+func TestWorkSessionCompletedTaskIDSet(t *testing.T) {
+	session, _ := NewWorkSession(entity.NewIssue(123, "Test", "Body", "owner/repo", "user"))
+	setupSessionForExecution(session)
+
+	task1 := entity.NewTask("Task 1", nil, 1)
+	task2 := entity.NewTask("Task 2", nil, 2)
+	task3 := entity.NewTask("Task 3", nil, 3)
+	session.SetTasks([]*entity.Task{task1, task2, task3})
+	session.StartExecution("/path/to/worktree", "feature-branch")
+
+	// Initially, no tasks completed
+	completedSet := session.CompletedTaskIDSet()
+	if len(completedSet) != 0 {
+		t.Errorf("CompletedTaskIDSet should be empty initially, got %d", len(completedSet))
+	}
+
+	// Complete task1
+	session.StartTask(task1.ID)
+	session.CompleteTask(task1.ID, valueobject.NewExecutionResult("Success", true, 100))
+
+	completedSet = session.CompletedTaskIDSet()
+	if len(completedSet) != 1 {
+		t.Errorf("CompletedTaskIDSet should have 1 entry, got %d", len(completedSet))
+	}
+	if !completedSet[task1.ID] {
+		t.Errorf("CompletedTaskIDSet should contain task1")
+	}
+
+	// Complete task2
+	session.StartTask(task2.ID)
+	session.CompleteTask(task2.ID, valueobject.NewExecutionResult("Success", true, 100))
+
+	completedSet = session.CompletedTaskIDSet()
+	if len(completedSet) != 2 {
+		t.Errorf("CompletedTaskIDSet should have 2 entries, got %d", len(completedSet))
+	}
+	if !completedSet[task2.ID] {
+		t.Errorf("CompletedTaskIDSet should contain task2")
+	}
+}
+
+func TestWorkSessionAreDependenciesSatisfiedForTask(t *testing.T) {
+	session, _ := NewWorkSession(entity.NewIssue(123, "Test", "Body", "owner/repo", "user"))
+	setupSessionForExecution(session)
+
+	task1 := entity.NewTask("Task 1", nil, 1)
+	task2 := entity.NewTask("Task 2", []uuid.UUID{task1.ID}, 2) // task2 depends on task1
+	task3 := entity.NewTask("Task 3", []uuid.UUID{task1.ID, task2.ID}, 3) // task3 depends on both
+	session.SetTasks([]*entity.Task{task1, task2, task3})
+	session.StartExecution("/path/to/worktree", "feature-branch")
+
+	// task1 has no dependencies, should be satisfied
+	if !session.AreDependenciesSatisfiedForTask(task1) {
+		t.Errorf("task1 dependencies should be satisfied (no dependencies)")
+	}
+
+	// task2 depends on task1 which is not completed
+	if session.AreDependenciesSatisfiedForTask(task2) {
+		t.Errorf("task2 dependencies should NOT be satisfied (task1 not completed)")
+	}
+
+	// task3 depends on both task1 and task2, none completed
+	if session.AreDependenciesSatisfiedForTask(task3) {
+		t.Errorf("task3 dependencies should NOT be satisfied (neither task1 nor task2 completed)")
+	}
+
+	// Complete task1
+	session.StartTask(task1.ID)
+	session.CompleteTask(task1.ID, valueobject.NewExecutionResult("Success", true, 100))
+
+	// Now task2 dependencies should be satisfied
+	if !session.AreDependenciesSatisfiedForTask(task2) {
+		t.Errorf("task2 dependencies should be satisfied (task1 completed)")
+	}
+
+	// task3 still depends on task2 which is not completed
+	if session.AreDependenciesSatisfiedForTask(task3) {
+		t.Errorf("task3 dependencies should NOT be satisfied (task2 not completed)")
+	}
+
+	// Complete task2
+	session.StartTask(task2.ID)
+	session.CompleteTask(task2.ID, valueobject.NewExecutionResult("Success", true, 100))
+
+	// Now task3 dependencies should be satisfied
+	if !session.AreDependenciesSatisfiedForTask(task3) {
+		t.Errorf("task3 dependencies should be satisfied (task1 and task2 completed)")
+	}
+}
+
 // Helper functions for test setup
 
 func setupSessionForExecution(session *WorkSession) {

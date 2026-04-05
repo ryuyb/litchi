@@ -29,6 +29,7 @@ packages:
       WorkSessionRepository: {}
       DesignRepository: {}
       AuditLogRepository: {}
+      RepositoryRepository: {}
   github.com/ryuyb/litchi/internal/domain/service:
     config:
       all: false
