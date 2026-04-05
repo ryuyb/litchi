@@ -98,10 +98,10 @@ func TestStageTransitionService_PRRollbackConstraints(t *testing.T) {
 
 	// Test MaxPRRollbackCount constraint
 	ctx = TransitionContext{
-		ClarityThreshold:      60,
-		ComplexityThreshold:   70,
-		AllowPRRollback:       true,
-		MaxPRRollbackCount:    1,
+		ClarityThreshold:    60,
+		ComplexityThreshold: 70,
+		AllowPRRollback:     true,
+		MaxPRRollbackCount:  1,
 	}
 
 	// Direct field modification to test rollback count limit boundary condition.
@@ -576,7 +576,7 @@ func TestEvaluateTransition_MediumClarity(t *testing.T) {
 	if !result.HasRequiredAction() {
 		t.Error("medium clarity should have required action (design confirmation)")
 	}
-	if result.RequiredAction != "设计方案需要人工确认" {
+	if result.RequiredAction != "Design needs manual confirmation" {
 		t.Errorf("unexpected required action: %s", result.RequiredAction)
 	}
 }
@@ -650,10 +650,10 @@ func TestEvaluateTransition_VeryLowClarity_Denied(t *testing.T) {
 func TestEvaluateTransition_SkipClarityCheck(t *testing.T) {
 	service := NewDefaultStageTransitionService(nil)
 	ctx := TransitionContext{
-		ClarityThreshold:          60,
-		AutoProceedThreshold:      80,
-		ForceClarifyThreshold:     40,
-		SkipClarityCheck:          true, // User command "开始设计"
+		ClarityThreshold:      60,
+		AutoProceedThreshold:  80,
+		ForceClarifyThreshold: 40,
+		SkipClarityCheck:      true, // User command "start_design"
 	}
 
 	issue := entity.NewIssue(1, "Test Issue", "Body", "owner/repo", "author")

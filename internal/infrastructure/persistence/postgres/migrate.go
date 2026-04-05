@@ -9,8 +9,8 @@ import (
 	"net/url"
 
 	"github.com/golang-migrate/migrate/v4"
-	"github.com/golang-migrate/migrate/v4/source/iofs"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	"github.com/golang-migrate/migrate/v4/source/iofs"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 

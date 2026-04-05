@@ -315,12 +315,12 @@ func TestTaskStatusCanTransitionTo(t *testing.T) {
 	validTransitions := []struct {
 		from, to TaskStatus
 	}{
-		{TaskStatusPending, TaskStatusInProgress},    // Start
-		{TaskStatusPending, TaskStatusSkipped},       // Skip before starting
-		{TaskStatusInProgress, TaskStatusCompleted},  // Complete
-		{TaskStatusInProgress, TaskStatusFailed},     // Fail
-		{TaskStatusInProgress, TaskStatusSkipped},    // Skip during execution
-		{TaskStatusFailed, TaskStatusInProgress},     // Retry
+		{TaskStatusPending, TaskStatusInProgress},   // Start
+		{TaskStatusPending, TaskStatusSkipped},      // Skip before starting
+		{TaskStatusInProgress, TaskStatusCompleted}, // Complete
+		{TaskStatusInProgress, TaskStatusFailed},    // Fail
+		{TaskStatusInProgress, TaskStatusSkipped},   // Skip during execution
+		{TaskStatusFailed, TaskStatusInProgress},    // Retry
 	}
 
 	for _, tt := range validTransitions {
@@ -335,11 +335,11 @@ func TestTaskStatusCanTransitionTo(t *testing.T) {
 	invalidTransitions := []struct {
 		from, to TaskStatus
 	}{
-		{TaskStatusPending, TaskStatusCompleted},     // Cannot skip InProgress
-		{TaskStatusCompleted, TaskStatusInProgress},  // Terminal status
-		{TaskStatusSkipped, TaskStatusInProgress},    // Terminal status
-		{TaskStatusFailed, TaskStatusCompleted},      // Cannot complete from Failed
-		{TaskStatusInProgress, TaskStatusPending},    // Cannot go back
+		{TaskStatusPending, TaskStatusCompleted},    // Cannot skip InProgress
+		{TaskStatusCompleted, TaskStatusInProgress}, // Terminal status
+		{TaskStatusSkipped, TaskStatusInProgress},   // Terminal status
+		{TaskStatusFailed, TaskStatusCompleted},     // Cannot complete from Failed
+		{TaskStatusInProgress, TaskStatusPending},   // Cannot go back
 	}
 
 	for _, tt := range invalidTransitions {

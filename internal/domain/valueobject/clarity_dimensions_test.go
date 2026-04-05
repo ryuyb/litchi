@@ -10,10 +10,10 @@ import (
 
 func TestNewClarityDimensions(t *testing.T) {
 	tests := []struct {
-		name       string
+		name                         string
 		comp, clar, cons, feas, test int
-		expected   int
-		hasError   bool
+		expected                     int
+		hasError                     bool
 	}{
 		{"all_zero", 0, 0, 0, 0, 0, 0, false},
 		{"all_max", 30, 25, 20, 15, 10, 100, false},
@@ -376,7 +376,7 @@ func createTestClarityDimensions(total int) ClarityDimensions {
 
 	// Adjust if total doesn't match
 	remaining := total - (comp + clar + cons + feas + test)
-	comp = min(comp + remaining, 30)
+	comp = min(comp+remaining, 30)
 
 	cd, _ := NewClarityDimensions(comp, clar, cons, feas, test)
 	return cd

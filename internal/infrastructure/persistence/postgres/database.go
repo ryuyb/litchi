@@ -184,8 +184,8 @@ func (db *DB) Stats() (map[string]interface{}, error) {
 
 // GormLogger wraps zap.Logger for GORM logging.
 type GormLogger struct {
-	zapLogger  *zap.Logger
-	logLevel   logger.LogLevel
+	zapLogger     *zap.Logger
+	logLevel      logger.LogLevel
 	slowThreshold time.Duration
 }
 

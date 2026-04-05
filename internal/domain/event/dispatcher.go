@@ -61,7 +61,7 @@ func WithAsyncWorkers(n int) DispatcherOption {
 func NewDispatcher(opts ...DispatcherOption) *Dispatcher {
 	d := &Dispatcher{
 		handlers:     make(map[string][]Handler),
-		asyncWorkers: 10, // default concurrency
+		asyncWorkers: 10,           // default concurrency
 		logger:       zap.NewNop(), // default no-op logger
 	}
 

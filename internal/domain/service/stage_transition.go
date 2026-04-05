@@ -349,7 +349,7 @@ func (s *DefaultStageTransitionService) evaluateClarificationToDesign(
 		return TransitionResult{
 			Decision:       DecisionDenied,
 			Reason:         "pending questions must be answered",
-			RequiredAction: "请回答所有待澄清问题",
+			RequiredAction: "Please answer all pending clarification questions",
 			CanForce:       false,
 		}
 	}
@@ -359,14 +359,14 @@ func (s *DefaultStageTransitionService) evaluateClarificationToDesign(
 		return TransitionResult{
 			Decision:       DecisionDenied,
 			Reason:         "at least one requirement point must be confirmed",
-			RequiredAction: "请确认至少一个需求点",
+			RequiredAction: "Please confirm at least one requirement point",
 			CanForce:       false,
 		}
 	}
 
 	clarityScore := clarification.GetClarityScore()
 
-	// User command "开始设计" bypasses clarity check
+	// User command "start_design" bypasses clarity check
 	if ctx.SkipClarityCheck {
 		return TransitionResult{
 			Decision:     DecisionAllow,
@@ -392,7 +392,7 @@ func (s *DefaultStageTransitionService) evaluateClarificationToDesign(
 			Decision:       DecisionAllow,
 			Reason:         "medium clarity score, auto proceed but design confirmation required",
 			ClarityScore:   clarityScore,
-			RequiredAction: "设计方案需要人工确认",
+			RequiredAction: "Design needs manual confirmation",
 			CanForce:       false,
 		}
 	} else if clarityScore >= ctx.ForceClarifyThreshold {
@@ -401,7 +401,7 @@ func (s *DefaultStageTransitionService) evaluateClarificationToDesign(
 			Decision:       DecisionNeedConfirmation,
 			Reason:         fmt.Sprintf("clarity score %d below threshold %d, needs confirmation", clarityScore, ctx.ClarityThreshold),
 			ClarityScore:   clarityScore,
-			RequiredAction: "清晰度较低，请确认是否开始设计（回复'开始设计'确认）",
+			RequiredAction: "Clarity score is low, please confirm to start design (reply 'start_design' to confirm)",
 			CanForce:       true,
 		}
 	} else {
@@ -410,8 +410,8 @@ func (s *DefaultStageTransitionService) evaluateClarificationToDesign(
 			Decision:       DecisionDenied,
 			Reason:         fmt.Sprintf("clarity score %d too low, must continue clarification", clarityScore),
 			ClarityScore:   clarityScore,
-			RequiredAction: "清晰度过低，请继续澄清需求",
-			CanForce:       true, // Allow user to force proceed with "开始设计"
+			RequiredAction: "Clarity score is too low, please continue clarifying requirements",
+			CanForce:       true, // Allow user to force proceed with "start_design"
 		}
 	}
 }
@@ -435,7 +435,7 @@ func (s *DefaultStageTransitionService) evaluateDesignToTaskBreakdown(
 		return TransitionResult{
 			Decision:       DecisionDenied,
 			Reason:         "design has no versions",
-			RequiredAction: "请创建设计方案",
+			RequiredAction: "Please create a design",
 			CanForce:       false,
 		}
 	}
@@ -445,7 +445,7 @@ func (s *DefaultStageTransitionService) evaluateDesignToTaskBreakdown(
 		return TransitionResult{
 			Decision:       DecisionNeedConfirmation,
 			Reason:         "design must be confirmed (force confirm enabled)",
-			RequiredAction: "请确认设计方案",
+			RequiredAction: "Please confirm the design",
 			CanForce:       false,
 		}
 	}
@@ -454,7 +454,7 @@ func (s *DefaultStageTransitionService) evaluateDesignToTaskBreakdown(
 		return TransitionResult{
 			Decision:       DecisionNeedConfirmation,
 			Reason:         fmt.Sprintf("design requires confirmation (complexity: %s)", design.ComplexityScore.DisplayName()),
-			RequiredAction: "请确认设计方案",
+			RequiredAction: "Please confirm the design",
 			CanForce:       false,
 		}
 	}
@@ -474,7 +474,7 @@ func (s *DefaultStageTransitionService) evaluateTaskBreakdownToExecutionResult(
 		return TransitionResult{
 			Decision:       DecisionDenied,
 			Reason:         "no tasks defined",
-			RequiredAction: "请等待任务拆解完成",
+			RequiredAction: "Please wait for task breakdown to complete",
 			CanForce:       false,
 		}
 	}
@@ -484,7 +484,7 @@ func (s *DefaultStageTransitionService) evaluateTaskBreakdownToExecutionResult(
 		return TransitionResult{
 			Decision:       DecisionDenied,
 			Reason:         "task dependencies validation failed: " + err.Error(),
-			RequiredAction: "请检查任务依赖关系",
+			RequiredAction: "Please check task dependencies",
 			CanForce:       false,
 		}
 	}
@@ -506,14 +506,14 @@ func (s *DefaultStageTransitionService) evaluateExecutionToPullRequestResult(
 			return TransitionResult{
 				Decision:       DecisionDenied,
 				Reason:         fmt.Sprintf("task %s failed (%s)", failedTask.TaskID, failedTask.Reason),
-				RequiredAction: "请处理失败的任务",
+				RequiredAction: "Please handle failed tasks",
 				CanForce:       false,
 			}
 		}
 		return TransitionResult{
 			Decision:       DecisionDenied,
 			Reason:         "some tasks are not completed",
-			RequiredAction: "请等待所有任务完成",
+			RequiredAction: "Please wait for all tasks to complete",
 			CanForce:       false,
 		}
 	}
@@ -533,7 +533,7 @@ func (s *DefaultStageTransitionService) evaluatePullRequestToCompletedResult(
 		return TransitionResult{
 			Decision:       DecisionDenied,
 			Reason:         "PR not created",
-			RequiredAction: "请等待 PR 创建",
+			RequiredAction: "Please wait for PR creation",
 			CanForce:       false,
 		}
 	}
@@ -541,5 +541,268 @@ func (s *DefaultStageTransitionService) evaluatePullRequestToCompletedResult(
 	return TransitionResult{
 		Decision: DecisionAllow,
 		Reason:   "PR created and ready for completion",
+	}
+}
+
+// --- Rollback Evaluation Methods (T3.1.2) ---
+
+// EvaluateRollback evaluates rollback decision based on R1-R6 rules.
+func (s *DefaultStageTransitionService) EvaluateRollback(
+	session *aggregate.WorkSession,
+	target valueobject.Stage,
+	ctx TransitionContext,
+) RollbackResult {
+	currentStage := session.GetCurrentStage()
+
+	// 1. Check basic rollback rules (stage sequence)
+	if !session.CanRollbackTo(target) {
+		return RollbackResult{
+			Decision:         RollbackDenied,
+			Reason:           fmt.Sprintf("invalid rollback from %s to %s", currentStage, target),
+			PreconditionsMet: false,
+		}
+	}
+
+	// 2. Check rollback-specific conditions
+	if err := s.ValidateRollbackConditions(session, target, ctx); err != nil {
+		return RollbackResult{
+			Decision:         RollbackDenied,
+			Reason:           err.Error(),
+			PreconditionsMet: false,
+		}
+	}
+
+	// 3. Determine rollback rule and type
+	rule := s.GetRollbackRule(currentStage, target)
+	rollbackType := s.determineRollbackType(rule, currentStage, target)
+
+	// 4. Build rollback result with context
+	result := RollbackResult{
+		Decision:         RollbackAllowed,
+		RollbackType:     rollbackType,
+		RollbackRule:     rule,
+		PreconditionsMet: true,
+	}
+
+	// 5. Set rollback effects based on rule
+	s.populateRollbackEffects(&result, currentStage, target, session)
+
+	return result
+}
+
+// GetRollbackRule returns the rollback rule identifier (R1-R6).
+func (s *DefaultStageTransitionService) GetRollbackRule(
+	currentStage, targetStage valueobject.Stage,
+) string {
+	switch currentStage {
+	case valueobject.StageExecution:
+		if targetStage == valueobject.StageDesign {
+			return "R1" // Execution -> Design
+		}
+		if targetStage == valueobject.StageClarification {
+			return "R3" // Execution -> Clarification
+		}
+	case valueobject.StageDesign:
+		if targetStage == valueobject.StageClarification {
+			return "R2" // Design -> Clarification
+		}
+	case valueobject.StageTaskBreakdown:
+		// TaskBreakdown -> Clarification follows R2 rules (same as Design -> Clarification)
+		if targetStage == valueobject.StageClarification {
+			return "R2"
+		}
+		// TaskBreakdown -> Design is not a standard rollback rule (not defined in state-machine.md)
+		// Per state-machine.md line 224: "保留任务列表，等待设计更新后重新拆解"
+		// We return a special identifier for this non-standard path
+		if targetStage == valueobject.StageDesign {
+			return "R2b" // Non-standard: TaskBreakdown -> Design (keep tasks)
+		}
+	case valueobject.StagePullRequest:
+		if targetStage == valueobject.StageExecution {
+			return "R4" // PR -> Execution (shallow)
+		}
+		if targetStage == valueobject.StageDesign {
+			return "R5" // PR -> Design (deep)
+		}
+		if targetStage == valueobject.StageClarification {
+			return "R6" // PR -> Clarification (full)
+		}
+	}
+	return ""
+}
+
+// ValidateRollbackConditions validates detailed rollback conditions.
+// This checks conditions beyond basic stage sequence rules.
+func (s *DefaultStageTransitionService) ValidateRollbackConditions(
+	session *aggregate.WorkSession,
+	target valueobject.Stage,
+	ctx TransitionContext,
+) error {
+	currentStage := session.GetCurrentStage()
+
+	// PR stage specific conditions (R4, R5, R6)
+	if currentStage == valueobject.StagePullRequest {
+		// Check if PR rollback is enabled
+		if !ctx.AllowPRRollback {
+			return errors.New(errors.ErrValidationFailed).WithDetail(
+				"PR stage rollback is disabled by configuration",
+			)
+		}
+
+		// Check rollback count limit
+		if session.PRRollbackCount >= ctx.MaxPRRollbackCount {
+			return errors.New(errors.ErrValidationFailed).WithDetail(
+				fmt.Sprintf("PR rollback count (%d) exceeds maximum (%d)",
+					session.PRRollbackCount, ctx.MaxPRRollbackCount),
+			)
+		}
+
+		// PR must exist for rollback
+		if session.PRNumber == nil {
+			return errors.New(errors.ErrValidationFailed).WithDetail(
+				"cannot rollback: PR not created",
+			)
+		}
+
+		// Note: PR status (open/merged/closed) check requires GitHub API call
+		// This is handled at application layer. Domain layer assumes PR is open
+		// if PRNumber is set and session is not completed.
+	}
+
+	// Completed stage cannot rollback (already checked by CanRollbackTo)
+	if currentStage == valueobject.StageCompleted {
+		return errors.New(errors.ErrInvalidStageTransition).WithDetail(
+			"cannot rollback from completed stage",
+		)
+	}
+
+	// Clarification stage cannot rollback (already checked by CanRollbackTo)
+	if currentStage == valueobject.StageClarification {
+		return errors.New(errors.ErrInvalidStageTransition).WithDetail(
+			"cannot rollback from clarification stage",
+		)
+	}
+
+	return nil
+}
+
+// determineRollbackType determines the rollback depth type based on the rollback rule.
+// Rollback depth is defined per rule in state-machine.md:
+//   - R1 (Execution -> Design): Deep (design version +1, branch deprecated)
+//   - R2 (Design -> Clarification): Shallow (keep requirements, clear design)
+//   - R3 (Execution -> Clarification): Full (clear design, deprecate branch)
+//   - R4 (PR -> Execution): Shallow (PR remains open, branch preserved)
+//   - R5 (PR -> Design): Deep (PR closed, branch deprecated)
+//   - R6 (PR -> Clarification): Full (PR closed, all cleared)
+func (s *DefaultStageTransitionService) determineRollbackType(
+	rollbackRule string,
+	currentStage, targetStage valueobject.Stage,
+) RollbackType {
+	// Map rollback rules directly to types as per design document
+	switch rollbackRule {
+	case "R1", "R5":
+		return RollbackTypeDeep
+	case "R2", "R4", "R2b":
+		return RollbackTypeShallow
+	case "R3", "R6":
+		return RollbackTypeFull
+	}
+
+	// Fallback: for non-standard rollback paths, use stage order distance.
+	// Note: Non-standard paths should not occur in normal operation as
+	// GetRollbackRule returns empty string for undefined paths and
+	// EvaluateRollback denies such rollbacks. This fallback is provided
+	// for defensive programming only.
+	//
+	// The RollbackType returned here is primarily for logging/UI display.
+	// The actual rollback effects (WillDeprecateBranch, WillClearTasks, etc.)
+	// are calculated independently in populateRollbackEffects based on
+	// stage order, ensuring correct behavior regardless of RollbackType.
+	currentOrder := valueobject.StageOrder(currentStage)
+	targetOrder := valueobject.StageOrder(targetStage)
+
+	diff := currentOrder - targetOrder
+
+	if diff == 1 {
+		return RollbackTypeShallow
+	} else if diff == 2 {
+		return RollbackTypeDeep
+	}
+	return RollbackTypeFull
+}
+
+// populateRollbackEffects sets rollback effect flags based on the rollback rule.
+func (s *DefaultStageTransitionService) populateRollbackEffects(
+	result *RollbackResult,
+	currentStage, targetStage valueobject.Stage,
+	session *aggregate.WorkSession,
+) {
+	targetOrder := valueobject.StageOrder(targetStage)
+	designOrder := valueobject.StageOrder(valueobject.StageDesign)
+	clarificationOrder := valueobject.StageOrder(valueobject.StageClarification)
+
+	// Branch deprecation: for rollbacks to Design or earlier
+	result.WillDeprecateBranch = targetOrder <= designOrder
+
+	// PR closure: for rollbacks from PR stage to Design or earlier
+	result.WillClosePR = currentStage == valueobject.StagePullRequest &&
+		targetOrder <= designOrder
+
+	// Task clearing: for rollbacks to Design or earlier
+	// Exception: R2b (TaskBreakdown -> Design) keeps tasks per design document
+	result.WillClearTasks = targetOrder <= designOrder && result.RollbackRule != "R2b"
+
+	// Design clearing: for rollbacks to Clarification
+	result.WillClearDesign = targetOrder <= clarificationOrder
+
+	// PR rollback count: for any rollback from PR stage
+	result.WillIncrementPRRollbackCount = currentStage == valueobject.StagePullRequest
+
+	// Recovery actions based on rollback rule
+	switch result.RollbackRule {
+	case "R1":
+		result.RecoveryActions = []string{
+			"Design version will be incremented",
+			"New design content must be created",
+			"Tasks will be regenerated after design confirmation",
+		}
+	case "R2":
+		result.RecoveryActions = []string{
+			"Clarification questions can be added",
+			"Design must be recreated after clarification",
+		}
+	case "R2b":
+		// TaskBreakdown -> Design: non-standard path, keeps tasks
+		result.RecoveryActions = []string{
+			"Design can be updated",
+			"Task list is preserved for re-breakdown",
+			"Re-confirm design to proceed with task breakdown",
+		}
+	case "R3":
+		result.RecoveryActions = []string{
+			"Branch marked as deprecated",
+			"New branch required for re-execution",
+			"Design must be recreated",
+		}
+	case "R4":
+		result.RecoveryActions = []string{
+			"Fix tasks can be added to current branch",
+			"PR remains open",
+			"Continue with fixes and re-submit",
+		}
+	case "R5":
+		result.RecoveryActions = []string{
+			"PR will be closed",
+			"Branch marked as deprecated",
+			"New design version required",
+			"New branch required for implementation",
+		}
+	case "R6":
+		result.RecoveryActions = []string{
+			"PR will be closed",
+			"Branch marked as deprecated",
+			"Clarification must be re-done",
+			"New branch required after re-clarification",
+		}
 	}
 }

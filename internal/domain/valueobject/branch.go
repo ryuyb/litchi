@@ -31,10 +31,10 @@ func (b Branch) IsActive() bool {
 
 // DeprecatedBranch represents a deprecated branch record for rollback operations.
 type DeprecatedBranch struct {
-	Name            string    `json:"name"`                    // Branch name
-	DeprecatedAt    time.Time `json:"deprecatedAt"`            // When deprecated
-	Reason          string    `json:"reason"`                  // Why deprecated (e.g., "rollback to design")
-	PRNumber        *int      `json:"prNumber,omitempty"`      // Associated PR number (if any)
+	Name            string    `json:"name"`                      // Branch name
+	DeprecatedAt    time.Time `json:"deprecatedAt"`              // When deprecated
+	Reason          string    `json:"reason"`                    // Why deprecated (e.g., "rollback to design")
+	PRNumber        *int      `json:"prNumber,omitempty"`        // Associated PR number (if any)
 	RollbackToStage string    `json:"rollbackToStage,omitempty"` // Target stage for rollback
 }
 

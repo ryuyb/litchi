@@ -22,10 +22,10 @@ type ComplexityScore struct {
 
 // Complexity dimensions with their scores and weights
 type ComplexityDimensions struct {
-	EstimatedCodeChange     int `json:"estimatedCodeChange"`     // 0-100, weight 30%
-	AffectedModules         int `json:"affectedModules"`         // 0-100, weight 25%
-	BreakingChanges         int `json:"breakingChanges"`         // 0-100, weight 25%
-	TestCoverageDifficulty  int `json:"testCoverageDifficulty"`  // 0-100, weight 20%
+	EstimatedCodeChange    int `json:"estimatedCodeChange"`    // 0-100, weight 30%
+	AffectedModules        int `json:"affectedModules"`        // 0-100, weight 25%
+	BreakingChanges        int `json:"breakingChanges"`        // 0-100, weight 25%
+	TestCoverageDifficulty int `json:"testCoverageDifficulty"` // 0-100, weight 20%
 }
 
 // NewComplexityScore creates a new ComplexityScore with the given value (0-100).
@@ -76,10 +76,10 @@ func validateDimensionScores(dimensions ComplexityDimensions) error {
 // calculateWeightedScore calculates the weighted average of dimension scores.
 // Weight distribution: 30% + 25% + 25% + 20% = 100%
 func calculateWeightedScore(dimensions ComplexityDimensions) int {
-	score := dimensions.EstimatedCodeChange * 30 +
-		dimensions.AffectedModules * 25 +
-		dimensions.BreakingChanges * 25 +
-		dimensions.TestCoverageDifficulty * 20
+	score := dimensions.EstimatedCodeChange*30 +
+		dimensions.AffectedModules*25 +
+		dimensions.BreakingChanges*25 +
+		dimensions.TestCoverageDifficulty*20
 	return score / 100
 }
 

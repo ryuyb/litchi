@@ -14,9 +14,9 @@ import (
 type SessionStatus string
 
 const (
-	SessionStatusActive    SessionStatus = "active"    // Session is actively processing
-	SessionStatusPaused    SessionStatus = "paused"    // Session is paused (user-initiated)
-	SessionStatusCompleted SessionStatus = "completed" // Session completed successfully
+	SessionStatusActive     SessionStatus = "active"     // Session is actively processing
+	SessionStatusPaused     SessionStatus = "paused"     // Session is paused (user-initiated)
+	SessionStatusCompleted  SessionStatus = "completed"  // Session completed successfully
 	SessionStatusTerminated SessionStatus = "terminated" // Session terminated by user
 )
 
@@ -76,10 +76,14 @@ type WorkSession struct {
 	Execution     *entity.Execution     `json:"execution"`
 
 	// State tracking
-	CurrentStage   valueobject.Stage `json:"currentStage"`
-	SessionStatus  SessionStatus     `json:"sessionStatus"`
-	PRNumber       *int              `json:"prNumber,omitempty"` // PR number after creation
-	PRRollbackCount int              `json:"prRollbackCount"`    // Number of PR stage rollbacks
+	CurrentStage    valueobject.Stage `json:"currentStage"`
+	SessionStatus   SessionStatus     `json:"sessionStatus"`
+	PRNumber        *int              `json:"prNumber,omitempty"` // PR number after creation
+	PRRollbackCount int               `json:"prRollbackCount"`    // Number of PR stage rollbacks
+
+	// Pause context tracking (T3.1.3)
+	PauseContext *valueobject.PauseContext `json:"pauseContext,omitempty"`
+	PauseHistory []valueobject.PauseRecord `json:"pauseHistory"`
 
 	// Domain events (collected for publishing)
 	events []event.DomainEvent
@@ -96,16 +100,16 @@ func NewWorkSession(issue *entity.Issue) (*WorkSession, error) {
 	sessionID := uuid.New()
 
 	ws := &WorkSession{
-		ID:             sessionID,
-		CreatedAt:      now,
-		UpdatedAt:      now,
-		Issue:          issue,
-		Clarification:  entity.NewClarification(),
-		CurrentStage:   valueobject.StageClarification,
-		SessionStatus:  SessionStatusActive,
-		Tasks:          []*entity.Task{},
+		ID:              sessionID,
+		CreatedAt:       now,
+		UpdatedAt:       now,
+		Issue:           issue,
+		Clarification:   entity.NewClarification(),
+		CurrentStage:    valueobject.StageClarification,
+		SessionStatus:   SessionStatusActive,
+		Tasks:           []*entity.Task{},
 		PRRollbackCount: 0,
-		events:         []event.DomainEvent{},
+		events:          []event.DomainEvent{},
 	}
 
 	// Emit WorkSessionStarted event
@@ -384,7 +388,24 @@ func (ws *WorkSession) RollbackTo(target valueobject.Stage, reason string, userI
 
 // Pause pauses the active session.
 // The reason parameter records why the session was paused (e.g., "user_request", "system_maintenance").
+// For backward compatibility, this method accepts a string reason.
+// Use PauseWithContext for detailed pause context.
 func (ws *WorkSession) Pause(reason string) error {
+	pauseReason, err := valueobject.ParsePauseReason(reason)
+	if err != nil {
+		// Backward compatibility: unknown reasons are classified as "other"
+		// This preserves the original reason string for audit purposes
+		pauseReason = valueobject.PauseReasonOther
+		return ws.PauseWithContext(
+			valueobject.NewPauseContext(pauseReason).WithErrorDetails(reason),
+		)
+	}
+	return ws.PauseWithContext(valueobject.NewPauseContext(pauseReason))
+}
+
+// PauseWithContext pauses the session with detailed context.
+// This is the preferred method for pausing as it captures full context for recovery.
+func (ws *WorkSession) PauseWithContext(ctx valueobject.PauseContext) error {
 	if !ws.SessionStatus.CanPause() {
 		return errors.New(errors.ErrValidationFailed).WithDetail(
 			"cannot pause session with status: " + string(ws.SessionStatus),
@@ -392,30 +413,77 @@ func (ws *WorkSession) Pause(reason string) error {
 	}
 
 	ws.SessionStatus = SessionStatusPaused
+	ws.PauseContext = &ctx
 	ws.UpdatedAt = time.Now()
 
-	ws.recordEvent(event.NewWorkSessionPaused(ws.ID, reason))
+	ws.recordEvent(event.NewWorkSessionPausedWithContext(ws.ID, ctx))
 
 	return nil
 }
 
 // Resume resumes a paused session.
+// For backward compatibility, this method resumes without tracking the action.
+// Use ResumeWithAction for proper action tracking.
 func (ws *WorkSession) Resume() error {
+	return ws.ResumeWithAction("manual_resume")
+}
+
+// ResumeWithAction resumes a paused session with the specified action.
+// The action parameter records how the session was resumed (e.g., "admin_continue", "auto_resume").
+func (ws *WorkSession) ResumeWithAction(action string) error {
 	if !ws.SessionStatus.CanResume() {
 		return errors.New(errors.ErrValidationFailed).WithDetail(
 			"cannot resume session with status: " + string(ws.SessionStatus),
 		)
 	}
 
-	// Record the stage the session was in when paused
+	// Record pause history before clearing context
+	if ws.PauseContext != nil {
+		record := valueobject.NewPauseRecord(*ws.PauseContext)
+		record.Complete(action)
+		ws.PauseHistory = append(ws.PauseHistory, record)
+	}
+
 	previousStage := ws.CurrentStage
+	var pauseReason string
+	if ws.PauseContext != nil {
+		pauseReason = ws.PauseContext.Reason.DisplayName()
+	}
 
 	ws.SessionStatus = SessionStatusActive
+	ws.PauseContext = nil
 	ws.UpdatedAt = time.Now()
 
-	ws.recordEvent(event.NewWorkSessionResumed(ws.ID, previousStage))
+	ws.recordEvent(event.NewWorkSessionResumedWithAction(ws.ID, previousStage, pauseReason, action))
 
 	return nil
+}
+
+// CanAutoResume checks if the session can be automatically resumed.
+// Returns true if:
+// - Session is in Paused status
+// - PauseContext exists
+// - PauseReason supports auto-recovery
+// - Auto-resume time has passed (if specified)
+func (ws *WorkSession) CanAutoResume() bool {
+	if ws.SessionStatus != SessionStatusPaused {
+		return false
+	}
+	if ws.PauseContext == nil {
+		return false
+	}
+	return ws.PauseContext.CanAutoResumeNow()
+}
+
+// GetPauseContext returns the current pause context.
+// Returns nil if the session is not paused.
+func (ws *WorkSession) GetPauseContext() *valueobject.PauseContext {
+	return ws.PauseContext
+}
+
+// GetPauseHistory returns the pause history for audit purposes.
+func (ws *WorkSession) GetPauseHistory() []valueobject.PauseRecord {
+	return ws.PauseHistory
 }
 
 // Terminate terminates the session.

@@ -22,7 +22,7 @@ type Repository struct {
 // Issue represents a GitHub issue entity.
 type Issue struct {
 	ID         uuid.UUID      `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
-	Number     int64          `gorm:"not null;index"`                  // GitHub issue number
+	Number     int64          `gorm:"not null;index"` // GitHub issue number
 	Title      string         `gorm:"type:varchar(500);not null"`
 	Body       string         `gorm:"type:text"`
 	Repository string         `gorm:"type:varchar(255);not null;index"` // references repositories.name
@@ -42,25 +42,25 @@ type WorkSession struct {
 	UpdatedAt    time.Time `gorm:"autoUpdateTime"`
 
 	// Relations
-	Issue        *Issue        `gorm:"foreignKey:IssueID;constraint:OnDelete:CASCADE"`
+	Issue         *Issue         `gorm:"foreignKey:IssueID;constraint:OnDelete:CASCADE"`
 	Clarification *Clarification `gorm:"foreignKey:SessionID;constraint:OnDelete:CASCADE"`
-	Design       *Design       `gorm:"foreignKey:SessionID;constraint:OnDelete:CASCADE"`
-	Tasks        []Task        `gorm:"foreignKey:SessionID;constraint:OnDelete:CASCADE"`
-	Execution    *Execution    `gorm:"foreignKey:SessionID;constraint:OnDelete:CASCADE"`
+	Design        *Design        `gorm:"foreignKey:SessionID;constraint:OnDelete:CASCADE"`
+	Tasks         []Task         `gorm:"foreignKey:SessionID;constraint:OnDelete:CASCADE"`
+	Execution     *Execution     `gorm:"foreignKey:SessionID;constraint:OnDelete:CASCADE"`
 }
 
 // Clarification represents the clarification phase entity.
 type Clarification struct {
-	ID                   uuid.UUID      `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
-	SessionID            uuid.UUID      `gorm:"type:uuid;not null;unique;index"`
-	ConfirmedPoints      datatypes.JSON `gorm:"type:jsonb;default:'[]'"`     // list of confirmed requirement points
-	PendingQuestions     datatypes.JSON `gorm:"type:jsonb;default:'[]'"`     // list of pending questions
-	ConversationHistory  datatypes.JSON `gorm:"type:jsonb;default:'[]'"`     // conversation turns history
-	Status               string         `gorm:"type:varchar(50);not null;default:'in_progress';index"` // in_progress, completed
-	ClarityScore         *int           `gorm:"type:int"`                   // overall clarity score (0-100)
-	ClarityDimensions    datatypes.JSON `gorm:"type:jsonb"`                 // detailed clarity dimension scores
-	CreatedAt            time.Time      `gorm:"autoCreateTime"`
-	UpdatedAt            time.Time      `gorm:"autoUpdateTime"`
+	ID                  uuid.UUID      `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
+	SessionID           uuid.UUID      `gorm:"type:uuid;not null;unique;index"`
+	ConfirmedPoints     datatypes.JSON `gorm:"type:jsonb;default:'[]'"`                               // list of confirmed requirement points
+	PendingQuestions    datatypes.JSON `gorm:"type:jsonb;default:'[]'"`                               // list of pending questions
+	ConversationHistory datatypes.JSON `gorm:"type:jsonb;default:'[]'"`                               // conversation turns history
+	Status              string         `gorm:"type:varchar(50);not null;default:'in_progress';index"` // in_progress, completed
+	ClarityScore        *int           `gorm:"type:int"`                                              // overall clarity score (0-100)
+	ClarityDimensions   datatypes.JSON `gorm:"type:jsonb"`                                            // detailed clarity dimension scores
+	CreatedAt           time.Time      `gorm:"autoCreateTime"`
+	UpdatedAt           time.Time      `gorm:"autoUpdateTime"`
 
 	// Relation
 	Session *WorkSession `gorm:"foreignKey:SessionID;constraint:OnDelete:CASCADE"`
@@ -68,14 +68,14 @@ type Clarification struct {
 
 // Design represents the design phase entity.
 type Design struct {
-	ID                uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
-	SessionID         uuid.UUID `gorm:"type:uuid;not null;unique;index"`
-	CurrentVersion    int       `gorm:"not null;default:0"`
-	ComplexityScore   *int      `gorm:"type:int"`          // complexity score (0-100)
-	RequireConfirmation bool     `gorm:"default:false"`
-	Confirmed         bool      `gorm:"default:false"`
-	CreatedAt         time.Time `gorm:"autoCreateTime"`
-	UpdatedAt         time.Time `gorm:"autoUpdateTime"`
+	ID                  uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
+	SessionID           uuid.UUID `gorm:"type:uuid;not null;unique;index"`
+	CurrentVersion      int       `gorm:"not null;default:0"`
+	ComplexityScore     *int      `gorm:"type:int"` // complexity score (0-100)
+	RequireConfirmation bool      `gorm:"default:false"`
+	Confirmed           bool      `gorm:"default:false"`
+	CreatedAt           time.Time `gorm:"autoCreateTime"`
+	UpdatedAt           time.Time `gorm:"autoUpdateTime"`
 
 	// Relations
 	Session  *WorkSession    `gorm:"foreignKey:SessionID;constraint:OnDelete:CASCADE"`
@@ -113,14 +113,14 @@ type Task struct {
 	Result  *TaskResult  `gorm:"foreignKey:TaskID;constraint:OnDelete:CASCADE"`
 
 	// Many-to-many relation for dependencies
-	Dependencies     []Task `gorm:"many2many:task_dependencies;joinForeignKey:task_id;joinReferences:depends_on_task_id"`
-	DependentTasks   []Task `gorm:"many2many:task_dependencies;joinForeignKey:depends_on_task_id;joinReferences:task_id"`
+	Dependencies   []Task `gorm:"many2many:task_dependencies;joinForeignKey:task_id;joinReferences:depends_on_task_id"`
+	DependentTasks []Task `gorm:"many2many:task_dependencies;joinForeignKey:depends_on_task_id;joinReferences:task_id"`
 }
 
 // TaskDependency represents the junction table for task dependencies.
 type TaskDependency struct {
-	TaskID           uuid.UUID `gorm:"type:uuid;primaryKey"`
-	DependsOnTaskID  uuid.UUID `gorm:"type:uuid;primaryKey"`
+	TaskID          uuid.UUID `gorm:"type:uuid;primaryKey"`
+	DependsOnTaskID uuid.UUID `gorm:"type:uuid;primaryKey"`
 
 	Task          *Task `gorm:"foreignKey:TaskID;constraint:OnDelete:CASCADE"`
 	DependsOnTask *Task `gorm:"foreignKey:DependsOnTaskID;constraint:OnDelete:CASCADE"`
@@ -142,14 +142,14 @@ type TaskResult struct {
 type Execution struct {
 	ID                 uuid.UUID      `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
 	SessionID          uuid.UUID      `gorm:"type:uuid;not null;unique;index"`
-	WorktreePath       string         `gorm:"type:varchar(500)"`              // git worktree path
-	BranchName         string         `gorm:"type:varchar(255)"`              // current branch name
-	BranchDeprecated   bool           `gorm:"default:false"`                  // whether branch is deprecated
-	DeprecatedBranches datatypes.JSON `gorm:"type:jsonb;default:'[]'"`        // history of deprecated branches
-	CurrentTaskID      *uuid.UUID     `gorm:"type:uuid"`                      // currently executing task
-	FailedTask         datatypes.JSON `gorm:"type:jsonb"`                     // failed task details: {taskId, reason, suggestion}
-	FixTasks           datatypes.JSON `gorm:"type:jsonb;default:'[]'"`        // fix tasks added on PR rollback
-	RollbackHistory    datatypes.JSON `gorm:"type:jsonb;default:'[]'"`        // rollback operation history
+	WorktreePath       string         `gorm:"type:varchar(500)"`       // git worktree path
+	BranchName         string         `gorm:"type:varchar(255)"`       // current branch name
+	BranchDeprecated   bool           `gorm:"default:false"`           // whether branch is deprecated
+	DeprecatedBranches datatypes.JSON `gorm:"type:jsonb;default:'[]'"` // history of deprecated branches
+	CurrentTaskID      *uuid.UUID     `gorm:"type:uuid"`               // currently executing task
+	FailedTask         datatypes.JSON `gorm:"type:jsonb"`              // failed task details: {taskId, reason, suggestion}
+	FixTasks           datatypes.JSON `gorm:"type:jsonb;default:'[]'"` // fix tasks added on PR rollback
+	RollbackHistory    datatypes.JSON `gorm:"type:jsonb;default:'[]'"` // rollback operation history
 	CreatedAt          time.Time      `gorm:"autoCreateTime"`
 	UpdatedAt          time.Time      `gorm:"autoUpdateTime"`
 
@@ -171,36 +171,36 @@ type ExecutionCompletedTask struct {
 
 // ExecutionValidationResult represents the validation result after task execution.
 type ExecutionValidationResult struct {
-	ID            uuid.UUID      `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
-	SessionID     uuid.UUID      `gorm:"type:uuid;not null;index"`
-	TaskID        uuid.UUID      `gorm:"type:uuid;not null;index"`
+	ID        uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
+	SessionID uuid.UUID `gorm:"type:uuid;not null;index"`
+	TaskID    uuid.UUID `gorm:"type:uuid;not null;index"`
 
 	// Formatting results
-	FormatSuccess    *bool   `gorm:"type:boolean"`
-	FormatOutput     string  `gorm:"type:text"`
-	FormatDurationMs *int64  `gorm:"type:bigint"`
+	FormatSuccess    *bool  `gorm:"type:boolean"`
+	FormatOutput     string `gorm:"type:text"`
+	FormatDurationMs *int64 `gorm:"type:bigint"`
 
 	// Lint results
-	LintSuccess      *bool   `gorm:"type:boolean"`
-	LintOutput       string  `gorm:"type:text"`
-	LintIssuesFound  *int    `gorm:"type:int"`
-	LintIssuesFixed  *int    `gorm:"type:int"`
-	LintDurationMs   *int64  `gorm:"type:bigint"`
+	LintSuccess     *bool  `gorm:"type:boolean"`
+	LintOutput      string `gorm:"type:text"`
+	LintIssuesFound *int   `gorm:"type:int"`
+	LintIssuesFixed *int   `gorm:"type:int"`
+	LintDurationMs  *int64 `gorm:"type:bigint"`
 
 	// Test results
-	TestSuccess      *bool   `gorm:"type:boolean"`
-	TestOutput       string  `gorm:"type:text"`
-	TestPassed       *int    `gorm:"type:int"`
-	TestFailed       *int    `gorm:"type:int"`
-	TestDurationMs   *int64  `gorm:"type:bigint"`
+	TestSuccess    *bool  `gorm:"type:boolean"`
+	TestOutput     string `gorm:"type:text"`
+	TestPassed     *int   `gorm:"type:int"`
+	TestFailed     *int   `gorm:"type:int"`
+	TestDurationMs *int64 `gorm:"type:bigint"`
 
 	// Overall result
-	OverallStatus    string         `gorm:"type:varchar(50);not null;index"` // passed, failed, warned, skipped
-	Warnings         datatypes.JSON `gorm:"type:jsonb;default:'[]'"`
+	OverallStatus string         `gorm:"type:varchar(50);not null;index"` // passed, failed, warned, skipped
+	Warnings      datatypes.JSON `gorm:"type:jsonb;default:'[]'"`
 
 	// Timing
-	TotalDurationMs  *int64  `gorm:"type:bigint"`
-	CreatedAt        time.Time `gorm:"autoCreateTime"`
+	TotalDurationMs *int64    `gorm:"type:bigint"`
+	CreatedAt       time.Time `gorm:"autoCreateTime"`
 
 	// Relations
 	Session *WorkSession `gorm:"foreignKey:SessionID;constraint:OnDelete:CASCADE"`
@@ -219,15 +219,15 @@ type DomainEvent struct {
 
 // AuditLog represents an audit trail entry.
 type AuditLog struct {
-	ID           uuid.UUID      `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
-	Timestamp    time.Time      `gorm:"autoCreateTime;index"`
-	SessionID    *uuid.UUID     `gorm:"type:uuid;index"`
-	Repository   string         `gorm:"type:varchar(255);not null;index"`
-	IssueNumber  *int64         `gorm:"type:bigint"`
+	ID          uuid.UUID  `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
+	Timestamp   time.Time  `gorm:"autoCreateTime;index"`
+	SessionID   *uuid.UUID `gorm:"type:uuid;index"`
+	Repository  string     `gorm:"type:varchar(255);not null;index"`
+	IssueNumber *int64     `gorm:"type:bigint"`
 
 	// Actor information
-	Actor        string `gorm:"type:varchar(255);not null;index"` // GitHub username
-	ActorRole    string `gorm:"type:varchar(50)"`                 // admin, issue_author
+	Actor     string `gorm:"type:varchar(255);not null;index"` // GitHub username
+	ActorRole string `gorm:"type:varchar(50)"`                 // admin, issue_author
 
 	// Operation details
 	Operation    string `gorm:"type:varchar(100);not null;index"` // operation type
@@ -235,13 +235,13 @@ type AuditLog struct {
 	ResourceID   string `gorm:"type:varchar(255)"`                // resource identifier
 
 	// Result
-	Result       string  `gorm:"type:varchar(50);not null;index"` // success, failed, denied
-	DurationMs   *int64  `gorm:"type:bigint"`                     // operation duration in milliseconds
+	Result     string `gorm:"type:varchar(50);not null;index"` // success, failed, denied
+	DurationMs *int64 `gorm:"type:bigint"`                     // operation duration in milliseconds
 
 	// Details
-	Parameters   datatypes.JSON `gorm:"type:jsonb"`              // operation parameters
-	Output       string         `gorm:"type:text"`               // output summary (truncated)
-	ErrorMessage string         `gorm:"type:text"`               // error message
+	Parameters   datatypes.JSON `gorm:"type:jsonb"` // operation parameters
+	Output       string         `gorm:"type:text"`  // output summary (truncated)
+	ErrorMessage string         `gorm:"type:text"`  // error message
 
 	CreatedAt time.Time `gorm:"autoCreateTime"`
 
@@ -260,5 +260,5 @@ type WebhookDelivery struct {
 	ProcessResult  string     `gorm:"type:varchar(50)"`                        // success, ignored, error
 	ProcessMessage string     `gorm:"type:text"`                               // processing message
 	CreatedAt      time.Time  `gorm:"autoCreateTime;index"`
-	ExpiresAt      *time.Time `gorm:"type:timestamp with time zone;index"`     // expiration time (default 24h)
+	ExpiresAt      *time.Time `gorm:"type:timestamp with time zone;index"` // expiration time (default 24h)
 }

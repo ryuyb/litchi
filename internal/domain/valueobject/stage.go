@@ -14,12 +14,12 @@ type Stage string
 
 // Core workflow stages (6 stages as per T2.1.1 requirement)
 const (
-	StageClarification  Stage = "clarification"
-	StageDesign         Stage = "design"
-	StageTaskBreakdown  Stage = "task_breakdown"
-	StageExecution      Stage = "execution"
-	StagePullRequest    Stage = "pull_request"
-	StageCompleted      Stage = "completed"
+	StageClarification Stage = "clarification"
+	StageDesign        Stage = "design"
+	StageTaskBreakdown Stage = "task_breakdown"
+	StageExecution     Stage = "execution"
+	StagePullRequest   Stage = "pull_request"
+	StageCompleted     Stage = "completed"
 )
 
 // AllStages returns all valid workflow stages in order.

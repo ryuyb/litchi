@@ -55,10 +55,10 @@ func TestComplexityEvaluator_EvaluateWithCustomWeights(t *testing.T) {
 
 	// Custom weights: all equal
 	weights := ComplexityWeights{
-		CodeChangeWeight:    25,
-		ModulesWeight:       25,
+		CodeChangeWeight:     25,
+		ModulesWeight:        25,
 		BreakingChangeWeight: 25,
-		TestingWeight:       25,
+		TestingWeight:        25,
 	}
 
 	design := entity.NewDesign("Test design")
@@ -87,10 +87,10 @@ func TestComplexityEvaluator_InvalidWeights(t *testing.T) {
 
 	// Weights that don't sum to 100
 	weights := ComplexityWeights{
-		CodeChangeWeight:    30,
-		ModulesWeight:       30,
+		CodeChangeWeight:     30,
+		ModulesWeight:        30,
 		BreakingChangeWeight: 30,
-		TestingWeight:       30, // Sum = 120
+		TestingWeight:        30, // Sum = 120
 	}
 
 	design := entity.NewDesign("Test design")
@@ -175,10 +175,10 @@ func TestComplexityEvaluator_NoAnalyzer(t *testing.T) {
 func TestComplexityWeights_Validate(t *testing.T) {
 	// Valid weights
 	valid := ComplexityWeights{
-		CodeChangeWeight:    30,
-		ModulesWeight:       25,
+		CodeChangeWeight:     30,
+		ModulesWeight:        25,
 		BreakingChangeWeight: 25,
-		TestingWeight:       20,
+		TestingWeight:        20,
 	}
 	if !valid.Validate() {
 		t.Error("valid weights should pass validation")
@@ -186,10 +186,10 @@ func TestComplexityWeights_Validate(t *testing.T) {
 
 	// Sum not 100
 	invalidSum := ComplexityWeights{
-		CodeChangeWeight:    30,
-		ModulesWeight:       30,
+		CodeChangeWeight:     30,
+		ModulesWeight:        30,
 		BreakingChangeWeight: 30,
-		TestingWeight:       5, // Sum = 95
+		TestingWeight:        5, // Sum = 95
 	}
 	if invalidSum.Validate() {
 		t.Error("weights with sum != 100 should fail validation")
@@ -197,10 +197,10 @@ func TestComplexityWeights_Validate(t *testing.T) {
 
 	// Negative weight
 	negative := ComplexityWeights{
-		CodeChangeWeight:    -10,
-		ModulesWeight:       40,
+		CodeChangeWeight:     -10,
+		ModulesWeight:        40,
 		BreakingChangeWeight: 40,
-		TestingWeight:       30,
+		TestingWeight:        30,
 	}
 	if negative.Validate() {
 		t.Error("negative weight should fail validation")
@@ -208,10 +208,10 @@ func TestComplexityWeights_Validate(t *testing.T) {
 
 	// Weight > 100
 	overLimit := ComplexityWeights{
-		CodeChangeWeight:    110,
-		ModulesWeight:       0,
+		CodeChangeWeight:     110,
+		ModulesWeight:        0,
 		BreakingChangeWeight: 0,
-		TestingWeight:       0,
+		TestingWeight:        0,
 	}
 	if overLimit.Validate() {
 		t.Error("weight > 100 should fail validation")

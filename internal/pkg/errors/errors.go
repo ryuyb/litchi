@@ -7,8 +7,8 @@ import (
 
 // ErrorCode represents a structured error code in the Litchi system.
 type ErrorCode struct {
-	Code    string // e.g., L1SYS0001
-	Message string // Human-readable message
+	Code     string // e.g., L1SYS0001
+	Message  string // Human-readable message
 	Category string // SYS, AGE, GIT, NET, ENV
 	Severity int    // 1=Critical, 2=High, 3=Medium, 4=Low
 }
@@ -113,49 +113,49 @@ func GetSeverity(err error) int {
 
 // Critical errors (Severity 1) - System level
 var (
-	ErrDatabaseConnection   = ErrorCode{Code: "L1SYS0001", Message: "Database connection failed", Category: "SYS", Severity: 1}
-	ErrDatabaseOperation    = ErrorCode{Code: "L1SYS0005", Message: "Database operation failed", Category: "SYS", Severity: 1}
-	ErrConfigLoadFailed     = ErrorCode{Code: "L1SYS0002", Message: "Configuration load failed", Category: "SYS", Severity: 1}
-	ErrServerStartFailed    = ErrorCode{Code: "L1SYS0003", Message: "Server startup failed", Category: "SYS", Severity: 1}
-	ErrMigrationFailed      = ErrorCode{Code: "L1SYS0004", Message: "Database migration failed", Category: "SYS", Severity: 1}
+	ErrDatabaseConnection = ErrorCode{Code: "L1SYS0001", Message: "Database connection failed", Category: "SYS", Severity: 1}
+	ErrDatabaseOperation  = ErrorCode{Code: "L1SYS0005", Message: "Database operation failed", Category: "SYS", Severity: 1}
+	ErrConfigLoadFailed   = ErrorCode{Code: "L1SYS0002", Message: "Configuration load failed", Category: "SYS", Severity: 1}
+	ErrServerStartFailed  = ErrorCode{Code: "L1SYS0003", Message: "Server startup failed", Category: "SYS", Severity: 1}
+	ErrMigrationFailed    = ErrorCode{Code: "L1SYS0004", Message: "Database migration failed", Category: "SYS", Severity: 1}
 )
 
 // High severity errors (Severity 2) - Agent level
 var (
-	ErrAgentProcessCrash    = ErrorCode{Code: "L2AGE0001", Message: "Agent process crashed", Category: "AGE", Severity: 2}
-	ErrAgentContextLost     = ErrorCode{Code: "L2AGE0002", Message: "Agent session context lost", Category: "AGE", Severity: 2}
-	ErrAgentExecutionFail   = ErrorCode{Code: "L2AGE0003", Message: "Agent execution failed", Category: "AGE", Severity: 2}
-	ErrAgentTimeout         = ErrorCode{Code: "L2AGE0004", Message: "Agent execution timeout", Category: "AGE", Severity: 2}
+	ErrAgentProcessCrash     = ErrorCode{Code: "L2AGE0001", Message: "Agent process crashed", Category: "AGE", Severity: 2}
+	ErrAgentContextLost      = ErrorCode{Code: "L2AGE0002", Message: "Agent session context lost", Category: "AGE", Severity: 2}
+	ErrAgentExecutionFail    = ErrorCode{Code: "L2AGE0003", Message: "Agent execution failed", Category: "AGE", Severity: 2}
+	ErrAgentTimeout          = ErrorCode{Code: "L2AGE0004", Message: "Agent execution timeout", Category: "AGE", Severity: 2}
 	ErrAgentPermissionDenied = ErrorCode{Code: "L2AGE0005", Message: "Agent permission denied", Category: "AGE", Severity: 2}
 )
 
 // Medium severity errors (Severity 3) - External services
 var (
-	ErrGitHubAPIRateLimit  = ErrorCode{Code: "L3GIT0001", Message: "GitHub API rate limit exceeded", Category: "GIT", Severity: 3}
-	ErrGitHubAuthFailed    = ErrorCode{Code: "L3GIT0002", Message: "GitHub authentication failed", Category: "GIT", Severity: 3}
-	ErrGitHubAPIError      = ErrorCode{Code: "L3GIT0003", Message: "GitHub API error", Category: "GIT", Severity: 3}
-	ErrWebhookInvalidSig   = ErrorCode{Code: "L3GIT0004", Message: "Webhook signature verification failed", Category: "GIT", Severity: 3}
-	ErrNetworkTimeout      = ErrorCode{Code: "L3NET0001", Message: "Network timeout", Category: "NET", Severity: 3}
-	ErrNetworkConnection   = ErrorCode{Code: "L3NET0002", Message: "Network connection failed", Category: "NET", Severity: 3}
-	ErrTestEnvUnavailable  = ErrorCode{Code: "L3ENV0001", Message: "Test environment unavailable", Category: "ENV", Severity: 3}
-	ErrGitOperationFailed  = ErrorCode{Code: "L3ENV0002", Message: "Git operation failed", Category: "ENV", Severity: 3}
+	ErrGitHubAPIRateLimit = ErrorCode{Code: "L3GIT0001", Message: "GitHub API rate limit exceeded", Category: "GIT", Severity: 3}
+	ErrGitHubAuthFailed   = ErrorCode{Code: "L3GIT0002", Message: "GitHub authentication failed", Category: "GIT", Severity: 3}
+	ErrGitHubAPIError     = ErrorCode{Code: "L3GIT0003", Message: "GitHub API error", Category: "GIT", Severity: 3}
+	ErrWebhookInvalidSig  = ErrorCode{Code: "L3GIT0004", Message: "Webhook signature verification failed", Category: "GIT", Severity: 3}
+	ErrNetworkTimeout     = ErrorCode{Code: "L3NET0001", Message: "Network timeout", Category: "NET", Severity: 3}
+	ErrNetworkConnection  = ErrorCode{Code: "L3NET0002", Message: "Network connection failed", Category: "NET", Severity: 3}
+	ErrTestEnvUnavailable = ErrorCode{Code: "L3ENV0001", Message: "Test environment unavailable", Category: "ENV", Severity: 3}
+	ErrGitOperationFailed = ErrorCode{Code: "L3ENV0002", Message: "Git operation failed", Category: "ENV", Severity: 3}
 )
 
 // Low severity errors (Severity 4) - Business logic
 var (
-	ErrTaskSkipped         = ErrorCode{Code: "L4TASK0001", Message: "Task was skipped", Category: "DOM", Severity: 4}
-	ErrNoTestsFound        = ErrorCode{Code: "L4ENV0001", Message: "No tests found", Category: "ENV", Severity: 4}
-	ErrTaskAlreadyComplete = ErrorCode{Code: "L4TASK0002", Message: "Task already completed", Category: "DOM", Severity: 4}
-	ErrSessionNotFound     = ErrorCode{Code: "L4DOM0001", Message: "Work session not found", Category: "DOM", Severity: 4}
-	ErrIssueNotFound       = ErrorCode{Code: "L4DOM0002", Message: "Issue not found", Category: "DOM", Severity: 4}
-	ErrInvalidStage          = ErrorCode{Code: "L4DOM0003", Message: "Invalid stage", Category: "DOM", Severity: 4}
+	ErrTaskSkipped            = ErrorCode{Code: "L4TASK0001", Message: "Task was skipped", Category: "DOM", Severity: 4}
+	ErrNoTestsFound           = ErrorCode{Code: "L4ENV0001", Message: "No tests found", Category: "ENV", Severity: 4}
+	ErrTaskAlreadyComplete    = ErrorCode{Code: "L4TASK0002", Message: "Task already completed", Category: "DOM", Severity: 4}
+	ErrSessionNotFound        = ErrorCode{Code: "L4DOM0001", Message: "Work session not found", Category: "DOM", Severity: 4}
+	ErrIssueNotFound          = ErrorCode{Code: "L4DOM0002", Message: "Issue not found", Category: "DOM", Severity: 4}
+	ErrInvalidStage           = ErrorCode{Code: "L4DOM0003", Message: "Invalid stage", Category: "DOM", Severity: 4}
 	ErrInvalidStageTransition = ErrorCode{Code: "L4DOM0007", Message: "Invalid stage transition", Category: "DOM", Severity: 4}
-	ErrInvalidTaskStatus     = ErrorCode{Code: "L4DOM0004", Message: "Invalid task status", Category: "DOM", Severity: 4}
+	ErrInvalidTaskStatus      = ErrorCode{Code: "L4DOM0004", Message: "Invalid task status", Category: "DOM", Severity: 4}
 	ErrInvalidComplexityScore = ErrorCode{Code: "L4DOM0005", Message: "Invalid complexity score", Category: "DOM", Severity: 4}
-	ErrInvalidClarityScore = ErrorCode{Code: "L4DOM0006", Message: "Invalid clarity score", Category: "DOM", Severity: 4}
-	ErrPermissionDenied    = ErrorCode{Code: "L4API0001", Message: "Permission denied", Category: "API", Severity: 4}
-	ErrValidationFailed    = ErrorCode{Code: "L4API0002", Message: "Validation failed", Category: "API", Severity: 4}
-	ErrBadRequest          = ErrorCode{Code: "L4API0003", Message: "Bad request", Category: "API", Severity: 4}
+	ErrInvalidClarityScore    = ErrorCode{Code: "L4DOM0006", Message: "Invalid clarity score", Category: "DOM", Severity: 4}
+	ErrPermissionDenied       = ErrorCode{Code: "L4API0001", Message: "Permission denied", Category: "API", Severity: 4}
+	ErrValidationFailed       = ErrorCode{Code: "L4API0002", Message: "Validation failed", Category: "API", Severity: 4}
+	ErrBadRequest             = ErrorCode{Code: "L4API0003", Message: "Bad request", Category: "API", Severity: 4}
 )
 
 // API response error codes (for HTTP responses)
@@ -165,13 +165,13 @@ type APIErrorCode struct {
 }
 
 var (
-	APIErrBadRequest          = APIErrorCode{Code: 400, Message: "Bad request"}
-	APIErrUnauthorized        = APIErrorCode{Code: 401, Message: "Unauthorized"}
-	APIErrForbidden           = APIErrorCode{Code: 403, Message: "Forbidden"}
-	APIErrNotFound            = APIErrorCode{Code: 404, Message: "Not found"}
-	APIErrConflict            = APIErrorCode{Code: 409, Message: "Conflict"}
-	APIErrInternal            = APIErrorCode{Code: 500, Message: "Internal server error"}
-	APIErrServiceUnavailable  = APIErrorCode{Code: 503, Message: "Service unavailable"}
+	APIErrBadRequest         = APIErrorCode{Code: 400, Message: "Bad request"}
+	APIErrUnauthorized       = APIErrorCode{Code: 401, Message: "Unauthorized"}
+	APIErrForbidden          = APIErrorCode{Code: 403, Message: "Forbidden"}
+	APIErrNotFound           = APIErrorCode{Code: 404, Message: "Not found"}
+	APIErrConflict           = APIErrorCode{Code: 409, Message: "Conflict"}
+	APIErrInternal           = APIErrorCode{Code: 500, Message: "Internal server error"}
+	APIErrServiceUnavailable = APIErrorCode{Code: 503, Message: "Service unavailable"}
 )
 
 // ToAPIError converts domain error to API error code.

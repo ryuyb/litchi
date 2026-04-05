@@ -49,7 +49,7 @@ type TransitionResult struct {
 	Reason         string             `json:"reason,omitempty"`
 	RequiredAction string             `json:"requiredAction,omitempty"` // Action user needs to take
 	ClarityScore   int                `json:"clarityScore,omitempty"`   // Clarity score if applicable
-	CanForce       bool               `json:"canForce"`                 // Whether user can force proceed with command (e.g., "开始设计"). Only meaningful when decision is NeedConfirmation or Denied.
+	CanForce       bool               `json:"canForce"`                 // Whether user can force proceed with command (e.g., "start_design"). Only meaningful when decision is NeedConfirmation or Denied.
 	SkipClarity    bool               `json:"skipClarity,omitempty"`    // Whether user used force command to bypass clarity check. Only set when SkipClarityCheck context is true.
 }
 

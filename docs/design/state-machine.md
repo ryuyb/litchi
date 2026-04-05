@@ -221,6 +221,18 @@
 | 后置行为 | 清空设计版本 |
 | 后置行为 | 可添加新的待澄清问题 |
 
+> **注意**：TaskBreakdown 阶段还可以回退到 Design（用户指令 `@bot 回退设计`），这属于设计修正场景，定义为 **R2b** 规则。
+>
+> **R2b: TaskBreakdown → Design（非标准路径）**
+> | 条件 | 说明 |
+> |------|------|
+> | 前置条件 | 当前阶段为 `task_breakdown` |
+> | 触发方式 | 用户指令 `@bot 回退设计` |
+> | 回退类型 | Shallow（浅层回退） |
+> | 产生事件 | `StageRolledBack` |
+> | 后置行为 | 保留任务列表，等待设计更新后重新拆解 |
+> | 后置行为 | 设计版本可更新 |
+
 #### 回退 (R3): Execution → Clarification
 
 | 条件 | 说明 |
@@ -352,7 +364,7 @@ PR 状态: open
 | UserRequest | `user_request` | 仓库管理员主动暂停 | 管理员指令继续 |
 | TaskFailed | `task_failed` | 任务执行失败，等待指令 | 管理员指令继续/跳过/回退 |
 | ApprovalPending | `approval_pending` | 等待危险操作审批 | 管理员回复同意/拒绝 |
-| ExternalError | `external_error` | API 限流、网络错误等 | 自动恢复或管理员干预 |
+| ExternalError | `external_error` | 非限流的外部错误（服务不可用、DNS失败、网络超时） | 管理员干预 |
 | ServiceRestart | `service_restart` | 服务重启时的中断状态 | 服务启动自动恢复 |
 | PRReviewPending | `pr_review_pending` | PR 等待 Review 反馈 | 管理员指令继续/回退 |
 | CIFailure | `ci_failure` | CI 检查失败，等待处理 | 管理员指令修复或回退 |
@@ -363,6 +375,7 @@ PR 状态: open
 | **ResourceExhausted** | `resource_exhausted` | 并发资源不足（队列已满） | 自动排队或管理员取消 |
 | **BudgetExceeded** | `budget_exceeded` | 预算超限 | 管理员增加预算或使用备用模型 |
 | **SessionLost** | `session_lost` | 会话上下文丢失 | 需重新触发 |
+| **Other** | `other` | 未知或自定义暂停原因（向后兼容） | 管理员强制恢复 |
 
 > **注意**：
 > - 加粗的暂停原因为新增项
@@ -380,8 +393,10 @@ PR 状态: open
 | **半自动恢复** | `budget_exceeded` | ✅ 切换备用模型 | ✅ 需确认 |
 | **需人工干预** | `task_failed` | ❌ | ✅ 需指令 |
 | **需人工干预** | `approval_pending` | ❌ | ✅ 需审批 |
+| **需人工干预** | `external_error` | ❌ | ✅ 需干预 |
 | **需人工干预** | `session_lost` | ❌ | ✅ 需重新触发 |
 | **需人工干预** | `timeout` | ❌ | ✅ 需指令 |
+| **需人工干预** | `other` | ❌ | ✅ 仅允许 admin_force |
 
 **PR 阶段暂停特殊处理**：
 

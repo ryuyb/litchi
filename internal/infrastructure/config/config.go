@@ -60,9 +60,9 @@ type DatabaseConfig struct {
 	SSLMode         string `mapstructure:"sslmode"`
 	MaxOpenConns    int    `mapstructure:"max_open_conns"`
 	MaxIdleConns    int    `mapstructure:"max_idle_conns"`
-	ConnMaxLifetime string `mapstructure:"conn_max_lifetime"` // connection max lifetime, e.g. "1h"
+	ConnMaxLifetime string `mapstructure:"conn_max_lifetime"`  // connection max lifetime, e.g. "1h"
 	ConnMaxIdleTime string `mapstructure:"conn_max_idle_time"` // connection max idle time, e.g. "10m"
-	AutoMigrate     bool   `mapstructure:"auto_migrate"`      // run migrations on startup
+	AutoMigrate     bool   `mapstructure:"auto_migrate"`       // run migrations on startup
 }
 
 func (c *DatabaseConfig) Validate() error {
@@ -106,22 +106,22 @@ type WebhookConfig struct {
 }
 
 type IdempotencyConfig struct {
-	Enabled       bool   `mapstructure:"enabled"`
-	TTL           string `mapstructure:"ttl"`
-	AutoCleanup   bool   `mapstructure:"auto_cleanup"`
+	Enabled         bool   `mapstructure:"enabled"`
+	TTL             string `mapstructure:"ttl"`
+	AutoCleanup     bool   `mapstructure:"auto_cleanup"`
 	CleanupInterval string `mapstructure:"cleanup_interval"`
 }
 
 type AgentConfig struct {
-	Type             string `mapstructure:"type"`
-	MaxConcurrency   int    `mapstructure:"max_concurrency"`
-	TaskRetryLimit   int    `mapstructure:"task_retry_limit"`
-	ApprovalTimeout  string `mapstructure:"approval_timeout"`
+	Type            string `mapstructure:"type"`
+	MaxConcurrency  int    `mapstructure:"max_concurrency"`
+	TaskRetryLimit  int    `mapstructure:"task_retry_limit"`
+	ApprovalTimeout string `mapstructure:"approval_timeout"`
 }
 
 type ClarityConfig struct {
-	Threshold            int `mapstructure:"threshold"`
-	AutoProceedThreshold int `mapstructure:"auto_proceed_threshold"`
+	Threshold             int `mapstructure:"threshold"`
+	AutoProceedThreshold  int `mapstructure:"auto_proceed_threshold"`
 	ForceClarifyThreshold int `mapstructure:"force_clarify_threshold"`
 }
 
@@ -131,17 +131,17 @@ type ComplexityConfig struct {
 }
 
 type AuditConfig struct {
-	Enabled           bool     `mapstructure:"enabled"`
-	RetentionDays     int      `mapstructure:"retention_days"`
-	MaxOutputLength   int      `mapstructure:"max_output_length"`
+	Enabled             bool     `mapstructure:"enabled"`
+	RetentionDays       int      `mapstructure:"retention_days"`
+	MaxOutputLength     int      `mapstructure:"max_output_length"`
 	SensitiveOperations []string `mapstructure:"sensitive_operations"`
 }
 
 type FailureConfig struct {
-	Retry          RetryConfig          `mapstructure:"retry"`
-	RateLimit      RateLimitConfig      `mapstructure:"rate_limit"`
-	Timeout        TimeoutConfig        `mapstructure:"timeout"`
-	Queue          QueueConfig          `mapstructure:"queue"`
+	Retry           RetryConfig           `mapstructure:"retry"`
+	RateLimit       RateLimitConfig       `mapstructure:"rate_limit"`
+	Timeout         TimeoutConfig         `mapstructure:"timeout"`
+	Queue           QueueConfig           `mapstructure:"queue"`
 	TestEnvironment TestEnvironmentConfig `mapstructure:"test_environment"`
 }
 
@@ -161,27 +161,27 @@ type RateLimitConfig struct {
 }
 
 type TimeoutConfig struct {
-	ClarificationAgent  string `mapstructure:"clarification_agent"`
-	DesignAnalysis      string `mapstructure:"design_analysis"`
-	DesignGeneration    string `mapstructure:"design_generation"`
-	TaskBreakdown       string `mapstructure:"task_breakdown"`
-	TaskExecution       string `mapstructure:"task_execution"`
-	TestRun             string `mapstructure:"test_run"`
-	PRCreation          string `mapstructure:"pr_creation"`
-	ApprovalWait        string `mapstructure:"approval_wait"`
-	SessionMaxDuration  string `mapstructure:"session_max_duration"`
+	ClarificationAgent string `mapstructure:"clarification_agent"`
+	DesignAnalysis     string `mapstructure:"design_analysis"`
+	DesignGeneration   string `mapstructure:"design_generation"`
+	TaskBreakdown      string `mapstructure:"task_breakdown"`
+	TaskExecution      string `mapstructure:"task_execution"`
+	TestRun            string `mapstructure:"test_run"`
+	PRCreation         string `mapstructure:"pr_creation"`
+	ApprovalWait       string `mapstructure:"approval_wait"`
+	SessionMaxDuration string `mapstructure:"session_max_duration"`
 }
 
 type QueueConfig struct {
-	MaxLength        int  `mapstructure:"max_length"`
-	PriorityEnabled  bool `mapstructure:"priority_enabled"`
-	TimeoutOnQueue   string `mapstructure:"timeout_on_queue"`
+	MaxLength       int    `mapstructure:"max_length"`
+	PriorityEnabled bool   `mapstructure:"priority_enabled"`
+	TimeoutOnQueue  string `mapstructure:"timeout_on_queue"`
 }
 
 type TestEnvironmentConfig struct {
-	SkipIfNoTests      bool   `mapstructure:"skip_if_no_tests"`
-	SkipIfUnavailable  bool   `mapstructure:"skip_if_unavailable"`
-	CheckInterval      string `mapstructure:"check_interval"`
+	SkipIfNoTests     bool   `mapstructure:"skip_if_no_tests"`
+	SkipIfUnavailable bool   `mapstructure:"skip_if_unavailable"`
+	CheckInterval     string `mapstructure:"check_interval"`
 }
 
 type LoggingConfig struct {

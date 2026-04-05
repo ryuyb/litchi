@@ -107,23 +107,23 @@ type DesignRepository interface {
 
 // AuditLogFilter defines filter criteria for querying audit logs.
 type AuditLogFilter struct {
-	SessionID    *uuid.UUID          // Filter by session ID
-	Repository   string              // Filter by repository name
-	Actor        string              // Filter by actor username
-	ActorRole    valueobject.ActorRole // Filter by actor role
+	SessionID    *uuid.UUID                // Filter by session ID
+	Repository   string                    // Filter by repository name
+	Actor        string                    // Filter by actor username
+	ActorRole    valueobject.ActorRole     // Filter by actor role
 	Operation    valueobject.OperationType // Filter by operation type
-	Result       valueobject.AuditResult // Filter by result status
-	StartTime    *time.Time          // Filter by start time (inclusive)
-	EndTime      *time.Time          // Filter by end time (inclusive)
-	ResourceType string              // Filter by resource type
+	Result       valueobject.AuditResult   // Filter by result status
+	StartTime    *time.Time                // Filter by start time (inclusive)
+	EndTime      *time.Time                // Filter by end time (inclusive)
+	ResourceType string                    // Filter by resource type
 }
 
 // AuditLogListOptions defines options for listing audit logs.
 type AuditLogListOptions struct {
-	Filter   AuditLogFilter // Filter criteria
-	Offset   int            // Offset for pagination
-	Limit    int            // Limit for pagination (0 means default)
-	OrderBy  string         // Order by field (default: timestamp desc)
+	Filter  AuditLogFilter // Filter criteria
+	Offset  int            // Offset for pagination
+	Limit   int            // Limit for pagination (0 means default)
+	OrderBy string         // Order by field (default: timestamp desc)
 }
 
 // AuditLogRepository defines the repository interface for AuditLog entity.

@@ -33,12 +33,18 @@ func IsSystemEvent(e DomainEvent) bool {
 	return e.SessionID() == uuid.Nil
 }
 
+// CurrentEventVersion is the current schema version for domain events.
+// This should be incremented when event structure changes in a breaking way.
+// Version 0 indicates events created before versioning was introduced.
+const CurrentEventVersion = 1
+
 // BaseEvent provides common fields for all domain events.
 // Concrete event types should embed this struct to inherit common behavior.
 type BaseEvent struct {
-	Type      string      `json:"type"`
-	Session   uuid.UUID   `json:"sessionId"`
-	Timestamp time.Time   `json:"timestamp"`
+	Type      string    `json:"type"`
+	Session   uuid.UUID `json:"sessionId"`
+	Timestamp time.Time `json:"timestamp"`
+	Version   int       `json:"version"` // Event schema version for evolution
 }
 
 // EventType returns the event type identifier.
@@ -73,6 +79,7 @@ func NewWorkSessionStarted(sessionID uuid.UUID, issueNumber int, repository, tit
 			Type:      "WorkSessionStarted",
 			Session:   sessionID,
 			Timestamp: time.Now(),
+			Version:   CurrentEventVersion,
 		},
 		IssueNumber: issueNumber,
 		Repository:  repository,
@@ -86,6 +93,7 @@ func (e WorkSessionStarted) ToMap() map[string]any {
 		"type":        e.Type,
 		"sessionId":   e.Session.String(),
 		"timestamp":   e.Timestamp,
+		"version":     e.Version,
 		"issueNumber": e.IssueNumber,
 		"repository":  e.Repository,
 		"title":       e.Title,
@@ -105,6 +113,7 @@ func NewWorkSessionPaused(sessionID uuid.UUID, reason string) *WorkSessionPaused
 			Type:      "WorkSessionPaused",
 			Session:   sessionID,
 			Timestamp: time.Now(),
+			Version:   CurrentEventVersion,
 		},
 		Reason: reason,
 	}
@@ -116,6 +125,7 @@ func (e WorkSessionPaused) ToMap() map[string]any {
 		"type":      e.Type,
 		"sessionId": e.Session.String(),
 		"timestamp": e.Timestamp,
+		"version":   e.Version,
 		"reason":    e.Reason,
 	}
 }
@@ -133,6 +143,7 @@ func NewWorkSessionResumed(sessionID uuid.UUID, previousStage valueobject.Stage)
 			Type:      "WorkSessionResumed",
 			Session:   sessionID,
 			Timestamp: time.Now(),
+			Version:   CurrentEventVersion,
 		},
 		PreviousStage: previousStage,
 	}
@@ -144,6 +155,7 @@ func (e WorkSessionResumed) ToMap() map[string]any {
 		"type":          e.Type,
 		"sessionId":     e.Session.String(),
 		"timestamp":     e.Timestamp,
+		"version":       e.Version,
 		"previousStage": e.PreviousStage.String(),
 	}
 }
@@ -161,6 +173,7 @@ func NewWorkSessionTerminated(sessionID uuid.UUID, reason string) *WorkSessionTe
 			Type:      "WorkSessionTerminated",
 			Session:   sessionID,
 			Timestamp: time.Now(),
+			Version:   CurrentEventVersion,
 		},
 		Reason: reason,
 	}
@@ -172,6 +185,7 @@ func (e WorkSessionTerminated) ToMap() map[string]any {
 		"type":      e.Type,
 		"sessionId": e.Session.String(),
 		"timestamp": e.Timestamp,
+		"version":   e.Version,
 		"reason":    e.Reason,
 	}
 }
@@ -189,6 +203,7 @@ func NewWorkSessionCompleted(sessionID uuid.UUID, prNumber int) *WorkSessionComp
 			Type:      "WorkSessionCompleted",
 			Session:   sessionID,
 			Timestamp: time.Now(),
+			Version:   CurrentEventVersion,
 		},
 		PRNumber: prNumber,
 	}
@@ -200,6 +215,7 @@ func (e WorkSessionCompleted) ToMap() map[string]any {
 		"type":      e.Type,
 		"sessionId": e.Session.String(),
 		"timestamp": e.Timestamp,
+		"version":   e.Version,
 		"prNumber":  e.PRNumber,
 	}
 }
@@ -220,6 +236,7 @@ func NewStageTransitioned(sessionID uuid.UUID, fromStage, toStage valueobject.St
 			Type:      "StageTransitioned",
 			Session:   sessionID,
 			Timestamp: time.Now(),
+			Version:   CurrentEventVersion,
 		},
 		FromStage: fromStage,
 		ToStage:   toStage,
@@ -232,6 +249,7 @@ func (e StageTransitioned) ToMap() map[string]any {
 		"type":      e.Type,
 		"sessionId": e.Session.String(),
 		"timestamp": e.Timestamp,
+		"version":   e.Version,
 		"fromStage": e.FromStage.String(),
 		"toStage":   e.ToStage.String(),
 	}
@@ -253,6 +271,7 @@ func NewStageRolledBack(sessionID uuid.UUID, fromStage, toStage valueobject.Stag
 			Type:      "StageRolledBack",
 			Session:   sessionID,
 			Timestamp: time.Now(),
+			Version:   CurrentEventVersion,
 		},
 		FromStage:     fromStage,
 		ToStage:       toStage,
@@ -267,6 +286,7 @@ func (e StageRolledBack) ToMap() map[string]any {
 		"type":          e.Type,
 		"sessionId":     e.Session.String(),
 		"timestamp":     e.Timestamp,
+		"version":       e.Version,
 		"fromStage":     e.FromStage.String(),
 		"toStage":       e.ToStage.String(),
 		"reason":        e.Reason,
@@ -289,6 +309,7 @@ func NewQuestionAsked(sessionID uuid.UUID, question string) *QuestionAsked {
 			Type:      "QuestionAsked",
 			Session:   sessionID,
 			Timestamp: time.Now(),
+			Version:   CurrentEventVersion,
 		},
 		Question: question,
 	}
@@ -300,6 +321,7 @@ func (e QuestionAsked) ToMap() map[string]any {
 		"type":      e.Type,
 		"sessionId": e.Session.String(),
 		"timestamp": e.Timestamp,
+		"version":   e.Version,
 		"question":  e.Question,
 	}
 }
@@ -319,6 +341,7 @@ func NewQuestionAnswered(sessionID uuid.UUID, question, answer, actor string) *Q
 			Type:      "QuestionAnswered",
 			Session:   sessionID,
 			Timestamp: time.Now(),
+			Version:   CurrentEventVersion,
 		},
 		Question: question,
 		Answer:   answer,
@@ -332,6 +355,7 @@ func (e QuestionAnswered) ToMap() map[string]any {
 		"type":      e.Type,
 		"sessionId": e.Session.String(),
 		"timestamp": e.Timestamp,
+		"version":   e.Version,
 		"question":  e.Question,
 		"answer":    e.Answer,
 		"actor":     e.Actor,
@@ -351,6 +375,7 @@ func NewClarificationCompleted(sessionID uuid.UUID, clarityScore int) *Clarifica
 			Type:      "ClarificationCompleted",
 			Session:   sessionID,
 			Timestamp: time.Now(),
+			Version:   CurrentEventVersion,
 		},
 		ClarityScore: clarityScore,
 	}
@@ -362,16 +387,20 @@ func (e ClarificationCompleted) ToMap() map[string]any {
 		"type":         e.Type,
 		"sessionId":    e.Session.String(),
 		"timestamp":    e.Timestamp,
+		"version":      e.Version,
 		"clarityScore": e.ClarityScore,
 	}
 }
 
 // --- Design Stage Events (Section 6.4) ---
+// Note: Design events have two version fields:
+//   - eventVersion (from BaseEvent.Version): Schema version for event evolution
+//   - designVersion (from event's Version field): Business version of the design document
 
 // DesignCreated is emitted when a new design version is created.
 type DesignCreated struct {
 	BaseEvent
-	Version int    `json:"version"`
+	Version int    `json:"version"` // Design document version (business data)
 	Reason  string `json:"reason,omitempty"`
 }
 
@@ -382,6 +411,7 @@ func NewDesignCreated(sessionID uuid.UUID, version int, reason string) *DesignCr
 			Type:      "DesignCreated",
 			Session:   sessionID,
 			Timestamp: time.Now(),
+			Version:   CurrentEventVersion,
 		},
 		Version: version,
 		Reason:  reason,
@@ -391,18 +421,19 @@ func NewDesignCreated(sessionID uuid.UUID, version int, reason string) *DesignCr
 // ToMap converts the event to a map.
 func (e DesignCreated) ToMap() map[string]any {
 	return map[string]any{
-		"type":      e.Type,
-		"sessionId": e.Session.String(),
-		"timestamp": e.Timestamp,
-		"version":   e.Version,
-		"reason":    e.Reason,
+		"type":          e.Type,
+		"sessionId":     e.Session.String(),
+		"timestamp":     e.Timestamp,
+		"eventVersion":  e.BaseEvent.Version, // Event schema version
+		"designVersion": e.Version,           // Design version
+		"reason":        e.Reason,
 	}
 }
 
 // DesignApproved is emitted when a design is approved.
 type DesignApproved struct {
 	BaseEvent
-	Version int `json:"version"`
+	Version int `json:"version"` // Design document version (business data)
 }
 
 // NewDesignApproved creates a new DesignApproved event.
@@ -412,6 +443,7 @@ func NewDesignApproved(sessionID uuid.UUID, version int) *DesignApproved {
 			Type:      "DesignApproved",
 			Session:   sessionID,
 			Timestamp: time.Now(),
+			Version:   CurrentEventVersion,
 		},
 		Version: version,
 	}
@@ -420,17 +452,18 @@ func NewDesignApproved(sessionID uuid.UUID, version int) *DesignApproved {
 // ToMap converts the event to a map.
 func (e DesignApproved) ToMap() map[string]any {
 	return map[string]any{
-		"type":      e.Type,
-		"sessionId": e.Session.String(),
-		"timestamp": e.Timestamp,
-		"version":   e.Version,
+		"type":          e.Type,
+		"sessionId":     e.Session.String(),
+		"timestamp":     e.Timestamp,
+		"eventVersion":  e.BaseEvent.Version, // Event schema version
+		"designVersion": e.Version,           // Design version
 	}
 }
 
 // DesignRejected is emitted when a design is rejected.
 type DesignRejected struct {
 	BaseEvent
-	Version int    `json:"version"`
+	Version int    `json:"version"` // Design document version (business data)
 	Reason  string `json:"reason,omitempty"`
 }
 
@@ -441,6 +474,7 @@ func NewDesignRejected(sessionID uuid.UUID, version int, reason string) *DesignR
 			Type:      "DesignRejected",
 			Session:   sessionID,
 			Timestamp: time.Now(),
+			Version:   CurrentEventVersion,
 		},
 		Version: version,
 		Reason:  reason,
@@ -450,11 +484,12 @@ func NewDesignRejected(sessionID uuid.UUID, version int, reason string) *DesignR
 // ToMap converts the event to a map.
 func (e DesignRejected) ToMap() map[string]any {
 	return map[string]any{
-		"type":      e.Type,
-		"sessionId": e.Session.String(),
-		"timestamp": e.Timestamp,
-		"version":   e.Version,
-		"reason":    e.Reason,
+		"type":          e.Type,
+		"sessionId":     e.Session.String(),
+		"timestamp":     e.Timestamp,
+		"eventVersion":  e.BaseEvent.Version, // Event schema version
+		"designVersion": e.Version,           // Design version
+		"reason":        e.Reason,
 	}
 }
 
@@ -473,6 +508,7 @@ func NewTaskListCreated(sessionID uuid.UUID, taskCount int) *TaskListCreated {
 			Type:      "TaskListCreated",
 			Session:   sessionID,
 			Timestamp: time.Now(),
+			Version:   CurrentEventVersion,
 		},
 		TaskCount: taskCount,
 	}
@@ -484,6 +520,7 @@ func (e TaskListCreated) ToMap() map[string]any {
 		"type":      e.Type,
 		"sessionId": e.Session.String(),
 		"timestamp": e.Timestamp,
+		"version":   e.Version,
 		"taskCount": e.TaskCount,
 	}
 }
@@ -502,6 +539,7 @@ func NewTaskStarted(sessionID uuid.UUID, taskID uuid.UUID, description string) *
 			Type:      "TaskStarted",
 			Session:   sessionID,
 			Timestamp: time.Now(),
+			Version:   CurrentEventVersion,
 		},
 		TaskID:          taskID,
 		TaskDescription: description,
@@ -514,6 +552,7 @@ func (e TaskStarted) ToMap() map[string]any {
 		"type":            e.Type,
 		"sessionId":       e.Session.String(),
 		"timestamp":       e.Timestamp,
+		"version":         e.Version,
 		"taskId":          e.TaskID.String(),
 		"taskDescription": e.TaskDescription,
 	}
@@ -532,6 +571,7 @@ func NewTaskCompleted(sessionID uuid.UUID, taskID uuid.UUID) *TaskCompleted {
 			Type:      "TaskCompleted",
 			Session:   sessionID,
 			Timestamp: time.Now(),
+			Version:   CurrentEventVersion,
 		},
 		TaskID: taskID,
 	}
@@ -543,6 +583,7 @@ func (e TaskCompleted) ToMap() map[string]any {
 		"type":      e.Type,
 		"sessionId": e.Session.String(),
 		"timestamp": e.Timestamp,
+		"version":   e.Version,
 		"taskId":    e.TaskID.String(),
 	}
 }
@@ -550,9 +591,9 @@ func (e TaskCompleted) ToMap() map[string]any {
 // TaskFailed is emitted when a task fails.
 type TaskFailed struct {
 	BaseEvent
-	TaskID    uuid.UUID `json:"taskId"`
-	Reason    string    `json:"reason"`
-	Suggestion string   `json:"suggestion,omitempty"`
+	TaskID     uuid.UUID `json:"taskId"`
+	Reason     string    `json:"reason"`
+	Suggestion string    `json:"suggestion,omitempty"`
 }
 
 // NewTaskFailed creates a new TaskFailed event.
@@ -562,6 +603,7 @@ func NewTaskFailed(sessionID uuid.UUID, taskID uuid.UUID, reason, suggestion str
 			Type:      "TaskFailed",
 			Session:   sessionID,
 			Timestamp: time.Now(),
+			Version:   CurrentEventVersion,
 		},
 		TaskID:     taskID,
 		Reason:     reason,
@@ -575,6 +617,7 @@ func (e TaskFailed) ToMap() map[string]any {
 		"type":       e.Type,
 		"sessionId":  e.Session.String(),
 		"timestamp":  e.Timestamp,
+		"version":    e.Version,
 		"taskId":     e.TaskID.String(),
 		"reason":     e.Reason,
 		"suggestion": e.Suggestion,
@@ -595,6 +638,7 @@ func NewTaskSkipped(sessionID uuid.UUID, taskID uuid.UUID, reason string) *TaskS
 			Type:      "TaskSkipped",
 			Session:   sessionID,
 			Timestamp: time.Now(),
+			Version:   CurrentEventVersion,
 		},
 		TaskID: taskID,
 		Reason: reason,
@@ -607,6 +651,7 @@ func (e TaskSkipped) ToMap() map[string]any {
 		"type":      e.Type,
 		"sessionId": e.Session.String(),
 		"timestamp": e.Timestamp,
+		"version":   e.Version,
 		"taskId":    e.TaskID.String(),
 		"reason":    e.Reason,
 	}
@@ -626,6 +671,7 @@ func NewTaskRetryStarted(sessionID uuid.UUID, taskID uuid.UUID, retryCount int) 
 			Type:      "TaskRetryStarted",
 			Session:   sessionID,
 			Timestamp: time.Now(),
+			Version:   CurrentEventVersion,
 		},
 		TaskID:     taskID,
 		RetryCount: retryCount,
@@ -638,6 +684,7 @@ func (e TaskRetryStarted) ToMap() map[string]any {
 		"type":       e.Type,
 		"sessionId":  e.Session.String(),
 		"timestamp":  e.Timestamp,
+		"version":    e.Version,
 		"taskId":     e.TaskID.String(),
 		"retryCount": e.RetryCount,
 	}
@@ -648,9 +695,9 @@ func (e TaskRetryStarted) ToMap() map[string]any {
 // PullRequestCreated is emitted when a PR is created successfully.
 type PullRequestCreated struct {
 	BaseEvent
-	PRNumber  int    `json:"prNumber"`
-	Branch    string `json:"branch"`
-	PRTitle   string `json:"prTitle"`
+	PRNumber int    `json:"prNumber"`
+	Branch   string `json:"branch"`
+	PRTitle  string `json:"prTitle"`
 }
 
 // NewPullRequestCreated creates a new PullRequestCreated event.
@@ -660,6 +707,7 @@ func NewPullRequestCreated(sessionID uuid.UUID, prNumber int, branch, title stri
 			Type:      "PullRequestCreated",
 			Session:   sessionID,
 			Timestamp: time.Now(),
+			Version:   CurrentEventVersion,
 		},
 		PRNumber: prNumber,
 		Branch:   branch,
@@ -673,6 +721,7 @@ func (e PullRequestCreated) ToMap() map[string]any {
 		"type":      e.Type,
 		"sessionId": e.Session.String(),
 		"timestamp": e.Timestamp,
+		"version":   e.Version,
 		"prNumber":  e.PRNumber,
 		"branch":    e.Branch,
 		"prTitle":   e.PRTitle,
@@ -683,9 +732,9 @@ func (e PullRequestCreated) ToMap() map[string]any {
 // This triggers the transition from PullRequest stage to Completed stage.
 type PullRequestMerged struct {
 	BaseEvent
-	PRNumber  int    `json:"prNumber"`
-	MergedBy  string `json:"mergedBy"`
-	MergeSHA  string `json:"mergeSha"`
+	PRNumber int    `json:"prNumber"`
+	MergedBy string `json:"mergedBy"`
+	MergeSHA string `json:"mergeSha"`
 }
 
 // NewPullRequestMerged creates a new PullRequestMerged event.
@@ -695,6 +744,7 @@ func NewPullRequestMerged(sessionID uuid.UUID, prNumber int, mergedBy, mergeSHA 
 			Type:      "PullRequestMerged",
 			Session:   sessionID,
 			Timestamp: time.Now(),
+			Version:   CurrentEventVersion,
 		},
 		PRNumber: prNumber,
 		MergedBy: mergedBy,
@@ -708,6 +758,7 @@ func (e PullRequestMerged) ToMap() map[string]any {
 		"type":      e.Type,
 		"sessionId": e.Session.String(),
 		"timestamp": e.Timestamp,
+		"version":   e.Version,
 		"prNumber":  e.PRNumber,
 		"mergedBy":  e.MergedBy,
 		"mergeSha":  e.MergeSHA,
@@ -733,6 +784,7 @@ func NewPRRolledBackToExecution(sessionID uuid.UUID, prNumber int, reason string
 			Type:      "PRRolledBackToExecution",
 			Session:   sessionID,
 			Timestamp: time.Now(),
+			Version:   CurrentEventVersion,
 		},
 		PRNumber: prNumber,
 		Reason:   reason,
@@ -745,6 +797,7 @@ func (e PRRolledBackToExecution) ToMap() map[string]any {
 		"type":      e.Type,
 		"sessionId": e.Session.String(),
 		"timestamp": e.Timestamp,
+		"version":   e.Version,
 		"prNumber":  e.PRNumber,
 		"reason":    e.Reason,
 	}
@@ -755,8 +808,8 @@ func (e PRRolledBackToExecution) ToMap() map[string]any {
 // PR is closed, branch is deprecated.
 type PRRolledBackToDesign struct {
 	BaseEvent
-	PRNumber       int    `json:"prNumber"`
-	Reason         string `json:"reason"`
+	PRNumber         int    `json:"prNumber"`
+	Reason           string `json:"reason"`
 	DeprecatedBranch string `json:"deprecatedBranch"`
 }
 
@@ -767,6 +820,7 @@ func NewPRRolledBackToDesign(sessionID uuid.UUID, prNumber int, reason, deprecat
 			Type:      "PRRolledBackToDesign",
 			Session:   sessionID,
 			Timestamp: time.Now(),
+			Version:   CurrentEventVersion,
 		},
 		PRNumber:         prNumber,
 		Reason:           reason,
@@ -780,6 +834,7 @@ func (e PRRolledBackToDesign) ToMap() map[string]any {
 		"type":             e.Type,
 		"sessionId":        e.Session.String(),
 		"timestamp":        e.Timestamp,
+		"version":          e.Version,
 		"prNumber":         e.PRNumber,
 		"reason":           e.Reason,
 		"deprecatedBranch": e.DeprecatedBranch,
@@ -803,6 +858,7 @@ func NewPRRolledBackToClarification(sessionID uuid.UUID, prNumber int, reason, d
 			Type:      "PRRolledBackToClarification",
 			Session:   sessionID,
 			Timestamp: time.Now(),
+			Version:   CurrentEventVersion,
 		},
 		PRNumber:         prNumber,
 		Reason:           reason,
@@ -816,6 +872,7 @@ func (e PRRolledBackToClarification) ToMap() map[string]any {
 		"type":             e.Type,
 		"sessionId":        e.Session.String(),
 		"timestamp":        e.Timestamp,
+		"version":          e.Version,
 		"prNumber":         e.PRNumber,
 		"reason":           e.Reason,
 		"deprecatedBranch": e.DeprecatedBranch,
@@ -839,6 +896,7 @@ func NewUserCommandReceived(sessionID uuid.UUID, command, actor, actorRole strin
 			Type:      "UserCommandReceived",
 			Session:   sessionID,
 			Timestamp: time.Now(),
+			Version:   CurrentEventVersion,
 		},
 		Command:   command,
 		Actor:     actor,
@@ -852,6 +910,7 @@ func (e UserCommandReceived) ToMap() map[string]any {
 		"type":      e.Type,
 		"sessionId": e.Session.String(),
 		"timestamp": e.Timestamp,
+		"version":   e.Version,
 		"command":   e.Command,
 		"actor":     e.Actor,
 		"actorRole": e.ActorRole,
@@ -876,6 +935,7 @@ func NewRepositoryAdded(repositoryName string) *RepositoryAdded {
 			Type:      "RepositoryAdded",
 			Session:   uuid.Nil, // System-level event, no associated session
 			Timestamp: time.Now(),
+			Version:   CurrentEventVersion,
 		},
 		RepositoryName: repositoryName,
 	}
@@ -886,6 +946,7 @@ func (e RepositoryAdded) ToMap() map[string]any {
 	return map[string]any{
 		"type":           e.Type,
 		"timestamp":      e.Timestamp,
+		"version":        e.Version,
 		"repositoryName": e.RepositoryName,
 	}
 }
@@ -905,6 +966,7 @@ func NewRepositoryUpdated(repositoryName string, changes []string) *RepositoryUp
 			Type:      "RepositoryUpdated",
 			Session:   uuid.Nil, // System-level event, no associated session
 			Timestamp: time.Now(),
+			Version:   CurrentEventVersion,
 		},
 		RepositoryName: repositoryName,
 		Changes:        changes,
@@ -916,6 +978,7 @@ func (e RepositoryUpdated) ToMap() map[string]any {
 	return map[string]any{
 		"type":           e.Type,
 		"timestamp":      e.Timestamp,
+		"version":        e.Version,
 		"repositoryName": e.RepositoryName,
 		"changes":        e.Changes,
 	}
@@ -935,6 +998,7 @@ func NewRepositoryEnabled(repositoryName string) *RepositoryEnabled {
 			Type:      "RepositoryEnabled",
 			Session:   uuid.Nil, // System-level event, no associated session
 			Timestamp: time.Now(),
+			Version:   CurrentEventVersion,
 		},
 		RepositoryName: repositoryName,
 	}
@@ -945,6 +1009,7 @@ func (e RepositoryEnabled) ToMap() map[string]any {
 	return map[string]any{
 		"type":           e.Type,
 		"timestamp":      e.Timestamp,
+		"version":        e.Version,
 		"repositoryName": e.RepositoryName,
 	}
 }
@@ -963,6 +1028,7 @@ func NewRepositoryDisabled(repositoryName string) *RepositoryDisabled {
 			Type:      "RepositoryDisabled",
 			Session:   uuid.Nil, // System-level event, no associated session
 			Timestamp: time.Now(),
+			Version:   CurrentEventVersion,
 		},
 		RepositoryName: repositoryName,
 	}
@@ -973,6 +1039,7 @@ func (e RepositoryDisabled) ToMap() map[string]any {
 	return map[string]any{
 		"type":           e.Type,
 		"timestamp":      e.Timestamp,
+		"version":        e.Version,
 		"repositoryName": e.RepositoryName,
 	}
 }
@@ -991,6 +1058,7 @@ func NewRepositoryDeleted(repositoryName string) *RepositoryDeleted {
 			Type:      "RepositoryDeleted",
 			Session:   uuid.Nil, // System-level event, no associated session
 			Timestamp: time.Now(),
+			Version:   CurrentEventVersion,
 		},
 		RepositoryName: repositoryName,
 	}
@@ -1001,6 +1069,279 @@ func (e RepositoryDeleted) ToMap() map[string]any {
 	return map[string]any{
 		"type":           e.Type,
 		"timestamp":      e.Timestamp,
+		"version":        e.Version,
 		"repositoryName": e.RepositoryName,
+	}
+}
+
+// --- Non-PR Rollback Events (T3.1.2) ---
+
+// ExecutionRolledBackToDesign is emitted when Execution rolls back to Design stage (R1).
+// Use case: Task execution failed, user requested design revision.
+// Branch is deprecated, design version is incremented.
+type ExecutionRolledBackToDesign struct {
+	BaseEvent
+	Reason              string `json:"reason"`
+	DeprecatedBranch    string `json:"deprecatedBranch,omitempty"`
+	DesignVersionBefore int    `json:"designVersionBefore"`
+	DesignVersionAfter  int    `json:"designVersionAfter"`
+}
+
+// NewExecutionRolledBackToDesign creates a new ExecutionRolledBackToDesign event.
+func NewExecutionRolledBackToDesign(sessionID uuid.UUID, reason, deprecatedBranch string, versionBefore, versionAfter int) *ExecutionRolledBackToDesign {
+	return &ExecutionRolledBackToDesign{
+		BaseEvent: BaseEvent{
+			Type:      "ExecutionRolledBackToDesign",
+			Session:   sessionID,
+			Timestamp: time.Now(),
+			Version:   CurrentEventVersion,
+		},
+		Reason:              reason,
+		DeprecatedBranch:    deprecatedBranch,
+		DesignVersionBefore: versionBefore,
+		DesignVersionAfter:  versionAfter,
+	}
+}
+
+// ToMap converts the event to a map.
+func (e ExecutionRolledBackToDesign) ToMap() map[string]any {
+	return map[string]any{
+		"type":                e.Type,
+		"sessionId":           e.Session.String(),
+		"timestamp":           e.Timestamp,
+		"version":             e.Version,
+		"reason":              e.Reason,
+		"deprecatedBranch":    e.DeprecatedBranch,
+		"designVersionBefore": e.DesignVersionBefore,
+		"designVersionAfter":  e.DesignVersionAfter,
+	}
+}
+
+// DesignRolledBackToClarification is emitted when Design rolls back to Clarification stage (R2).
+// Use case: User wants to re-clarify requirements after design review.
+// Confirmed points are preserved, design is cleared.
+type DesignRolledBackToClarification struct {
+	BaseEvent
+	Reason                   string   `json:"reason"`
+	PreservedConfirmedPoints []string `json:"preservedConfirmedPoints"`
+}
+
+// NewDesignRolledBackToClarification creates a new DesignRolledBackToClarification event.
+func NewDesignRolledBackToClarification(sessionID uuid.UUID, reason string, confirmedPoints []string) *DesignRolledBackToClarification {
+	return &DesignRolledBackToClarification{
+		BaseEvent: BaseEvent{
+			Type:      "DesignRolledBackToClarification",
+			Session:   sessionID,
+			Timestamp: time.Now(),
+			Version:   CurrentEventVersion,
+		},
+		Reason:                   reason,
+		PreservedConfirmedPoints: confirmedPoints,
+	}
+}
+
+// ToMap converts the event to a map.
+func (e DesignRolledBackToClarification) ToMap() map[string]any {
+	return map[string]any{
+		"type":                     e.Type,
+		"sessionId":                e.Session.String(),
+		"timestamp":                e.Timestamp,
+		"version":                  e.Version,
+		"reason":                   e.Reason,
+		"preservedConfirmedPoints": e.PreservedConfirmedPoints,
+	}
+}
+
+// ExecutionRolledBackToClarification is emitted when Execution rolls back to Clarification stage (R3).
+// Use case: Fundamental issues found during execution requiring re-clarification.
+// Branch is deprecated, design is cleared, confirmed points preserved.
+type ExecutionRolledBackToClarification struct {
+	BaseEvent
+	Reason                   string   `json:"reason"`
+	DeprecatedBranch         string   `json:"deprecatedBranch"`
+	PreservedConfirmedPoints []string `json:"preservedConfirmedPoints"`
+}
+
+// NewExecutionRolledBackToClarification creates a new ExecutionRolledBackToClarification event.
+func NewExecutionRolledBackToClarification(sessionID uuid.UUID, reason, deprecatedBranch string, confirmedPoints []string) *ExecutionRolledBackToClarification {
+	return &ExecutionRolledBackToClarification{
+		BaseEvent: BaseEvent{
+			Type:      "ExecutionRolledBackToClarification",
+			Session:   sessionID,
+			Timestamp: time.Now(),
+			Version:   CurrentEventVersion,
+		},
+		Reason:                   reason,
+		DeprecatedBranch:         deprecatedBranch,
+		PreservedConfirmedPoints: confirmedPoints,
+	}
+}
+
+// ToMap converts the event to a map.
+func (e ExecutionRolledBackToClarification) ToMap() map[string]any {
+	return map[string]any{
+		"type":                     e.Type,
+		"sessionId":                e.Session.String(),
+		"timestamp":                e.Timestamp,
+		"version":                  e.Version,
+		"reason":                   e.Reason,
+		"deprecatedBranch":         e.DeprecatedBranch,
+		"preservedConfirmedPoints": e.PreservedConfirmedPoints,
+	}
+}
+
+// RollbackEvaluated is emitted when a rollback is evaluated before execution.
+// This event captures the rollback decision analysis for audit purposes.
+type RollbackEvaluated struct {
+	BaseEvent
+	TargetStage         valueobject.Stage `json:"targetStage"`
+	RollbackRule        string            `json:"rollbackRule"`
+	RollbackType        string            `json:"rollbackType"`
+	Decision            string            `json:"decision"`
+	WillDeprecateBranch bool              `json:"willDeprecateBranch"`
+	WillClosePR         bool              `json:"willClosePR"`
+	WillClearTasks      bool              `json:"willClearTasks"`
+	WillClearDesign     bool              `json:"willClearDesign"`
+}
+
+// NewRollbackEvaluated creates a new RollbackEvaluated event.
+func NewRollbackEvaluated(sessionID uuid.UUID, targetStage valueobject.Stage, rule, rollbackType, decision string, deprecateBranch, closePR, clearTasks, clearDesign bool) *RollbackEvaluated {
+	return &RollbackEvaluated{
+		BaseEvent: BaseEvent{
+			Type:      "RollbackEvaluated",
+			Session:   sessionID,
+			Timestamp: time.Now(),
+			Version:   CurrentEventVersion,
+		},
+		TargetStage:         targetStage,
+		RollbackRule:        rule,
+		RollbackType:        rollbackType,
+		Decision:            decision,
+		WillDeprecateBranch: deprecateBranch,
+		WillClosePR:         closePR,
+		WillClearTasks:      clearTasks,
+		WillClearDesign:     clearDesign,
+	}
+}
+
+// ToMap converts the event to a map.
+func (e RollbackEvaluated) ToMap() map[string]any {
+	return map[string]any{
+		"type":                e.Type,
+		"sessionId":           e.Session.String(),
+		"timestamp":           e.Timestamp,
+		"version":             e.Version,
+		"targetStage":         e.TargetStage.String(),
+		"rollbackRule":        e.RollbackRule,
+		"rollbackType":        e.RollbackType,
+		"decision":            e.Decision,
+		"willDeprecateBranch": e.WillDeprecateBranch,
+		"willClosePR":         e.WillClosePR,
+		"willClearTasks":      e.WillClearTasks,
+		"willClearDesign":     e.WillClearDesign,
+	}
+}
+
+// --- Enhanced Pause/Resume Events (T3.1.3) ---
+
+// WorkSessionPausedWithContext is emitted when a session is paused with detailed context.
+// This provides richer information than the basic WorkSessionPaused event.
+type WorkSessionPausedWithContext struct {
+	BaseEvent
+	PauseContext valueobject.PauseContext `json:"pauseContext"`
+}
+
+// NewWorkSessionPausedWithContext creates a new WorkSessionPausedWithContext event.
+func NewWorkSessionPausedWithContext(sessionID uuid.UUID, ctx valueobject.PauseContext) *WorkSessionPausedWithContext {
+	return &WorkSessionPausedWithContext{
+		BaseEvent: BaseEvent{
+			Type:      "WorkSessionPausedWithContext",
+			Session:   sessionID,
+			Timestamp: time.Now(),
+			Version:   CurrentEventVersion,
+		},
+		PauseContext: ctx,
+	}
+}
+
+// ToMap converts the event to a map.
+func (e WorkSessionPausedWithContext) ToMap() map[string]any {
+	return map[string]any{
+		"type":         e.Type,
+		"sessionId":    e.Session.String(),
+		"timestamp":    e.Timestamp,
+		"version":      e.Version,
+		"pauseContext": e.PauseContext,
+	}
+}
+
+// WorkSessionResumedWithAction is emitted when a session is resumed with action tracking.
+// The action indicates how the session was resumed (manual, auto, etc.).
+type WorkSessionResumedWithAction struct {
+	BaseEvent
+	PreviousStage       valueobject.Stage `json:"previousStage"`
+	PreviousPauseReason string            `json:"previousPauseReason"`
+	ResumeAction        string            `json:"resumeAction"`
+}
+
+// NewWorkSessionResumedWithAction creates a new WorkSessionResumedWithAction event.
+func NewWorkSessionResumedWithAction(sessionID uuid.UUID, previousStage valueobject.Stage, pauseReason, action string) *WorkSessionResumedWithAction {
+	return &WorkSessionResumedWithAction{
+		BaseEvent: BaseEvent{
+			Type:      "WorkSessionResumedWithAction",
+			Session:   sessionID,
+			Timestamp: time.Now(),
+			Version:   CurrentEventVersion,
+		},
+		PreviousStage:       previousStage,
+		PreviousPauseReason: pauseReason,
+		ResumeAction:        action,
+	}
+}
+
+// ToMap converts the event to a map.
+func (e WorkSessionResumedWithAction) ToMap() map[string]any {
+	return map[string]any{
+		"type":                e.Type,
+		"sessionId":           e.Session.String(),
+		"timestamp":           e.Timestamp,
+		"version":             e.Version,
+		"previousStage":       e.PreviousStage.String(),
+		"previousPauseReason": e.PreviousPauseReason,
+		"resumeAction":        e.ResumeAction,
+	}
+}
+
+// WorkSessionAutoResumed is emitted when a session is automatically resumed.
+// This happens for pause reasons that support auto-recovery (rate_limited, resource_exhausted).
+type WorkSessionAutoResumed struct {
+	BaseEvent
+	PauseReason  valueobject.PauseReason `json:"pauseReason"`
+	WaitDuration int                     `json:"waitDuration"` // Duration in seconds
+}
+
+// NewWorkSessionAutoResumed creates a new WorkSessionAutoResumed event.
+func NewWorkSessionAutoResumed(sessionID uuid.UUID, reason valueobject.PauseReason, duration int) *WorkSessionAutoResumed {
+	return &WorkSessionAutoResumed{
+		BaseEvent: BaseEvent{
+			Type:      "WorkSessionAutoResumed",
+			Session:   sessionID,
+			Timestamp: time.Now(),
+			Version:   CurrentEventVersion,
+		},
+		PauseReason:  reason,
+		WaitDuration: duration,
+	}
+}
+
+// ToMap converts the event to a map.
+func (e WorkSessionAutoResumed) ToMap() map[string]any {
+	return map[string]any{
+		"type":         e.Type,
+		"sessionId":    e.Session.String(),
+		"timestamp":    e.Timestamp,
+		"version":      e.Version,
+		"pauseReason":  string(e.PauseReason),
+		"waitDuration": e.WaitDuration,
 	}
 }

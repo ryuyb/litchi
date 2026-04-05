@@ -15,30 +15,30 @@ import (
 // for complexity evaluation. This helps the evaluator assess the impact
 // of proposed design changes.
 type CodebaseInfo struct {
-	AffectedModules   []string          // List of modules that will be affected
-	ExistingPatterns  map[string]string // Key patterns/conventions in existing code
-	RecentChanges     []string          // Recent commit descriptions for context
-	ProjectSize       int               // Approximate number of files in project
-	TechStack         []string          // Technologies used (e.g., "go", "react", "postgres")
-	SensitiveAreas    []string          // Areas requiring careful handling (e.g., "auth", "payment")
+	AffectedModules  []string          // List of modules that will be affected
+	ExistingPatterns map[string]string // Key patterns/conventions in existing code
+	RecentChanges    []string          // Recent commit descriptions for context
+	ProjectSize      int               // Approximate number of files in project
+	TechStack        []string          // Technologies used (e.g., "go", "react", "postgres")
+	SensitiveAreas   []string          // Areas requiring careful handling (e.g., "auth", "payment")
 }
 
 // ComplexityWeights defines custom weights for complexity evaluation dimensions.
 // Default weights: CodeChange=30%, Modules=25%, Breaking=25%, Testing=20%
 type ComplexityWeights struct {
-	CodeChangeWeight    int // Weight for estimated code change (0-100, default 30)
-	ModulesWeight       int // Weight for affected modules (0-100, default 25)
+	CodeChangeWeight     int // Weight for estimated code change (0-100, default 30)
+	ModulesWeight        int // Weight for affected modules (0-100, default 25)
 	BreakingChangeWeight int // Weight for breaking changes (0-100, default 25)
-	TestingWeight       int // Weight for test coverage difficulty (0-100, default 20)
+	TestingWeight        int // Weight for test coverage difficulty (0-100, default 20)
 }
 
 // DefaultComplexityWeights returns the default weight configuration.
 func DefaultComplexityWeights() ComplexityWeights {
 	return ComplexityWeights{
-		CodeChangeWeight:    30,
-		ModulesWeight:       25,
+		CodeChangeWeight:     30,
+		ModulesWeight:        25,
 		BreakingChangeWeight: 25,
-		TestingWeight:       20,
+		TestingWeight:        20,
 	}
 }
 
@@ -93,29 +93,29 @@ type ComplexityEvaluator interface {
 // TransitionContext provides context for stage transition decisions.
 // Contains thresholds and configuration needed for precondition validation.
 type TransitionContext struct {
-	ClarityThreshold          int  // Minimum clarity score to enter design stage (default 60)
-	AutoProceedThreshold      int  // Threshold for auto proceed without confirmation (default 80)
-	ForceClarifyThreshold     int  // Threshold for forced clarification (default 40)
-	ComplexityThreshold       int  // Complexity threshold for design confirmation
-	ForceDesignConfirm        bool // Force design confirmation regardless of complexity
-	TaskRetryLimit            int  // Maximum retry count for failed tasks
-	AllowPRRollback           bool // Allow rollback from PR stage
-	MaxPRRollbackCount        int  // Maximum PR rollback count
-	SkipClarityCheck          bool // Skip clarity check (user command "开始设计")
+	ClarityThreshold      int  // Minimum clarity score to enter design stage (default 60)
+	AutoProceedThreshold  int  // Threshold for auto proceed without confirmation (default 80)
+	ForceClarifyThreshold int  // Threshold for forced clarification (default 40)
+	ComplexityThreshold   int  // Complexity threshold for design confirmation
+	ForceDesignConfirm    bool // Force design confirmation regardless of complexity
+	TaskRetryLimit        int  // Maximum retry count for failed tasks
+	AllowPRRollback       bool // Allow rollback from PR stage
+	MaxPRRollbackCount    int  // Maximum PR rollback count
+	SkipClarityCheck      bool // Skip clarity check (user command "start_design")
 }
 
 // DefaultTransitionContext returns default transition configuration.
 func DefaultTransitionContext() TransitionContext {
 	return TransitionContext{
-		ClarityThreshold:          60,
-		AutoProceedThreshold:      80,
-		ForceClarifyThreshold:     40,
-		ComplexityThreshold:       70,
-		ForceDesignConfirm:        false,
-		TaskRetryLimit:            3,
-		AllowPRRollback:           true,
-		MaxPRRollbackCount:        3,
-		SkipClarityCheck:          false,
+		ClarityThreshold:      60,
+		AutoProceedThreshold:  80,
+		ForceClarifyThreshold: 40,
+		ComplexityThreshold:   70,
+		ForceDesignConfirm:    false,
+		TaskRetryLimit:        3,
+		AllowPRRollback:       true,
+		MaxPRRollbackCount:    3,
+		SkipClarityCheck:      false,
 	}
 }
 
@@ -203,15 +203,51 @@ type StageTransitionService interface {
 	//   - Reason: Why the decision was made
 	//   - RequiredAction: What the user needs to do (if any)
 	//   - ClarityScore: The clarity score (if applicable)
-	//   - CanForce: Whether user can force proceed with "开始设计" command
+	//   - CanForce: Whether user can force proceed with "start_design" command
 	//
 	// Use this when you need detailed decision information and user guidance,
 	// especially for Clarification → Design where clarity score determines the decision:
 	//   - >= 80: Auto proceed without confirmation
 	//   - 60-79: Auto proceed but design needs confirmation
 	//   - 40-59: Need user confirmation to proceed
-	//   - < 40: Denied, must continue clarification (can force with "开始设计")
+	//   - < 40: Denied, must continue clarification (can force with "start_design")
 	EvaluateTransition(session *aggregate.WorkSession, target valueobject.Stage, ctx TransitionContext) TransitionResult
+
+	// --- Rollback Evaluation Methods (T3.1.2) ---
+
+	// EvaluateRollback evaluates rollback decision based on R1-R6 rules.
+	// Returns RollbackResult with:
+	//   - Decision: Allowed / NeedConfirmation / Denied
+	//   - RollbackType: Shallow / Deep / Full
+	//   - RollbackRule: R1-R6 identifier
+	//   - Effect flags: WillDeprecateBranch, WillClosePR, WillClearTasks, etc.
+	//   - RecoveryActions: Steps needed after rollback
+	//
+	// Rollback rules (R1-R6):
+	//   - R1: Execution -> Design (design version +1, branch deprecated)
+	//   - R2: Design/TaskBreakdown -> Clarification (keep requirements, clear design)
+	//   - R3: Execution -> Clarification (clear design, branch deprecated)
+	//   - R4: PR -> Execution (shallow, PR remains open)
+	//   - R5: PR -> Design (deep, PR closed, branch deprecated)
+	//   - R6: PR -> Clarification (full, PR closed, all cleared)
+	//
+	// Use this when you need detailed rollback decision and recovery guidance.
+	EvaluateRollback(session *aggregate.WorkSession, target valueobject.Stage, ctx TransitionContext) RollbackResult
+
+	// GetRollbackRule returns the rollback rule identifier (R1-R6) for a rollback path.
+	// Returns empty string if the rollback path is not one of the defined rules.
+	// Use this for logging and UI display purposes.
+	GetRollbackRule(currentStage, targetStage valueobject.Stage) string
+
+	// ValidateRollbackConditions validates detailed rollback conditions beyond basic rules.
+	// This includes:
+	//   - PR status check (must be open for R4-R6)
+	//   - PR rollback count limit check
+	//   - Stage-specific conditions
+	//
+	// Note: Basic rollback eligibility (stage sequence) is checked by CanRollback.
+	// This method checks additional conditions required for specific rollback rules.
+	ValidateRollbackConditions(session *aggregate.WorkSession, target valueobject.Stage, ctx TransitionContext) error
 }
 
 // --- T2.4.3 TaskScheduler ---

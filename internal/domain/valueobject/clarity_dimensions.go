@@ -18,43 +18,43 @@ import (
 // - Feasibility: 15% weight (max 15 points)
 // - Testability: 10% weight (max 10 points)
 type ClarityDimensions struct {
-	Completeness  DimensionDetail `json:"completeness"`  // Max 30, weight 30%
-	Clarity       DimensionDetail `json:"clarity"`       // Max 25, weight 25% (明确性)
-	Consistency   DimensionDetail `json:"consistency"`   // Max 20, weight 20%
-	Feasibility   DimensionDetail `json:"feasibility"`   // Max 15, weight 15%
-	Testability   DimensionDetail `json:"testability"`   // Max 10, weight 10%
-	totalScore    int             // Calculated total score (0-100)
+	Completeness DimensionDetail `json:"completeness"` // Max 30, weight 30%
+	Clarity      DimensionDetail `json:"clarity"`      // Max 25, weight 25% (明确性)
+	Consistency  DimensionDetail `json:"consistency"`  // Max 20, weight 20%
+	Feasibility  DimensionDetail `json:"feasibility"`  // Max 15, weight 15%
+	Testability  DimensionDetail `json:"testability"`  // Max 10, weight 10%
+	totalScore   int             // Calculated total score (0-100)
 }
 
 // DimensionDetail represents a single dimension's score and detailed checks.
 type DimensionDetail struct {
-	Score   int             `json:"score"`   // Current score
-	MaxScore int            `json:"maxScore"` // Maximum possible score
-	Checks  map[string]Check `json:"checks"`  // Individual check items
+	Score    int              `json:"score"`    // Current score
+	MaxScore int              `json:"maxScore"` // Maximum possible score
+	Checks   map[string]Check `json:"checks"`   // Individual check items
 }
 
 // Check represents a single check item within a dimension.
 type Check struct {
-	Score   int    `json:"score"`   // Score for this check
-	Passed  bool   `json:"passed"`  // Whether the check passed
-	Detail  string `json:"detail,omitempty"` // Optional detail/reason
+	Score  int    `json:"score"`            // Score for this check
+	Passed bool   `json:"passed"`           // Whether the check passed
+	Detail string `json:"detail,omitempty"` // Optional detail/reason
 }
 
 // Dimension constants for max scores
 const (
-	CompletenessMaxScore  = 30
-	ClarityMaxScore       = 25
-	ConsistencyMaxScore   = 20
-	FeasibilityMaxScore   = 15
-	TestabilityMaxScore   = 10
+	CompletenessMaxScore = 30
+	ClarityMaxScore      = 25
+	ConsistencyMaxScore  = 20
+	FeasibilityMaxScore  = 15
+	TestabilityMaxScore  = 10
 )
 
 // ClarityGrade constants
 const (
-	GradeHighClarity      = "高清晰度"      // 80-100
-	GradeMediumClarity    = "中清晰度"      // 60-79
-	GradeLowClarity       = "低清晰度"      // 40-59
-	GradeNotClear         = "不清晰"        // 0-39
+	GradeHighClarity   = "高清晰度" // 80-100
+	GradeMediumClarity = "中清晰度" // 60-79
+	GradeLowClarity    = "低清晰度" // 40-59
+	GradeNotClear      = "不清晰"  // 0-39
 )
 
 // NewClarityDimensions creates a new ClarityDimensions with all dimension scores.
@@ -275,24 +275,24 @@ func (cd *ClarityDimensions) Scan(value any) error {
 func (cd ClarityDimensions) MarshalJSON() ([]byte, error) {
 	// Create a proxy struct for JSON serialization with totalScore included
 	type Alias struct {
-		Completeness  DimensionDetail `json:"completeness"`
-		Clarity       DimensionDetail `json:"clarity"`
-		Consistency   DimensionDetail `json:"consistency"`
-		Feasibility   DimensionDetail `json:"feasibility"`
-		Testability   DimensionDetail `json:"testability"`
-		TotalScore    int             `json:"totalScore"`
-		Grade         string          `json:"grade"`
-		CanAutoProceed bool           `json:"canAutoProceed"`
+		Completeness   DimensionDetail `json:"completeness"`
+		Clarity        DimensionDetail `json:"clarity"`
+		Consistency    DimensionDetail `json:"consistency"`
+		Feasibility    DimensionDetail `json:"feasibility"`
+		Testability    DimensionDetail `json:"testability"`
+		TotalScore     int             `json:"totalScore"`
+		Grade          string          `json:"grade"`
+		CanAutoProceed bool            `json:"canAutoProceed"`
 	}
 
 	alias := Alias{
-		Completeness:  cd.Completeness,
-		Clarity:       cd.Clarity,
-		Consistency:   cd.Consistency,
-		Feasibility:   cd.Feasibility,
-		Testability:   cd.Testability,
-		TotalScore:    cd.TotalScore(),
-		Grade:         cd.Grade(),
+		Completeness:   cd.Completeness,
+		Clarity:        cd.Clarity,
+		Consistency:    cd.Consistency,
+		Feasibility:    cd.Feasibility,
+		Testability:    cd.Testability,
+		TotalScore:     cd.TotalScore(),
+		Grade:          cd.Grade(),
 		CanAutoProceed: cd.CanAutoProceed(60), // Default threshold
 	}
 
@@ -303,12 +303,12 @@ func (cd ClarityDimensions) MarshalJSON() ([]byte, error) {
 func (cd *ClarityDimensions) UnmarshalJSON(data []byte) error {
 	// Use proxy struct to extract fields
 	type Alias struct {
-		Completeness  DimensionDetail `json:"completeness"`
-		Clarity       DimensionDetail `json:"clarity"`
-		Consistency   DimensionDetail `json:"consistency"`
-		Feasibility   DimensionDetail `json:"feasibility"`
-		Testability   DimensionDetail `json:"testability"`
-		TotalScore    int             `json:"totalScore"` // Ignored, recalculated
+		Completeness DimensionDetail `json:"completeness"`
+		Clarity      DimensionDetail `json:"clarity"`
+		Consistency  DimensionDetail `json:"consistency"`
+		Feasibility  DimensionDetail `json:"feasibility"`
+		Testability  DimensionDetail `json:"testability"`
+		TotalScore   int             `json:"totalScore"` // Ignored, recalculated
 	}
 
 	var alias Alias
@@ -337,8 +337,8 @@ func (cd *ClarityDimensions) UnmarshalJSON(data []byte) error {
 // DimensionDetail MarshalJSON for proper maxScore serialization
 func (dd DimensionDetail) MarshalJSON() ([]byte, error) {
 	type Alias struct {
-		Score    int             `json:"score"`
-		MaxScore int             `json:"maxScore"`
+		Score    int              `json:"score"`
+		MaxScore int              `json:"maxScore"`
 		Checks   map[string]Check `json:"checks"`
 	}
 	return json.Marshal(Alias(dd))
@@ -347,8 +347,8 @@ func (dd DimensionDetail) MarshalJSON() ([]byte, error) {
 // DimensionDetail UnmarshalJSON
 func (dd *DimensionDetail) UnmarshalJSON(data []byte) error {
 	type Alias struct {
-		Score    int             `json:"score"`
-		MaxScore int             `json:"maxScore"`
+		Score    int              `json:"score"`
+		MaxScore int              `json:"maxScore"`
 		Checks   map[string]Check `json:"checks"`
 	}
 	var alias Alias

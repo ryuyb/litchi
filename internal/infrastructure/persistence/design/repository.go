@@ -309,10 +309,10 @@ func (r *Repository) Delete(ctx context.Context, id uuid.UUID) error {
 // toDBModel converts a domain Design entity to a persistence model.
 func toDBModel(design *entity.Design, sessionID uuid.UUID) models.Design {
 	dbDesign := models.Design{
-		SessionID:         sessionID,
-		CurrentVersion:    design.CurrentVersion,
+		SessionID:           sessionID,
+		CurrentVersion:      design.CurrentVersion,
 		RequireConfirmation: design.RequireConfirmation,
-		Confirmed:         design.Confirmed,
+		Confirmed:           design.Confirmed,
 	}
 
 	// Set complexity score

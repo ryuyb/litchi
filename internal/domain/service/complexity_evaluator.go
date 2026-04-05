@@ -130,10 +130,10 @@ func (e *DefaultComplexityEvaluator) calculateWeightedScore(
 	weights *ComplexityWeights,
 ) int {
 	// Weighted calculation: score = sum(dimension * weight) / 100
-	score := dimensions.EstimatedCodeChange * weights.CodeChangeWeight +
-		dimensions.AffectedModules * weights.ModulesWeight +
-		dimensions.BreakingChanges * weights.BreakingChangeWeight +
-		dimensions.TestCoverageDifficulty * weights.TestingWeight
+	score := dimensions.EstimatedCodeChange*weights.CodeChangeWeight +
+		dimensions.AffectedModules*weights.ModulesWeight +
+		dimensions.BreakingChanges*weights.BreakingChangeWeight +
+		dimensions.TestCoverageDifficulty*weights.TestingWeight
 
 	return score / 100
 }

@@ -73,11 +73,11 @@ func WorkSessionFromModel(m *models.WorkSession) (*aggregate.WorkSession, error)
 	}
 
 	session := &aggregate.WorkSession{
-		ID:             m.ID,
-		CreatedAt:      m.CreatedAt,
-		UpdatedAt:      m.UpdatedAt,
-		CurrentStage:   stage,
-		SessionStatus:  aggregate.SessionStatus(m.Status),
+		ID:              m.ID,
+		CreatedAt:       m.CreatedAt,
+		UpdatedAt:       m.UpdatedAt,
+		CurrentStage:    stage,
+		SessionStatus:   aggregate.SessionStatus(m.Status),
 		PRRollbackCount: 0, // Will be set from Execution if available
 	}
 
@@ -262,14 +262,14 @@ func DesignToModel(d *entity.Design, sessionID uuid.UUID) *models.Design {
 	}
 
 	m := &models.Design{
-		ID:                uuid.New(),
-		SessionID:         sessionID,
-		CurrentVersion:    d.CurrentVersion,
-		ComplexityScore:   complexityScore,
+		ID:                  uuid.New(),
+		SessionID:           sessionID,
+		CurrentVersion:      d.CurrentVersion,
+		ComplexityScore:     complexityScore,
 		RequireConfirmation: d.RequireConfirmation,
-		Confirmed:         d.Confirmed,
-		CreatedAt:         time.Now(),
-		UpdatedAt:         time.Now(),
+		Confirmed:           d.Confirmed,
+		CreatedAt:           time.Now(),
+		UpdatedAt:           time.Now(),
 	}
 
 	// Convert versions
@@ -287,9 +287,9 @@ func DesignFromModel(m *models.Design, versionModels []models.DesignVersion) *en
 	}
 
 	d := &entity.Design{
-		CurrentVersion:     m.CurrentVersion,
+		CurrentVersion:      m.CurrentVersion,
 		RequireConfirmation: m.RequireConfirmation,
-		Confirmed:          m.Confirmed,
+		Confirmed:           m.Confirmed,
 	}
 
 	// Set complexity score
@@ -422,14 +422,14 @@ func TaskFromModel(m *models.Task) *entity.Task {
 	}
 
 	return &entity.Task{
-		ID:           m.ID,
-		Description:  m.Description,
-		Status:       status,
-		Dependencies: dependencies,
-		RetryCount:   m.RetryCount,
+		ID:            m.ID,
+		Description:   m.Description,
+		Status:        status,
+		Dependencies:  dependencies,
+		RetryCount:    m.RetryCount,
 		FailureReason: m.FailureReason,
-		Suggestion:   m.Suggestion,
-		Order:        m.Seq,
+		Suggestion:    m.Suggestion,
+		Order:         m.Seq,
 	}
 }
 
@@ -486,11 +486,11 @@ func ExecutionFromModel(m *models.Execution) *entity.Execution {
 	}
 
 	e := &entity.Execution{
-		WorktreePath: m.WorktreePath,
-		Branch:       valueobject.NewBranch(m.BranchName),
-		CompletedTasks: make([]uuid.UUID, 0),
-		FixTasks:     make([]uuid.UUID, 0),
-		RollbackHistory: make([]valueobject.RollbackRecord, 0),
+		WorktreePath:       m.WorktreePath,
+		Branch:             valueobject.NewBranch(m.BranchName),
+		CompletedTasks:     make([]uuid.UUID, 0),
+		FixTasks:           make([]uuid.UUID, 0),
+		RollbackHistory:    make([]valueobject.RollbackRecord, 0),
 		DeprecatedBranches: make([]valueobject.DeprecatedBranch, 0),
 	}
 

@@ -118,8 +118,8 @@ func (r *auditLogRepository) ListBySessionID(ctx context.Context, sessionID uuid
 		Filter: repository.AuditLogFilter{
 			SessionID: &sessionID,
 		},
-		Offset:  offset,
-		Limit:   limit,
+		Offset: offset,
+		Limit:  limit,
 	})
 }
 
@@ -234,7 +234,7 @@ func (r *auditLogRepository) toModel(e *entity.AuditLog) *models.AuditLog {
 		DurationMs:   ptrToInt64(e.Duration),
 		Output:       e.Output,
 		ErrorMessage: e.Error,
-		CreatedAt:   time.Now(),
+		CreatedAt:    time.Now(),
 	}
 
 	// Handle nullable SessionID

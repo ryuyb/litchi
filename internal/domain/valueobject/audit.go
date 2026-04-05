@@ -77,11 +77,11 @@ func (ar AuditResult) IsValid() bool {
 
 // RollbackRecord represents a record of a rollback operation.
 type RollbackRecord struct {
-	FromStage      Stage     `json:"fromStage"`      // Stage before rollback
-	ToStage        Stage     `json:"toStage"`        // Stage after rollback
-	Reason         string    `json:"reason"`         // Reason for rollback
-	Timestamp      time.Time `json:"timestamp"`      // When rollback occurred
-	UserInitiated  bool      `json:"userInitiated"`  // Whether rollback was user-initiated
+	FromStage     Stage     `json:"fromStage"`     // Stage before rollback
+	ToStage       Stage     `json:"toStage"`       // Stage after rollback
+	Reason        string    `json:"reason"`        // Reason for rollback
+	Timestamp     time.Time `json:"timestamp"`     // When rollback occurred
+	UserInitiated bool      `json:"userInitiated"` // Whether rollback was user-initiated
 }
 
 // NewRollbackRecord creates a new rollback record.

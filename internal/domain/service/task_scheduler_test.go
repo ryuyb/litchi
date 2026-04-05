@@ -257,9 +257,9 @@ func TestTaskScheduler_CanRetryTask(t *testing.T) {
 	}
 
 	// Mark Task2 as retried multiple times (simulating retries)
-	task2.Retry(3) // Reset to InProgress
+	task2.Retry(3)                         // Reset to InProgress
 	task2.Fail("error again", "try again") // Fail again, retry count = 2
-	task2.Retry(3) // Reset to InProgress
+	task2.Retry(3)                         // Reset to InProgress
 	task2.Fail("error again", "try again") // Fail again, retry count = 3
 
 	if scheduler.CanRetryTask(task2, []uuid.UUID{task1ID}, 3) {
@@ -290,7 +290,7 @@ func TestTaskScheduler_ValidateDependencies(t *testing.T) {
 
 	// Self-dependency test
 	task3 := entity.NewTask("Task 3", []uuid.UUID{task1ID}, 3)
-	task3.ID = task1ID // Same ID as task1
+	task3.ID = task1ID                        // Same ID as task1
 	task3.Dependencies = []uuid.UUID{task1ID} // Self-dependency
 
 	err = scheduler.ValidateDependencies([]*entity.Task{task3})

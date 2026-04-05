@@ -18,6 +18,6 @@ import (
 
 func main() {
 	fx.New(
-		// Worker Fx modules will be added in future tasks
+	// Worker Fx modules will be added in future tasks
 	).Run()
 }

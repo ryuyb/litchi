@@ -57,8 +57,8 @@ func TestNewWorkSessionInvalidIssue(t *testing.T) {
 
 func TestWorkSessionValidate(t *testing.T) {
 	tests := []struct {
-		name    string
-		session *WorkSession
+		name     string
+		session  *WorkSession
 		hasError bool
 	}{
 		{
@@ -72,8 +72,8 @@ func TestWorkSessionValidate(t *testing.T) {
 		{
 			name: "nil_issue",
 			session: &WorkSession{
-				ID: uuid.New(),
-				CurrentStage: valueobject.StageClarification,
+				ID:            uuid.New(),
+				CurrentStage:  valueobject.StageClarification,
 				SessionStatus: SessionStatusActive,
 			},
 			hasError: true,
@@ -117,11 +117,11 @@ func TestWorkSessionValidate(t *testing.T) {
 
 func TestSessionStatus(t *testing.T) {
 	tests := []struct {
-		status   SessionStatus
-		isValid  bool
-		isTerminal bool
-		canPause bool
-		canResume bool
+		status       SessionStatus
+		isValid      bool
+		isTerminal   bool
+		canPause     bool
+		canResume    bool
 		canTerminate bool
 	}{
 		{SessionStatusActive, true, false, true, false, true},
@@ -464,7 +464,7 @@ func TestWorkSessionTaskFailAndRetry(t *testing.T) {
 	// Fail again and exceed retry limit
 	session.FailTask(task.ID, "Second failure", "Try again") // RetryCount = 2
 	session.RetryTask(task.ID, 3)
-	session.FailTask(task.ID, "Third failure", "Try again")  // RetryCount = 3
+	session.FailTask(task.ID, "Third failure", "Try again") // RetryCount = 3
 	session.RetryTask(task.ID, 3)
 	session.FailTask(task.ID, "Fourth failure", "Try again") // RetryCount = 4
 

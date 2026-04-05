@@ -277,7 +277,7 @@ func TestStageNext(t *testing.T) {
 		{StageTaskBreakdown, StageExecution},
 		{StageExecution, StagePullRequest},
 		{StagePullRequest, StageCompleted},
-		{StageCompleted, ""}, // Terminal stage has no next
+		{StageCompleted, ""},   // Terminal stage has no next
 		{Stage("invalid"), ""}, // Invalid stage has no next
 	}
 
@@ -371,9 +371,9 @@ func TestStageCanTransitionTo(t *testing.T) {
 		from, to Stage
 	}{
 		{StageClarification, StageTaskBreakdown}, // Skip Design
-		{StageClarification, StageExecution},      // Skip Design + TaskBreakdown
-		{StageDesign, StageExecution},             // Skip TaskBreakdown
-		{StageCompleted, StageClarification},      // Terminal stage
+		{StageClarification, StageExecution},     // Skip Design + TaskBreakdown
+		{StageDesign, StageExecution},            // Skip TaskBreakdown
+		{StageCompleted, StageClarification},     // Terminal stage
 	}
 
 	for _, tt := range invalidForwardTransitions {

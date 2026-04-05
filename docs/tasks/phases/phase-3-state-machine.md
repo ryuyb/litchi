@@ -23,26 +23,40 @@
     - 实现 5 个阶段的评估方法（evaluateClarificationToDesign 等）
     - 添加 13 个测试场景覆盖各种边界情况
 
-- [ ] **T3.1.2** 实现阶段回退转换逻辑 ⚠️ **高风险**
+- [x] **T3.1.2** 实现阶段回退转换逻辑 ⚠️ **高风险**
   - 验收标准：
-    - [ ] 6 个回退规则 (R1-R6) 正确
-    - [ ] 回退条件验证完整
-    - [ ] 状态恢复正确
+    - [x] 6 个回退规则 (R1-R6) 正确
+    - [x] 回退条件验证完整
+    - [x] 状态恢复正确
   - 依赖：T2.4.2
   - 风险：**高**
   - 预估：1.5d
   - 可并行：是（与 T3.1.1）
   - 备注：回退规则需要处理各种边界情况
+  - 实施详情：
+    - 新建 rollback_decision.go 定义 RollbackDecision、RollbackType、RollbackResult
+    - 扩展 StageTransitionService 接口添加 EvaluateRollback、GetRollbackRule、ValidateRollbackConditions 方法
+    - 实现 R1-R6 回退规则评估逻辑，包含回退效果标志（WillDeprecateBranch、WillClosePR 等）
+    - 添加回退相关领域事件（ExecutionRolledBackToDesign、DesignRolledBackToClarification 等）
+    - 编写 rollback_test.go 覆盖所有回退规则场景
 
-- [ ] **T3.1.3** 实现暂停/恢复/终止逻辑
+- [x] **T3.1.3** 实现暂停/恢复/终止逻辑
   - 验收标准：
-    - [ ] 所有暂停原因处理正确
-    - [ ] 恢复逻辑正确
-    - [ ] 终止清理正确
+    - [x] 所有暂停原因处理正确
+    - [x] 恢复逻辑正确
+    - [x] 终止清理正确
   - 依赖：T2.4.2
   - 风险：中
   - 预估：1d
   - 可并行：否
+  - 实施详情：
+    - 新建 pause_reason.go 定义 14 种暂停原因枚举和 PauseContext、PauseRecord 结构体
+    - 实现恢复分类（Auto/SemiAuto/Manual）和恢复操作列表
+    - 增强 WorkSession 聚合根添加 PauseContext/PauseHistory 字段
+    - 实现 PauseWithContext、ResumeWithAction、CanAutoResume 等方法
+    - 新建 session_control.go 实现 SessionControlService
+    - 添加暂停恢复领域事件（WorkSessionPausedWithContext、WorkSessionResumedWithAction 等）
+    - 编写 pause_reason_test.go 和 session_control_test.go 测试
 
 ---
 

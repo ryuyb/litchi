@@ -107,11 +107,11 @@ func (i *Issue) HasLabel(label string) bool {
 // Clarification represents the clarification dialogue entity.
 // It tracks the process of clarifying requirements through Q&A.
 type Clarification struct {
-	ConfirmedPoints    []string                        `json:"confirmedPoints"`    // Confirmed requirement points
-	PendingQuestions   []string                        `json:"pendingQuestions"`   // Questions awaiting answers
-	History            []valueobject.ConversationTurn  `json:"history"`            // Q&A dialogue history
-	Status             ClarificationStatus             `json:"status"`             // Current clarification status
-	ClarityDimensions  valueobject.ClarityDimensions   `json:"clarityDimensions"`  // Clarity score details
+	ConfirmedPoints   []string                       `json:"confirmedPoints"`   // Confirmed requirement points
+	PendingQuestions  []string                       `json:"pendingQuestions"`  // Questions awaiting answers
+	History           []valueobject.ConversationTurn `json:"history"`           // Q&A dialogue history
+	Status            ClarificationStatus            `json:"status"`            // Current clarification status
+	ClarityDimensions valueobject.ClarityDimensions  `json:"clarityDimensions"` // Clarity score details
 }
 
 // ClarificationStatus represents the status of clarification.
@@ -125,10 +125,10 @@ const (
 // NewClarification creates a new Clarification entity.
 func NewClarification() *Clarification {
 	return &Clarification{
-		ConfirmedPoints:   []string{},
-		PendingQuestions:  []string{},
-		History:           []valueobject.ConversationTurn{},
-		Status:            ClarificationStatusInProgress,
+		ConfirmedPoints:  []string{},
+		PendingQuestions: []string{},
+		History:          []valueobject.ConversationTurn{},
+		Status:           ClarificationStatusInProgress,
 	}
 }
 
@@ -202,21 +202,21 @@ func (c *Clarification) GetClarityScore() int {
 
 // Design represents the design document entity with version management.
 type Design struct {
-	Versions          []valueobject.DesignVersion `json:"versions"`          // Design version history
-	CurrentVersion    int                         `json:"currentVersion"`    // Current version number
-	ComplexityScore   valueobject.ComplexityScore `json:"complexityScore"`   // Complexity evaluation
-	RequireConfirmation bool                       `json:"requireConfirmation"` // Whether manual confirmation is needed
-	Confirmed         bool                        `json:"confirmed"`         // Whether design is confirmed
+	Versions            []valueobject.DesignVersion `json:"versions"`            // Design version history
+	CurrentVersion      int                         `json:"currentVersion"`      // Current version number
+	ComplexityScore     valueobject.ComplexityScore `json:"complexityScore"`     // Complexity evaluation
+	RequireConfirmation bool                        `json:"requireConfirmation"` // Whether manual confirmation is needed
+	Confirmed           bool                        `json:"confirmed"`           // Whether design is confirmed
 }
 
 // NewDesign creates a new Design entity with the initial version.
 func NewDesign(content string) *Design {
 	initialVersion := valueobject.NewDesignVersion(1, content, "initial")
 	return &Design{
-		Versions:        []valueobject.DesignVersion{initialVersion},
-		CurrentVersion:  1,
+		Versions:            []valueobject.DesignVersion{initialVersion},
+		CurrentVersion:      1,
 		RequireConfirmation: false,
-		Confirmed:       false,
+		Confirmed:           false,
 	}
 }
 
@@ -287,15 +287,15 @@ func (d *Design) CanProceedToTaskBreakdown() bool {
 
 // Task represents an individual executable task unit.
 type Task struct {
-	ID              uuid.UUID                  `json:"id"`              // Unique identifier
-	Description     string                     `json:"description"`     // Task description
-	Status          valueobject.TaskStatus     `json:"status"`          // Current status
-	Dependencies    []uuid.UUID                `json:"dependencies"`    // IDs of tasks this depends on
+	ID              uuid.UUID                   `json:"id"`              // Unique identifier
+	Description     string                      `json:"description"`     // Task description
+	Status          valueobject.TaskStatus      `json:"status"`          // Current status
+	Dependencies    []uuid.UUID                 `json:"dependencies"`    // IDs of tasks this depends on
 	ExecutionResult valueobject.ExecutionResult `json:"executionResult"` // Execution result
-	RetryCount      int                        `json:"retryCount"`      // Number of retries
-	FailureReason   string                     `json:"failureReason"`   // Reason for failure
-	Suggestion      string                     `json:"suggestion"`      // Suggested fix
-	Order           int                        `json:"order"`           // Execution order (for sorting)
+	RetryCount      int                         `json:"retryCount"`      // Number of retries
+	FailureReason   string                      `json:"failureReason"`   // Reason for failure
+	Suggestion      string                      `json:"suggestion"`      // Suggested fix
+	Order           int                         `json:"order"`           // Execution order (for sorting)
 }
 
 // NewTask creates a new Task entity.
@@ -414,24 +414,24 @@ func (t *Task) HasDependencies() bool {
 
 // Execution represents the execution phase state tracking entity.
 type Execution struct {
-	WorktreePath      string                       `json:"worktreePath"`      // Git worktree path
-	Branch            valueobject.Branch           `json:"branch"`            // Current branch
-	CompletedTasks    []uuid.UUID                  `json:"completedTasks"`    // IDs of completed tasks
-	CurrentTaskID     *uuid.UUID                   `json:"currentTaskId"`     // ID of currently executing task
-	FailedTask        *valueobject.FailedTask      `json:"failedTask"`        // Current failed task info
-	FixTasks          []uuid.UUID                  `json:"fixTasks"`          // Additional fix task IDs (from PR rollback)
-	RollbackHistory   []valueobject.RollbackRecord `json:"rollbackHistory"`   // History of rollback operations
+	WorktreePath       string                         `json:"worktreePath"`       // Git worktree path
+	Branch             valueobject.Branch             `json:"branch"`             // Current branch
+	CompletedTasks     []uuid.UUID                    `json:"completedTasks"`     // IDs of completed tasks
+	CurrentTaskID      *uuid.UUID                     `json:"currentTaskId"`      // ID of currently executing task
+	FailedTask         *valueobject.FailedTask        `json:"failedTask"`         // Current failed task info
+	FixTasks           []uuid.UUID                    `json:"fixTasks"`           // Additional fix task IDs (from PR rollback)
+	RollbackHistory    []valueobject.RollbackRecord   `json:"rollbackHistory"`    // History of rollback operations
 	DeprecatedBranches []valueobject.DeprecatedBranch `json:"deprecatedBranches"` // Branches deprecated during rollbacks
 }
 
 // NewExecution creates a new Execution entity.
 func NewExecution(worktreePath, branchName string) *Execution {
 	return &Execution{
-		WorktreePath:     worktreePath,
-		Branch:           valueobject.NewBranch(branchName),
-		CompletedTasks:   []uuid.UUID{},
-		FixTasks:         []uuid.UUID{},
-		RollbackHistory:  []valueobject.RollbackRecord{},
+		WorktreePath:       worktreePath,
+		Branch:             valueobject.NewBranch(branchName),
+		CompletedTasks:     []uuid.UUID{},
+		FixTasks:           []uuid.UUID{},
+		RollbackHistory:    []valueobject.RollbackRecord{},
 		DeprecatedBranches: []valueobject.DeprecatedBranch{},
 	}
 }
@@ -508,21 +508,21 @@ func (e *Execution) SetNewBranch(branchName string) {
 // AuditLog represents an audit log entry entity.
 // Audit logs are immutable and record all key operations in the system.
 type AuditLog struct {
-	ID           uuid.UUID              `json:"id"`           // Unique identifier
-	Timestamp    time.Time              `json:"timestamp"`    // Operation timestamp
-	SessionID    uuid.UUID              `json:"sessionId"`    // Associated work session ID
-	Repository   string                 `json:"repository"`   // Repository name
-	IssueNumber  int                    `json:"issueNumber"`  // Issue number
-	Actor        string                 `json:"actor"`        // Operator (GitHub username)
-	ActorRole    valueobject.ActorRole  `json:"actorRole"`    // Operator role
-	Operation    valueobject.OperationType `json:"operation"` // Operation type
-	ResourceType string                 `json:"resourceType"` // Type of resource operated on
-	ResourceID   string                 `json:"resourceId"`   // Resource identifier
-	Parameters   map[string]any         `json:"parameters"`   // Operation parameters
-	Result       valueobject.AuditResult `json:"result"`       // Operation result
-	Duration     int                    `json:"duration"`     // Operation duration (ms)
-	Output       string                 `json:"output"`       // Output summary (truncated if too long)
-	Error        string                 `json:"error"`        // Error message (if failed)
+	ID           uuid.UUID                 `json:"id"`           // Unique identifier
+	Timestamp    time.Time                 `json:"timestamp"`    // Operation timestamp
+	SessionID    uuid.UUID                 `json:"sessionId"`    // Associated work session ID
+	Repository   string                    `json:"repository"`   // Repository name
+	IssueNumber  int                       `json:"issueNumber"`  // Issue number
+	Actor        string                    `json:"actor"`        // Operator (GitHub username)
+	ActorRole    valueobject.ActorRole     `json:"actorRole"`    // Operator role
+	Operation    valueobject.OperationType `json:"operation"`    // Operation type
+	ResourceType string                    `json:"resourceType"` // Type of resource operated on
+	ResourceID   string                    `json:"resourceId"`   // Resource identifier
+	Parameters   map[string]any            `json:"parameters"`   // Operation parameters
+	Result       valueobject.AuditResult   `json:"result"`       // Operation result
+	Duration     int                       `json:"duration"`     // Operation duration (ms)
+	Output       string                    `json:"output"`       // Output summary (truncated if too long)
+	Error        string                    `json:"error"`        // Error message (if failed)
 }
 
 // NewAuditLog creates a new audit log entry.
@@ -617,19 +617,19 @@ func (a *AuditLog) IsDenied() bool {
 // Repository represents a repository configuration entity.
 // It stores configuration overrides for specific repositories.
 type Repository struct {
-	ID      uuid.UUID `json:"id"`      // Unique identifier
-	Name    string    `json:"name"`    // Repository name (owner/repo format)
-	Enabled bool      `json:"enabled"` // Whether the repository is enabled
-	Config  RepoConfig `json:"config"` // Repository-specific configuration overrides
+	ID      uuid.UUID  `json:"id"`      // Unique identifier
+	Name    string     `json:"name"`    // Repository name (owner/repo format)
+	Enabled bool       `json:"enabled"` // Whether the repository is enabled
+	Config  RepoConfig `json:"config"`  // Repository-specific configuration overrides
 }
 
 // RepoConfig represents repository-specific configuration overrides.
 type RepoConfig struct {
-	MaxConcurrency      *int   `json:"maxConcurrency,omitempty"`      // Max concurrent sessions
-	ComplexityThreshold *int   `json:"complexityThreshold,omitempty"` // Complexity threshold for design confirmation
-	ForceDesignConfirm  *bool  `json:"forceDesignConfirm,omitempty"`  // Force design confirmation
+	MaxConcurrency      *int    `json:"maxConcurrency,omitempty"`      // Max concurrent sessions
+	ComplexityThreshold *int    `json:"complexityThreshold,omitempty"` // Complexity threshold for design confirmation
+	ForceDesignConfirm  *bool   `json:"forceDesignConfirm,omitempty"`  // Force design confirmation
 	DefaultModel        *string `json:"defaultModel,omitempty"`        // Default AI model
-	TaskRetryLimit      *int   `json:"taskRetryLimit,omitempty"`      // Max task retry count
+	TaskRetryLimit      *int    `json:"taskRetryLimit,omitempty"`      // Max task retry count
 }
 
 // NewRepository creates a new Repository entity.

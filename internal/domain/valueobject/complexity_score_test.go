@@ -75,10 +75,10 @@ func TestNewComplexityScoreFromDimensions(t *testing.T) {
 		{
 			name: "mixed_values",
 			dims: ComplexityDimensions{
-				EstimatedCodeChange:    80,  // 80 * 30% = 24
-				AffectedModules:        60,  // 60 * 25% = 15
-				BreakingChanges:        40,  // 40 * 25% = 10
-				TestCoverageDifficulty: 50,  // 50 * 20% = 10
+				EstimatedCodeChange:    80, // 80 * 30% = 24
+				AffectedModules:        60, // 60 * 25% = 15
+				BreakingChanges:        40, // 40 * 25% = 10
+				TestCoverageDifficulty: 50, // 50 * 20% = 10
 			},
 			expected: 59, // 24 + 15 + 10 + 10 = 59
 			hasError: false,
