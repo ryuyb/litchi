@@ -1,8 +1,10 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactNode } from "react";
+import { showErrorToast } from "#/lib/api-error";
 
 /**
  * Create QueryClient with optimized defaults for Litchi
+ * Includes global error handling for toast notifications
  */
 export function getQueryClient() {
 	return new QueryClient({
@@ -18,10 +20,16 @@ export function getQueryClient() {
 				retry: 3,
 				// Retry delay with exponential backoff
 				retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+				// Global error handler for queries
+				throwOnError: false,
 			},
 			mutations: {
 				// Retry mutations once
 				retry: 1,
+				// Global error handler for mutations - show toast on error
+				onError: (error) => {
+					showErrorToast(error);
+				},
 			},
 		},
 	});

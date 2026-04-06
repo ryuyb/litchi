@@ -9,6 +9,7 @@ import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { MainLayout } from "../components/layout";
 import TanStackQueryDevtools from "../integrations/tanstack-query/devtools";
 import StoreDevtools from "../lib/store-devtools";
+import { AppToaster } from "../lib/toaster";
 import appCss from "../styles.css?url";
 
 interface MyRouterContext {
@@ -67,6 +68,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 			</head>
 			<body className="font-sans antialiased [overflow-wrap:anywhere] selection:bg-[rgba(79,184,178,0.24)]">
 				<MainLayout>{children}</MainLayout>
+				<AppToaster />
 				<TanStackDevtools
 					config={{
 						position: "bottom-right",

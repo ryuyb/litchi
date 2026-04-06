@@ -481,9 +481,6 @@ export function ValidationConfigForm({
 				});
 				onSaveSuccess?.();
 			},
-			onError: (error) => {
-				setSaveError(error.message || "Failed to save configuration");
-			},
 		},
 	});
 
@@ -495,7 +492,6 @@ export function ValidationConfigForm({
 		testing: { enabled: false },
 	});
 	const [saveSuccess, setSaveSuccess] = useState(false);
-	const [saveError, setSaveError] = useState<string | null>(null);
 
 	// Extract successful data
 	const validationConfig = isSuccessfulValidationConfigResponse(
@@ -531,7 +527,6 @@ export function ValidationConfigForm({
 
 	// Handle save
 	const handleSave = () => {
-		setSaveError(null);
 		updateMutation.mutate({
 			name: repositoryName,
 			data: { config },
@@ -591,11 +586,6 @@ export function ValidationConfigForm({
 					<p className="text-green-600 dark:text-green-400 text-sm">
 						Validation configuration saved successfully!
 					</p>
-				</div>
-			)}
-			{saveError && (
-				<div className="rounded-lg border border-destructive/50 bg-destructive/10 p-3">
-					<p className="text-destructive text-sm">{saveError}</p>
 				</div>
 			)}
 

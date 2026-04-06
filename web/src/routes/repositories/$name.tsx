@@ -74,16 +74,12 @@ function RepositoryConfigPage() {
 					queryKey: getGetApiV1RepositoriesNameEffectiveConfigQueryKey(name),
 				});
 			},
-			onError: (error) => {
-				setSaveError(error.message || "Failed to save configuration");
-			},
 		},
 	});
 
 	// Form state
 	const [config, setConfig] = useState<RepoConfig>({});
 	const [saveSuccess, setSaveSuccess] = useState(false);
-	const [saveError, setSaveError] = useState<string | null>(null);
 
 	// Extract successful data
 	const repository = isSuccessfulRepositoryResponse(repositoryResponse)
@@ -127,7 +123,6 @@ function RepositoryConfigPage() {
 
 	// Handle save
 	const handleSave = () => {
-		setSaveError(null);
 		updateMutation.mutate({
 			name,
 			data: { config },
@@ -227,11 +222,6 @@ function RepositoryConfigPage() {
 					<p className="text-green-600 dark:text-green-400">
 						Configuration saved successfully!
 					</p>
-				</div>
-			)}
-			{saveError && (
-				<div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4">
-					<p className="text-destructive">{saveError}</p>
 				</div>
 			)}
 

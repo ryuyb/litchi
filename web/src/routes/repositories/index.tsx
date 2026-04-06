@@ -1,9 +1,13 @@
+import { useForm } from "@tanstack/react-form";
 import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import type { ColumnDef } from "@tanstack/react-table";
+import { LoaderIcon, PlusIcon } from "lucide-react";
 import { useState } from "react";
+import { z } from "zod";
 import {
 	useGetApiV1Repositories,
+	usePostApiV1Repositories,
 	usePostApiV1RepositoriesNameDisable,
 	usePostApiV1RepositoriesNameEnable,
 } from "#/api/repositories/repositories";
@@ -11,6 +15,39 @@ import type { Repository } from "#/api/schemas";
 import { DataTable } from "#/components/data-table";
 import { Button } from "#/components/ui/button";
 import { Input } from "#/components/ui/input";
+import { Label } from "#/components/ui/label";
+import {
+	Pagination,
+	PaginationContent,
+	PaginationItem,
+	PaginationNext,
+	PaginationPrevious,
+} from "#/components/ui/pagination";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "#/components/ui/select";
+import {
+	Sheet,
+	SheetContent,
+	SheetDescription,
+	SheetFooter,
+	SheetHeader,
+	SheetTitle,
+} from "#/components/ui/sheet";
+
+// Zod schema for repository name validation
+const repositorySchema = z.object({
+	name: z
+		.string()
+		.min(1, "Repository name is required")
+		.refine((val) => val.includes("/"), {
+			message: "Repository name must be in owner/repo format",
+		}),
+});
 
 export const Route = createFileRoute("/repositories/")({
 	component: RepositoriesPage,
@@ -117,13 +154,115 @@ const columns: ColumnDef<Repository>[] = [
 	},
 ];
 
+// Add Repository Sheet component
+interface AddRepositorySheetProps {
+	open: boolean;
+	onOpenChange: (open: boolean) => void;
+}
+
+function AddRepositorySheet({ open, onOpenChange }: AddRepositorySheetProps) {
+	const queryClient = useQueryClient();
+
+	const createMutation = usePostApiV1Repositories({
+		mutation: {
+			onSuccess: () => {
+				onOpenChange(false);
+				form.reset();
+				queryClient.invalidateQueries({
+					queryKey: ["getApiV1Repositories"],
+				});
+			},
+		},
+	});
+
+	const form = useForm({
+		defaultValues: {
+			name: "",
+		},
+		validators: {
+			onChange: repositorySchema,
+		},
+		onSubmit: async ({ value }) => {
+			createMutation.mutate({ data: { name: value.name } });
+		},
+	});
+
+	return (
+		<Sheet open={open} onOpenChange={onOpenChange}>
+			<SheetContent>
+				<SheetHeader>
+					<SheetTitle>Add Repository</SheetTitle>
+					<SheetDescription>
+						Enter the GitHub repository name in owner/repo format to enable
+						processing for this repository.
+					</SheetDescription>
+				</SheetHeader>
+
+				<form
+					onSubmit={(e) => {
+						e.preventDefault();
+						e.stopPropagation();
+						form.handleSubmit();
+					}}
+					className="space-y-4 px-4 py-4"
+				>
+					<form.Field
+						name="name"
+						// biome-ignore lint/correctness/noChildrenProp: TanStack Form uses children as render prop
+						children={(field) => (
+							<div className="space-y-2">
+								<Label htmlFor="name">Repository Name</Label>
+								<Input
+									id="name"
+									placeholder="owner/repo"
+									value={field.state.value}
+									onChange={(e) => field.handleChange(e.target.value)}
+									onBlur={field.handleBlur}
+								/>
+								{field.state.meta.errors.length > 0 && (
+									<p className="text-destructive text-sm">
+										{field.state.meta.errors[0]?.message}
+									</p>
+								)}
+							</div>
+						)}
+					/>
+
+					<SheetFooter className="px-0">
+						<form.Subscribe
+							selector={(state) => [state.canSubmit, state.isSubmitting]}
+							// biome-ignore lint/correctness/noChildrenProp: TanStack Form uses children as render prop
+							children={([canSubmit, isSubmitting]) => (
+								<Button
+									type="submit"
+									disabled={!canSubmit || createMutation.isPending}
+								>
+									{isSubmitting || createMutation.isPending ? (
+										<LoaderIcon className="size-4 animate-spin" />
+									) : (
+										<PlusIcon className="size-4" />
+									)}
+									{isSubmitting || createMutation.isPending
+										? "Adding..."
+										: "Add Repository"}
+								</Button>
+							)}
+						/>
+					</SheetFooter>
+				</form>
+			</SheetContent>
+		</Sheet>
+	);
+}
+
 function RepositoriesPage() {
-	const [pageIndex, setPageIndex] = useState(0);
+	const [page, setPage] = useState(1);
 	const [pageSize, setPageSize] = useState(10);
 	const [search, setSearch] = useState("");
+	const [isAddSheetOpen, setIsAddSheetOpen] = useState(false);
 
 	const { data, isLoading, isError, error } = useGetApiV1Repositories({
-		page: pageIndex + 1,
+		page,
 		pageSize,
 	});
 
@@ -133,20 +272,15 @@ function RepositoriesPage() {
 	const pagination = isSuccess ? data.data.pagination : undefined;
 	const totalPages = pagination?.totalPages ?? 1;
 
-	const handlePaginationChange = (
-		newPageIndex: number,
-		newPageSize: number,
-	) => {
-		setPageIndex(newPageIndex);
-		setPageSize(newPageSize);
-	};
-
 	// Filter by search on client side since API doesn't support search param
 	const filteredRepositories = search
 		? repositories.filter((repo: Repository) =>
 				repo.name?.toLowerCase().includes(search.toLowerCase()),
 			)
 		: repositories;
+
+	const canPreviousPage = page > 1;
+	const canNextPage = page < totalPages;
 
 	return (
 		<div className="space-y-6">
@@ -172,6 +306,10 @@ function RepositoriesPage() {
 							onChange={(e) => setSearch(e.target.value)}
 							className="w-[250px]"
 						/>
+						<Button onClick={() => setIsAddSheetOpen(true)}>
+							<PlusIcon className="size-4" />
+							Add Repository
+						</Button>
 					</div>
 				</div>
 
@@ -191,18 +329,75 @@ function RepositoriesPage() {
 					</div>
 				)}
 
-				<div className="mt-4">
+				<div className="mt-4 space-y-4">
 					<DataTable
 						columns={columns}
 						data={filteredRepositories}
-						pageCount={totalPages}
-						pageIndex={pageIndex}
-						pageSize={pageSize}
-						onPaginationChange={handlePaginationChange}
 						loading={isLoading}
 					/>
+
+					{/* Pagination */}
+					<div className="flex items-center justify-between">
+						<div className="flex items-center space-x-2">
+							<span className="text-sm text-muted-foreground">
+								Rows per page
+							</span>
+							<Select
+								value={`${pageSize}`}
+								onValueChange={(value) => {
+									setPageSize(Number(value));
+									setPage(1);
+								}}
+							>
+								<SelectTrigger className="h-8 w-[70px]">
+									<SelectValue placeholder={pageSize} />
+								</SelectTrigger>
+								<SelectContent side="top">
+									{[10, 20, 30, 40, 50].map((size) => (
+										<SelectItem key={size} value={`${size}`}>
+											{size}
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
+						</div>
+						<Pagination>
+							<PaginationContent>
+								<PaginationItem>
+									<PaginationPrevious
+										onClick={() => setPage(page - 1)}
+										className={
+											!canPreviousPage
+												? "pointer-events-none opacity-50"
+												: "cursor-pointer"
+										}
+									/>
+								</PaginationItem>
+								<PaginationItem>
+									<span className="flex h-9 w-9 items-center justify-center text-sm">
+										{page}
+									</span>
+								</PaginationItem>
+								<PaginationItem>
+									<PaginationNext
+										onClick={() => setPage(page + 1)}
+										className={
+											!canNextPage
+												? "pointer-events-none opacity-50"
+												: "cursor-pointer"
+										}
+									/>
+								</PaginationItem>
+							</PaginationContent>
+						</Pagination>
+					</div>
 				</div>
 			</section>
+
+			<AddRepositorySheet
+				open={isAddSheetOpen}
+				onOpenChange={setIsAddSheetOpen}
+			/>
 		</div>
 	);
 }
