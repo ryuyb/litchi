@@ -24,22 +24,6 @@ func init() {
 
 ## 当前模块列表
 
-### config 模块
-
-| 属性 | 值 |
-|------|-----|
-| 名称 | `config` |
-| 提供 | `*config.Config` |
-| 调用 | - |
-| 依赖 | - |
-| 文件 | `internal/infrastructure/config/viper.go` |
-
-功能：
-- 读取 YAML 配置文件
-- 支持环境变量覆盖 (`LITCHI_*` 前缀)
-- 设置默认值
-- 作为 Fx Provider 注册
-
 ### logger 模块
 
 | 属性 | 值 |
@@ -74,33 +58,32 @@ func init() {
 ## 依赖图
 
 ```
-main.go
+main.go (CLI)
     │
-    ├── config.Module (无依赖)
-    │       │
-    │       └── *config.Config
+    ├── config.NewConfigWithOptions() → *config.Config (loaded before Fx)
     │
-    ├── logger.Module (依赖 config)
-    │       │
-    │       ├── *zap.Logger
-    │       └── *zap.SugaredLogger
-    │
-    └── server.Module (依赖 logger)
-            │
-            └── *fiber.App
-                    │
-                    └── HTTP Server (:8080)
+    └── fx.New(
+            fx.Supply(*config.Config),  // pre-loaded config
+            logger.Module,
+            infrastructure.Module,
+            service.Module,
+            server.Module,
+            static.Module,
+        ).Run()
 ```
 
 ## 模块组合
 
-在 `main.go` 中按依赖顺序组合：
+在 `cmd/litchi/server.go` 中按依赖顺序组合：
 
 ```go
 fx.New(
-    config.Module,   // 先加载（无依赖）
-    logger.Module,   // 其次（依赖 config）
-    server.Module,   // 最后（依赖 logger）
+    fx.Supply(loadedCfg),  // pre-loaded config
+    logger.Module,
+    infrastructure.Module,
+    service.Module,
+    server.Module,
+    static.Module,
 ).Run()
 ```
 

@@ -11,7 +11,7 @@ help:
 	@echo "  make swagger-gen     Generate Swagger/OpenAPI documentation"
 	@echo "  make test            Run all tests"
 	@echo "  make test-short      Run short tests (skip integration tests)"
-	@echo "  make build           Build backend binaries (development mode)"
+	@echo "  make build           Build backend binary (development mode)"
 	@echo "  make build-embed     Build production binary with embedded frontend"
 	@echo "  make frontend-build  Build frontend (TanStack Start SPA mode)"
 	@echo "  make dev             Run backend in development mode"
@@ -27,7 +27,7 @@ generate-mocks:
 swagger-gen:
 	@echo "Generating Swagger documentation (OpenAPI 3.1)..."
 	@mkdir -p ./docs/api
-	swag init --v3.1 -g cmd/server/main.go -d . -o ./docs/api \
+	swag init --v3.1 -g cmd/litchi/server.go -d . -o ./docs/api \
 		--parseInternal --parseDependencyLevel 3 --outputTypes go,json,yaml --propertyStrategy camelcase
 	@echo "Swagger documentation generated in ./docs/api"
 
@@ -43,10 +43,9 @@ test-short:
 test-integration:
 	go test ./... -v -run Integration
 
-# Build backend binaries (development mode - no frontend embedded)
+# Build backend binary (development mode - no frontend embedded)
 build:
-	go build ./cmd/server
-	go build ./cmd/worker
+	go build -ldflags "-X main.Version=dev" ./cmd/litchi
 
 # Build frontend (TanStack Start SPA mode)
 frontend-build:
@@ -64,12 +63,12 @@ copy-dist:
 # Build production binary with embedded frontend
 build-embed: frontend-build copy-dist
 	@echo "Building production binary with embedded frontend..."
-	go build -tags embed ./cmd/server
+	go build -tags embed -ldflags "-X main.Version=$(shell git describe --tags --always --dirty 2>/dev/null || echo dev) -X main.GitCommit=$(shell git rev-parse --short HEAD 2>/dev/null || echo unknown) -X main.BuildDate=$(shell date -u +%Y-%m-%dT%H:%M:%SZ)" ./cmd/litchi
 	@echo "Production binary ready"
 
 # Run backend in development mode
 dev:
-	go run ./cmd/server
+	go run ./cmd/litchi server
 
 # Clean generated mock files
 clean-mocks:

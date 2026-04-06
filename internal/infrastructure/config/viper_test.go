@@ -93,13 +93,13 @@ func TestDetectEnvironment(t *testing.T) {
 				defer os.Unsetenv(k)
 			}
 
-			result := detectEnvironment()
+			result := detectEnvironment("")
 			assert.Equal(t, tt.expected, result)
 		})
 	}
 }
 
-func TestNewConfigWithEnv_EnvironmentField(t *testing.T) {
+func TestNewConfigWithOptions_EnvironmentField(t *testing.T) {
 	projectRoot := getProjectRoot(t)
 
 	// Set required env vars for validation
@@ -114,14 +114,14 @@ func TestNewConfigWithEnv_EnvironmentField(t *testing.T) {
 		os.Unsetenv("LITCHI_CONFIG_DIR")
 	}()
 
-	cfg, err := NewConfigWithEnv(EnvDev, nil)
+	cfg, err := NewConfigWithOptions(LoadOptions{Env: EnvDev})
 	require.NoError(t, err)
 	require.NotNil(t, cfg)
 
 	assert.Equal(t, EnvDev, cfg.Environment())
 }
 
-func TestNewConfigWithEnv_MissingEnvConfig(t *testing.T) {
+func TestNewConfigWithOptions_MissingEnvConfig(t *testing.T) {
 	projectRoot := getProjectRoot(t)
 
 	// Set required env vars for validation
@@ -137,7 +137,7 @@ func TestNewConfigWithEnv_MissingEnvConfig(t *testing.T) {
 	}()
 
 	// Test with an environment that doesn't have a config file
-	cfg, err := NewConfigWithEnv(Environment("nonexistent"), nil)
+	cfg, err := NewConfigWithOptions(LoadOptions{Env: Environment("nonexistent")})
 	require.NoError(t, err) // Should not error, just skip the env config
 	require.NotNil(t, cfg)
 
