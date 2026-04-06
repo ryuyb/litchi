@@ -290,6 +290,25 @@ func (s *RepositoryService) ListRepositories(
 	return repos, nil
 }
 
+// ListRepositoriesWithPagination lists repositories with pagination and optional filtering.
+//
+// Returns empty slice if no repositories found.
+func (s *RepositoryService) ListRepositoriesWithPagination(
+	ctx context.Context,
+	params repository.PaginationParams,
+	filter *repository.RepositoryFilter,
+) ([]*entity.Repository, *repository.PaginationResult, error) {
+	repos, pagination, err := s.repoRepo.ListWithPagination(ctx, params, filter)
+	if err != nil {
+		s.logger.Error("failed to list repositories with pagination",
+			zap.Error(err),
+		)
+		return nil, nil, litchierrors.Wrap(litchierrors.ErrDatabaseOperation, err)
+	}
+
+	return repos, pagination, nil
+}
+
 // ListEnabledRepositories lists all enabled repositories.
 //
 // Returns empty slice if no enabled repositories found.

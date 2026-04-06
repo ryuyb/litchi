@@ -93,9 +93,3 @@ func (h *ErrorHandler) Handle(c fiber.Ctx, err error) error {
 
 	return c.Status(apiErr.Code).JSON(response)
 }
-
-// RegisterErrorHandler registers the global error handler for Fiber App.
-// This should be called in Fx Invoke.
-func RegisterErrorHandler(app *fiber.App, handler *ErrorHandler) {
-	app.Use(handler.Handle)
-}

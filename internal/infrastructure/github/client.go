@@ -13,6 +13,7 @@ import (
 	"github.com/ryuyb/litchi/internal/domain/valueobject"
 	"github.com/ryuyb/litchi/internal/infrastructure/config"
 	"github.com/ryuyb/litchi/internal/pkg/errors"
+	"github.com/ryuyb/litchi/internal/pkg/health"
 	"go.uber.org/zap"
 	"golang.org/x/oauth2"
 )
@@ -114,6 +115,44 @@ func (c *Client) Ping(ctx context.Context) error {
 	}
 	c.rateLimiter.UpdateFromResponse(resp)
 	return nil
+}
+
+// Name returns the health check component name.
+func (c *Client) Name() string {
+	return "github"
+}
+
+// Check performs the health check for GitHub API.
+func (c *Client) Check(ctx context.Context) health.CheckResult {
+	start := time.Now()
+
+	err := c.Ping(ctx)
+	latency := time.Since(start)
+
+	result := health.CheckResult{
+		Name:      c.Name(),
+		LatencyMs: int(latency.Milliseconds()),
+	}
+
+	if err != nil {
+		result.Status = "fail"
+		result.Error = err.Error()
+		result.Message = "GitHub API connection failed"
+		c.logger.Error("github health check failed", zap.Error(err))
+	} else {
+		result.Status = "pass"
+		result.Message = "API connection OK"
+
+		// Add rate limit info if available
+		remaining := c.rateLimiter.GetRemaining()
+		if remaining > 0 {
+			result.Details = map[string]any{
+				"rate_limit_remaining": remaining,
+			}
+		}
+	}
+
+	return result
 }
 
 // executeWithRetry wraps API calls with rate limit handling and retry logic.

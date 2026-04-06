@@ -5,18 +5,9 @@
  * Automated development agent system - from GitHub Issue to Pull Request
  * OpenAPI spec version: 0.1.0
  */
-import type { DesignVersion } from "./designVersion";
 
 export interface Design {
-	id?: string;
-	versions?: DesignVersion[];
-	/** @minimum 1 */
-	currentVersion?: number;
-	/**
-	 * @minimum 0
-	 * @maximum 100
-	 */
-	complexityScore?: number;
-	requireConfirmation?: boolean;
 	confirmed?: boolean;
+	content?: string;
+	currentVersion?: number;
 }

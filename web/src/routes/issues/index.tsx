@@ -1,124 +1,140 @@
 import { createFileRoute } from "@tanstack/react-router";
 import type { ColumnDef } from "@tanstack/react-table";
-import type { Stage, WorkSession } from "#/api/schemas";
+import type { Session } from "#/api/schemas";
+import { SessionCurrentStage, SessionStatus } from "#/api/schemas";
 import { DataTable } from "#/components/data-table";
 
 export const Route = createFileRoute("/issues/")({
 	component: IssuesPage,
 });
 
-// Demo data using generated types
-const demoSessions: WorkSession[] = [
+// Demo data using generated types and constants
+const demoSessions: Session[] = [
 	{
 		id: "550e8400-e29b-41d4-a716-446655440001",
-		stage: "execution" as Stage,
+		currentStage: SessionCurrentStage.execution,
+		status: SessionStatus.active,
+		repository: "ryuyb/litchi",
+		issueNumber: 123,
+		issueTitle: "Add user authentication",
 		issue: {
-			id: "550e8400-e29b-41d4-a716-446655440010",
 			number: 123,
 			title: "Add user authentication",
 			body: "Implement OAuth2 authentication flow",
-			repository: "ryuyb/litchi",
 			author: "ryuyb",
+			url: "https://github.com/ryuyb/litchi/issues/123",
 		},
-		paused: false,
-		terminated: false,
 	},
 	{
 		id: "550e8400-e29b-41d4-a716-446655440002",
-		stage: "clarification" as Stage,
+		currentStage: SessionCurrentStage.clarification,
+		status: SessionStatus.active,
+		repository: "ryuyb/litchi",
+		issueNumber: 121,
+		issueTitle: "Update API documentation",
 		issue: {
-			id: "550e8400-e29b-41d4-a716-446655440011",
 			number: 121,
 			title: "Update API documentation",
 			body: "Add examples for new endpoints",
-			repository: "ryuyb/litchi",
 			author: "contributor",
+			url: "https://github.com/ryuyb/litchi/issues/121",
 		},
-		paused: false,
-		terminated: false,
 	},
 	{
 		id: "550e8400-e29b-41d4-a716-446655440003",
-		stage: "design" as Stage,
+		currentStage: SessionCurrentStage.design,
+		status: SessionStatus.paused,
+		repository: "ryuyb/litchi",
+		issueNumber: 120,
+		issueTitle: "Fix database connection pool",
 		issue: {
-			id: "550e8400-e29b-41d4-a716-446655440012",
 			number: 120,
 			title: "Fix database connection pool",
 			body: "Connection pool exhausted under high load",
-			repository: "ryuyb/litchi",
 			author: "ryuyb",
+			url: "https://github.com/ryuyb/litchi/issues/120",
 		},
-		paused: true,
-		terminated: false,
 	},
 ];
 
-const columns: ColumnDef<WorkSession>[] = [
+const columns: ColumnDef<Session>[] = [
 	{
-		accessorKey: "issue.number",
+		accessorKey: "issueNumber",
 		header: "Issue #",
 		cell: ({ row }) => (
-			<span className="font-mono text-sm">#{row.original.issue.number}</span>
+			<span className="font-mono text-sm">#{row.original.issueNumber}</span>
 		),
 	},
 	{
-		accessorKey: "issue.title",
+		accessorKey: "issueTitle",
 		header: "Title",
 		cell: ({ row }) => (
-			<span className="font-medium">{row.original.issue.title}</span>
+			<span className="font-medium">{row.original.issueTitle}</span>
 		),
 	},
 	{
-		accessorKey: "issue.repository",
+		accessorKey: "repository",
 		header: "Repository",
 		cell: ({ row }) => (
 			<span className="text-muted-foreground text-sm">
-				{row.original.issue.repository}
+				{row.original.repository}
 			</span>
 		),
 	},
 	{
-		accessorKey: "stage",
+		accessorKey: "currentStage",
 		header: "Stage",
 		cell: ({ row }) => {
-			const stageColors: Record<Stage, string> = {
-				clarification:
+			const stage = row.original.currentStage;
+			const stageColors: Record<SessionCurrentStage, string> = {
+				[SessionCurrentStage.clarification]:
 					"bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300",
-				design:
+				[SessionCurrentStage.design]:
 					"bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300",
-				task_breakdown:
+				[SessionCurrentStage.task_breakdown]:
 					"bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300",
-				execution:
+				[SessionCurrentStage.execution]:
 					"bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300",
-				pull_request:
+				[SessionCurrentStage.pull_request]:
 					"bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
-				completed:
+				[SessionCurrentStage.completed]:
 					"bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300",
 			};
+			const colorClass = stage
+				? stageColors[stage]
+				: "bg-gray-100 text-gray-800";
 			return (
 				<span
-					className={`rounded-full px-2 py-0.5 text-xs font-medium ${stageColors[row.original.stage]}`}
+					className={`rounded-full px-2 py-0.5 text-xs font-medium ${colorClass}`}
 				>
-					{row.original.stage.replace("_", " ")}
+					{stage?.replace("_", " ") ?? "unknown"}
 				</span>
 			);
 		},
 	},
 	{
-		accessorKey: "paused",
+		accessorKey: "status",
 		header: "Status",
 		cell: ({ row }) => {
-			if (row.original.terminated) {
+			const status = row.original.status;
+			if (status === SessionStatus.terminated) {
 				return (
 					<span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800 dark:bg-red-900 dark:text-red-300">
 						Terminated
 					</span>
 				);
 			}
-			if (row.original.paused) {
+			if (status === SessionStatus.paused) {
 				return (
 					<span className="rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300">
 						Paused
+					</span>
+				);
+			}
+			if (status === SessionStatus.completed) {
+				return (
+					<span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-800 dark:bg-gray-800 dark:text-gray-300">
+						Completed
 					</span>
 				);
 			}

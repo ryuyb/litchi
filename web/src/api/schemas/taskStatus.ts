@@ -5,17 +5,19 @@
  * Automated development agent system - from GitHub Issue to Pull Request
  * OpenAPI spec version: 0.1.0
  */
+import type { DependencyStatus } from "./dependencyStatus";
+import type { ExecutionResult } from "./executionResult";
 
-/**
- * Task status enum
- */
-export type TaskStatus = (typeof TaskStatus)[keyof typeof TaskStatus];
-
-export const TaskStatus = {
-	pending: "pending",
-	running: "running",
-	completed: "completed",
-	failed: "failed",
-	skipped: "skipped",
-	retrying: "retrying",
-} as const;
+export interface TaskStatus {
+	dependencies?: DependencyStatus[];
+	description?: string;
+	executionResult?: ExecutionResult;
+	failureReason?: string;
+	order?: number;
+	retryCount?: number;
+	sessionId?: string;
+	status?: string;
+	statusDisplayName?: string;
+	suggestion?: string;
+	taskId?: string;
+}

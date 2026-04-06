@@ -499,8 +499,8 @@ func TestTaskService_GetTaskList_Success(t *testing.T) {
 
 	sessionRepo.On("FindByID", ctx, session.ID).Return(session, nil)
 
-	// Execute
-	listStatus, err := svc.GetTaskList(ctx, session.ID)
+	// Execute (no filter, page 1, pageSize 20)
+	listStatus, err := svc.GetTaskList(ctx, session.ID, 1, 20, nil)
 
 	// Assert
 	assert.NoError(t, err)

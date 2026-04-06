@@ -181,17 +181,29 @@ var (
 	ErrTaskSkipped            = ErrorCode{Code: "L4TASK0001", Message: "Task was skipped", Category: "DOM", Severity: 4}
 	ErrNoTestsFound           = ErrorCode{Code: "L4ENV0001", Message: "No tests found", Category: "ENV", Severity: 4}
 	ErrTaskAlreadyComplete    = ErrorCode{Code: "L4TASK0002", Message: "Task already completed", Category: "DOM", Severity: 4}
+	ErrTaskNotFound           = ErrorCode{Code: "L4TASK0003", Message: "Task not found", Category: "DOM", Severity: 4}
 	ErrSessionNotFound        = ErrorCode{Code: "L4DOM0001", Message: "Work session not found", Category: "DOM", Severity: 4}
 	ErrIssueNotFound          = ErrorCode{Code: "L4DOM0002", Message: "Issue not found", Category: "DOM", Severity: 4}
 	ErrInvalidStage           = ErrorCode{Code: "L4DOM0003", Message: "Invalid stage", Category: "DOM", Severity: 4}
-	ErrInvalidStageTransition = ErrorCode{Code: "L4DOM0007", Message: "Invalid stage transition", Category: "DOM", Severity: 4}
 	ErrInvalidTaskStatus      = ErrorCode{Code: "L4DOM0004", Message: "Invalid task status", Category: "DOM", Severity: 4}
 	ErrInvalidComplexityScore = ErrorCode{Code: "L4DOM0005", Message: "Invalid complexity score", Category: "DOM", Severity: 4}
 	ErrInvalidClarityScore    = ErrorCode{Code: "L4DOM0006", Message: "Invalid clarity score", Category: "DOM", Severity: 4}
+	ErrInvalidStageTransition = ErrorCode{Code: "L4DOM0007", Message: "Invalid stage transition", Category: "DOM", Severity: 4}
 	ErrVersionConflict        = ErrorCode{Code: "L4DOM0008", Message: "Version conflict (optimistic lock)", Category: "DOM", Severity: 4}
+	ErrRepositoryNotFound     = ErrorCode{Code: "L4DOM0009", Message: "Repository not found", Category: "DOM", Severity: 4}
+	ErrAuditLogNotFound       = ErrorCode{Code: "L4DOM0010", Message: "Audit log not found", Category: "DOM", Severity: 4}
+	ErrSessionAlreadyExists   = ErrorCode{Code: "L4DOM0011", Message: "Session already exists for this issue", Category: "DOM", Severity: 4}
+	ErrSessionPaused          = ErrorCode{Code: "L4DOM0012", Message: "Session is paused", Category: "DOM", Severity: 4}
+	ErrSessionNotPaused       = ErrorCode{Code: "L4DOM0013", Message: "Session is not paused", Category: "DOM", Severity: 4}
+	ErrSessionTerminated      = ErrorCode{Code: "L4DOM0014", Message: "Session is terminated", Category: "DOM", Severity: 4}
+	ErrSessionActive          = ErrorCode{Code: "L4DOM0015", Message: "Session is still active", Category: "DOM", Severity: 4}
 	ErrPermissionDenied       = ErrorCode{Code: "L4API0001", Message: "Permission denied", Category: "API", Severity: 4}
 	ErrValidationFailed       = ErrorCode{Code: "L4API0002", Message: "Validation failed", Category: "API", Severity: 4}
 	ErrBadRequest             = ErrorCode{Code: "L4API0003", Message: "Bad request", Category: "API", Severity: 4}
+	ErrInvalidQueryParam      = ErrorCode{Code: "L4API0004", Message: "Invalid query parameter", Category: "API", Severity: 4}
+	ErrInvalidRequestBody     = ErrorCode{Code: "L4API0005", Message: "Invalid request body", Category: "API", Severity: 4}
+	ErrDependencyNotMet       = ErrorCode{Code: "L4TASK0004", Message: "Task dependencies not met", Category: "DOM", Severity: 4}
+	ErrRetryLimitExceeded     = ErrorCode{Code: "L4TASK0005", Message: "Task retry limit exceeded", Category: "DOM", Severity: 4}
 
 	// Git naming convention errors
 	ErrGitBranchNamingViolation = ErrorCode{Code: "L4GIT0001", Message: "Git branch naming convention violation", Category: "GIT", Severity: 4}
@@ -233,18 +245,26 @@ func ToAPIError(err error) APIErrorCode {
 		case 2:
 			return APIErrInternal
 		case 3, 4:
+			// API category errors
 			if litchiErr.Code.Category == "API" {
 				if Is(err, ErrPermissionDenied) {
 					return APIErrForbidden
 				}
-				if Is(err, ErrValidationFailed) || Is(err, ErrBadRequest) {
+				if Is(err, ErrValidationFailed) || Is(err, ErrBadRequest) ||
+					Is(err, ErrInvalidQueryParam) || Is(err, ErrInvalidRequestBody) {
 					return APIErrBadRequest
 				}
 			}
-			if Is(err, ErrSessionNotFound) || Is(err, ErrIssueNotFound) {
+			// Not found errors
+			if Is(err, ErrSessionNotFound) || Is(err, ErrIssueNotFound) ||
+				Is(err, ErrTaskNotFound) || Is(err, ErrRepositoryNotFound) ||
+				Is(err, ErrAuditLogNotFound) {
 				return APIErrNotFound
 			}
-			if Is(err, ErrVersionConflict) {
+			// Conflict errors
+			if Is(err, ErrVersionConflict) || Is(err, ErrSessionAlreadyExists) ||
+				Is(err, ErrSessionPaused) || Is(err, ErrSessionNotPaused) ||
+				Is(err, ErrSessionTerminated) || Is(err, ErrSessionActive) {
 				return APIErrConflict
 			}
 			return APIErrBadRequest

@@ -208,4 +208,12 @@ type RepositoryRepository interface {
 
 	// ExistsByName checks if a repository exists by name.
 	ExistsByName(ctx context.Context, name string) (bool, error)
+
+	// ListWithPagination lists repositories with pagination and optional filtering.
+	ListWithPagination(ctx context.Context, params PaginationParams, filter *RepositoryFilter) ([]*entity.Repository, *PaginationResult, error)
+}
+
+// RepositoryFilter holds filter parameters for Repository queries.
+type RepositoryFilter struct {
+	Enabled *bool // Filter by enabled status (nil means all)
 }

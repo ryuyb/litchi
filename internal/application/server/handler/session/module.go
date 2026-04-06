@@ -2,18 +2,8 @@
 package session
 
 import (
-	"github.com/ryuyb/litchi/internal/pkg/fxutil"
 	"go.uber.org/fx"
 )
-
-func init() {
-	fxutil.RegisterModule(fxutil.ModuleInfo{
-		Name:     "session-handler",
-		Provides: []string{"*session.Handler"},
-		Depends:  []string{"*zap.Logger", "*config.Config", "*repository.WorkSessionRepository", "SessionControlService"},
-		Invokes:  []string{"RegisterRoutes"},
-	})
-}
 
 // Module provides the session handler as an Fx module.
 // It registers the handler as a Provider and the routes as an Invoke.

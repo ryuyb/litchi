@@ -6,16 +6,13 @@
  * OpenAPI spec version: 0.1.0
  */
 
+/**
+ * Optional embedded details
+ */
 export interface Issue {
-	id: string;
-	/** @minimum 1 */
-	number: number;
-	/** @maxLength 500 */
-	title: string;
+	author?: string;
 	body?: string;
-	/** @pattern ^[^/]+/[^/]+$ */
-	repository: string;
-	author: string;
-	createdAt?: string;
-	updatedAt?: string;
+	number?: number;
+	title?: string;
+	url?: string;
 }

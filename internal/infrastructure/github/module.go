@@ -10,6 +10,7 @@ import (
 	"github.com/ryuyb/litchi/internal/infrastructure/config"
 	"github.com/ryuyb/litchi/internal/infrastructure/github/webhook"
 	"github.com/ryuyb/litchi/internal/infrastructure/persistence/postgres/repositories"
+	"github.com/ryuyb/litchi/internal/pkg/health"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -20,6 +21,11 @@ var Module = fx.Module("github",
 	fx.Provide(
 		// GitHub client and services
 		NewClient,
+		// Provide Client as health.Checker
+		fx.Annotate(
+			func(c *Client) health.Checker { return c },
+			fx.ResultTags(`group:"health_checkers"`),
+		),
 		NewIssueService,
 		NewPullRequestService,
 

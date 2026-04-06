@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/ryuyb/litchi/internal/pkg/errors"
+	"github.com/ryuyb/litchi/internal/pkg/health"
 	"go.uber.org/zap"
 )
 
@@ -201,4 +202,43 @@ func (e *CommandExecutor) SetTimeout(timeout time.Duration) {
 // SetGitBinary updates the Git binary path.
 func (e *CommandExecutor) SetGitBinary(gitBinary string) {
 	e.gitBinary = gitBinary
+}
+
+// Name returns the health check component name.
+func (e *CommandExecutor) Name() string {
+	return "git"
+}
+
+// Check performs the health check for Git binary availability.
+func (e *CommandExecutor) Check(ctx context.Context) health.CheckResult {
+	start := time.Now()
+
+	// Execute git --version to check if Git is available
+	result, err := e.Exec(ctx, "", "--version")
+	latency := time.Since(start)
+
+	healthResult := health.CheckResult{
+		Name:      e.Name(),
+		LatencyMs: int(latency.Milliseconds()),
+	}
+
+	if err != nil {
+		healthResult.Status = "fail"
+		healthResult.Error = err.Error()
+		healthResult.Message = "Git binary not available"
+		e.logger.Error("git health check failed", zap.Error(err))
+	} else {
+		healthResult.Status = "pass"
+		healthResult.Message = "Git binary available"
+
+		// Extract version from output
+		version := result.Stdout
+		if version != "" {
+			healthResult.Details = map[string]any{
+				"version": strings.TrimSpace(version),
+			}
+		}
+	}
+
+	return healthResult
 }

@@ -14,9 +14,15 @@ export interface TaskList {
 	hasFailedTask?: boolean;
 	inProgress?: number;
 	maxRetryLimit?: number;
+	page?: number;
+	pageSize?: number;
 	pending?: number;
 	sessionId?: string;
 	skipped?: number;
 	tasks?: Task[];
+	/** Pagination info (based on filtered results) */
+	totalItems?: number;
+	totalPages?: number;
+	/** Total tasks in session (unfiltered) */
 	totalTasks?: number;
 }

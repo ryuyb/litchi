@@ -7,6 +7,7 @@ import (
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/gofiber/contrib/v3/swaggerui"
+	"github.com/ryuyb/litchi/internal/application/server/middleware"
 	"github.com/ryuyb/litchi/internal/infrastructure/config"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -16,19 +17,20 @@ import (
 type Params struct {
 	fx.In
 
-	Logger *zap.Logger
-	Config *config.Config
+	Logger      *zap.Logger
+	Config      *config.Config
+	ErrorHandler *middleware.ErrorHandler // Required for global error handling
 }
 
 // NewApp creates a new Fiber application.
 func NewApp(p Params) *fiber.App {
 	app := fiber.New(fiber.Config{
-		AppName: "Litchi v" + p.Config.Server.Version,
+		AppName:      "Litchi v" + p.Config.Server.Version,
+		ErrorHandler: p.ErrorHandler.Handle, // Set global error handler
 	})
 
-	// Health check endpoint
-	healthHandler := NewHealthHandler(p.Config.Server.Version)
-	app.Get("/health", healthHandler.Handle)
+	// Health check endpoint is now registered via health handler module
+	// See: internal/application/server/handler/health/routes.go
 
 	// Swagger UI - controlled by configuration
 	if p.Config.Server.EnableSwaggerUI {

@@ -2,6 +2,7 @@ package server
 
 import (
 	"github.com/gofiber/fiber/v3"
+	"github.com/ryuyb/litchi/internal/application/server/handler"
 	"github.com/ryuyb/litchi/internal/infrastructure/config"
 	"github.com/ryuyb/litchi/internal/pkg/fxutil"
 	"go.uber.org/fx"
@@ -13,14 +14,19 @@ func init() {
 		Name:     "server",
 		Provides: []string{"*fiber.App"},
 		Invokes:  []string{"StartAppHook"},
-		Depends:  []string{"*zap.Logger"},
+		Depends:  []string{"*zap.Logger", "*middleware.ErrorHandler", "api-handlers"},
 	})
 }
 
 // Module provides the HTTP server module for Fx.
 var Module = fx.Module("server",
-	// HTTP server providers will be added in T6.1.*
+	// Fiber App Provider
 	fx.Provide(NewApp),
+
+	// Handler Module (all REST API handlers)
+	fx.Options(handler.Module),
+
+	// Lifecycle Hooks
 	fx.Invoke(StartAppHook),
 )
 

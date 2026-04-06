@@ -5,24 +5,20 @@ import (
 	"time"
 
 	"github.com/ryuyb/litchi/internal/infrastructure/config"
-	"github.com/ryuyb/litchi/internal/pkg/fxutil"
+	"github.com/ryuyb/litchi/internal/pkg/health"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
-
-func init() {
-	fxutil.RegisterModule(fxutil.ModuleInfo{
-		Name:     "git",
-		Provides: []string{"*CommandExecutor", "GitClient", "BranchService", "WorktreeService", "CommitService", "ConflictDetector"},
-		Invokes:  []string{},
-		Depends:  []string{"*config.Config", "*zap.Logger"},
-	})
-}
 
 // Module provides Git operations via Fx.
 var Module = fx.Module("git",
 	fx.Provide(
 		NewCommandExecutorFromConfig,
+		// Provide CommandExecutor as health.Checker
+		fx.Annotate(
+			func(e *CommandExecutor) health.Checker { return e },
+			fx.ResultTags(`group:"health_checkers"`),
+		),
 		NewGitClientFromDeps,
 		NewBranchServiceFromDeps,
 		NewWorktreeServiceFromDeps,

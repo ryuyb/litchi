@@ -10,48 +10,67 @@ import type {
 	DataTag,
 	DefinedInitialDataOptions,
 	DefinedUseQueryResult,
+	MutationFunction,
 	QueryClient,
 	QueryFunction,
 	QueryKey,
 	UndefinedInitialDataOptions,
+	UseMutationOptions,
+	UseMutationResult,
 	UseQueryOptions,
 	UseQueryResult,
 } from "@tanstack/react-query";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 
 import type {
-	ErrorResponse,
-	ListSessions200,
-	ListSessionsParams,
-	WorkSession,
+	ApiError,
+	GetApiV1SessionsBody,
+	GetApiV1SessionsIdBody,
+	GetApiV1SessionsIdDetailBody,
+	GetApiV1SessionsParams,
+	PaginatedResponseSession,
+	PostApiV1SessionsIdPauseBody,
+	PostApiV1SessionsIdRestartBody,
+	PostApiV1SessionsIdResumeBody,
+	PostApiV1SessionsIdRollbackBody,
+	PostApiV1SessionsIdTerminateBody,
+	Session,
 } from "../schemas";
 
 /**
- * Get a paginated list of work sessions
+ * Retrieves a paginated list of work sessions with optional filtering by status, stage, and repository
  * @summary List work sessions
  */
-export type listSessionsResponse200 = {
-	data: ListSessions200;
+export type getApiV1SessionsResponse200 = {
+	data: PaginatedResponseSession;
 	status: 200;
 };
 
-export type listSessionsResponse400 = {
-	data: ErrorResponse;
+export type getApiV1SessionsResponse400 = {
+	data: ApiError;
 	status: 400;
 };
 
-export type listSessionsResponseSuccess = listSessionsResponse200 & {
+export type getApiV1SessionsResponse500 = {
+	data: ApiError;
+	status: 500;
+};
+
+export type getApiV1SessionsResponseSuccess = getApiV1SessionsResponse200 & {
 	headers: Headers;
 };
-export type listSessionsResponseError = listSessionsResponse400 & {
+export type getApiV1SessionsResponseError = (
+	| getApiV1SessionsResponse400
+	| getApiV1SessionsResponse500
+) & {
 	headers: Headers;
 };
 
-export type listSessionsResponse =
-	| listSessionsResponseSuccess
-	| listSessionsResponseError;
+export type getApiV1SessionsResponse =
+	| getApiV1SessionsResponseSuccess
+	| getApiV1SessionsResponseError;
 
-export const getListSessionsUrl = (params?: ListSessionsParams) => {
+export const getGetApiV1SessionsUrl = (params?: GetApiV1SessionsParams) => {
 	const normalizedParams = new URLSearchParams();
 
 	Object.entries(params || {}).forEach(([key, value]) => {
@@ -63,79 +82,102 @@ export const getListSessionsUrl = (params?: ListSessionsParams) => {
 	const stringifiedParams = normalizedParams.toString();
 
 	return stringifiedParams.length > 0
-		? `/sessions?${stringifiedParams}`
-		: `/sessions`;
+		? `/api/v1/sessions?${stringifiedParams}`
+		: `/api/v1/sessions`;
 };
 
-export const listSessions = async (
-	params?: ListSessionsParams,
+export const getApiV1Sessions = async (
+	getApiV1SessionsBody: GetApiV1SessionsBody,
+	params?: GetApiV1SessionsParams,
 	options?: RequestInit,
-): Promise<listSessionsResponse> => {
-	const res = await fetch(getListSessionsUrl(params), {
+): Promise<getApiV1SessionsResponse> => {
+	const res = await fetch(getGetApiV1SessionsUrl(params), {
 		...options,
 		method: "GET",
+		headers: { "Content-Type": "application/json", ...options?.headers },
+		body: JSON.stringify(getApiV1SessionsBody),
 	});
 
 	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
 
-	const data: listSessionsResponse["data"] = body ? JSON.parse(body) : {};
+	const data: getApiV1SessionsResponse["data"] = body ? JSON.parse(body) : {};
 	return {
 		data,
 		status: res.status,
 		headers: res.headers,
-	} as listSessionsResponse;
+	} as getApiV1SessionsResponse;
 };
 
-export const getListSessionsQueryKey = (params?: ListSessionsParams) => {
-	return [`/sessions`, ...(params ? [params] : [])] as const;
+export const getGetApiV1SessionsQueryKey = (
+	getApiV1SessionsBody?: GetApiV1SessionsBody,
+	params?: GetApiV1SessionsParams,
+) => {
+	return [
+		`/api/v1/sessions`,
+		...(params ? [params] : []),
+		getApiV1SessionsBody,
+	] as const;
 };
 
-export const getListSessionsQueryOptions = <
-	TData = Awaited<ReturnType<typeof listSessions>>,
-	TError = ErrorResponse,
+export const getGetApiV1SessionsQueryOptions = <
+	TData = Awaited<ReturnType<typeof getApiV1Sessions>>,
+	TError = ApiError,
 >(
-	params?: ListSessionsParams,
+	getApiV1SessionsBody: GetApiV1SessionsBody,
+	params?: GetApiV1SessionsParams,
 	options?: {
 		query?: Partial<
-			UseQueryOptions<Awaited<ReturnType<typeof listSessions>>, TError, TData>
+			UseQueryOptions<
+				Awaited<ReturnType<typeof getApiV1Sessions>>,
+				TError,
+				TData
+			>
 		>;
 		fetch?: RequestInit;
 	},
 ) => {
 	const { query: queryOptions, fetch: fetchOptions } = options ?? {};
 
-	const queryKey = queryOptions?.queryKey ?? getListSessionsQueryKey(params);
+	const queryKey =
+		queryOptions?.queryKey ??
+		getGetApiV1SessionsQueryKey(getApiV1SessionsBody, params);
 
-	const queryFn: QueryFunction<Awaited<ReturnType<typeof listSessions>>> = ({
-		signal,
-	}) => listSessions(params, { signal, ...fetchOptions });
+	const queryFn: QueryFunction<
+		Awaited<ReturnType<typeof getApiV1Sessions>>
+	> = ({ signal }) =>
+		getApiV1Sessions(getApiV1SessionsBody, params, { signal, ...fetchOptions });
 
 	return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-		Awaited<ReturnType<typeof listSessions>>,
+		Awaited<ReturnType<typeof getApiV1Sessions>>,
 		TError,
 		TData
 	> & { queryKey: DataTag<QueryKey, TData, TError> };
 };
 
-export type ListSessionsQueryResult = NonNullable<
-	Awaited<ReturnType<typeof listSessions>>
+export type GetApiV1SessionsQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getApiV1Sessions>>
 >;
-export type ListSessionsQueryError = ErrorResponse;
+export type GetApiV1SessionsQueryError = ApiError;
 
-export function useListSessions<
-	TData = Awaited<ReturnType<typeof listSessions>>,
-	TError = ErrorResponse,
+export function useGetApiV1Sessions<
+	TData = Awaited<ReturnType<typeof getApiV1Sessions>>,
+	TError = ApiError,
 >(
-	params: undefined | ListSessionsParams,
+	getApiV1SessionsBody: GetApiV1SessionsBody,
+	params: undefined | GetApiV1SessionsParams,
 	options: {
 		query: Partial<
-			UseQueryOptions<Awaited<ReturnType<typeof listSessions>>, TError, TData>
+			UseQueryOptions<
+				Awaited<ReturnType<typeof getApiV1Sessions>>,
+				TError,
+				TData
+			>
 		> &
 			Pick<
 				DefinedInitialDataOptions<
-					Awaited<ReturnType<typeof listSessions>>,
+					Awaited<ReturnType<typeof getApiV1Sessions>>,
 					TError,
-					Awaited<ReturnType<typeof listSessions>>
+					Awaited<ReturnType<typeof getApiV1Sessions>>
 				>,
 				"initialData"
 			>;
@@ -145,20 +187,25 @@ export function useListSessions<
 ): DefinedUseQueryResult<TData, TError> & {
 	queryKey: DataTag<QueryKey, TData, TError>;
 };
-export function useListSessions<
-	TData = Awaited<ReturnType<typeof listSessions>>,
-	TError = ErrorResponse,
+export function useGetApiV1Sessions<
+	TData = Awaited<ReturnType<typeof getApiV1Sessions>>,
+	TError = ApiError,
 >(
-	params?: ListSessionsParams,
+	getApiV1SessionsBody: GetApiV1SessionsBody,
+	params?: GetApiV1SessionsParams,
 	options?: {
 		query?: Partial<
-			UseQueryOptions<Awaited<ReturnType<typeof listSessions>>, TError, TData>
+			UseQueryOptions<
+				Awaited<ReturnType<typeof getApiV1Sessions>>,
+				TError,
+				TData
+			>
 		> &
 			Pick<
 				UndefinedInitialDataOptions<
-					Awaited<ReturnType<typeof listSessions>>,
+					Awaited<ReturnType<typeof getApiV1Sessions>>,
 					TError,
-					Awaited<ReturnType<typeof listSessions>>
+					Awaited<ReturnType<typeof getApiV1Sessions>>
 				>,
 				"initialData"
 			>;
@@ -168,14 +215,19 @@ export function useListSessions<
 ): UseQueryResult<TData, TError> & {
 	queryKey: DataTag<QueryKey, TData, TError>;
 };
-export function useListSessions<
-	TData = Awaited<ReturnType<typeof listSessions>>,
-	TError = ErrorResponse,
+export function useGetApiV1Sessions<
+	TData = Awaited<ReturnType<typeof getApiV1Sessions>>,
+	TError = ApiError,
 >(
-	params?: ListSessionsParams,
+	getApiV1SessionsBody: GetApiV1SessionsBody,
+	params?: GetApiV1SessionsParams,
 	options?: {
 		query?: Partial<
-			UseQueryOptions<Awaited<ReturnType<typeof listSessions>>, TError, TData>
+			UseQueryOptions<
+				Awaited<ReturnType<typeof getApiV1Sessions>>,
+				TError,
+				TData
+			>
 		>;
 		fetch?: RequestInit;
 	},
@@ -187,14 +239,19 @@ export function useListSessions<
  * @summary List work sessions
  */
 
-export function useListSessions<
-	TData = Awaited<ReturnType<typeof listSessions>>,
-	TError = ErrorResponse,
+export function useGetApiV1Sessions<
+	TData = Awaited<ReturnType<typeof getApiV1Sessions>>,
+	TError = ApiError,
 >(
-	params?: ListSessionsParams,
+	getApiV1SessionsBody: GetApiV1SessionsBody,
+	params?: GetApiV1SessionsParams,
 	options?: {
 		query?: Partial<
-			UseQueryOptions<Awaited<ReturnType<typeof listSessions>>, TError, TData>
+			UseQueryOptions<
+				Awaited<ReturnType<typeof getApiV1Sessions>>,
+				TError,
+				TData
+			>
 		>;
 		fetch?: RequestInit;
 	},
@@ -202,7 +259,11 @@ export function useListSessions<
 ): UseQueryResult<TData, TError> & {
 	queryKey: DataTag<QueryKey, TData, TError>;
 } {
-	const queryOptions = getListSessionsQueryOptions(params, options);
+	const queryOptions = getGetApiV1SessionsQueryOptions(
+		getApiV1SessionsBody,
+		params,
+		options,
+	);
 
 	const query = useQuery(queryOptions, queryClient) as UseQueryResult<
 		TData,
@@ -213,76 +274,105 @@ export function useListSessions<
 }
 
 /**
- * Retrieve a single work session by its ID
- * @summary Get work session by ID
+ * Retrieves a work session by its unique identifier
+ * @summary Get work session
  */
-export type getSessionResponse200 = {
-	data: WorkSession;
+export type getApiV1SessionsIdResponse200 = {
+	data: Session;
 	status: 200;
 };
 
-export type getSessionResponse404 = {
-	data: ErrorResponse;
+export type getApiV1SessionsIdResponse400 = {
+	data: ApiError;
+	status: 400;
+};
+
+export type getApiV1SessionsIdResponse404 = {
+	data: ApiError;
 	status: 404;
 };
 
-export type getSessionResponseSuccess = getSessionResponse200 & {
+export type getApiV1SessionsIdResponse500 = {
+	data: ApiError;
+	status: 500;
+};
+
+export type getApiV1SessionsIdResponseSuccess =
+	getApiV1SessionsIdResponse200 & {
+		headers: Headers;
+	};
+export type getApiV1SessionsIdResponseError = (
+	| getApiV1SessionsIdResponse400
+	| getApiV1SessionsIdResponse404
+	| getApiV1SessionsIdResponse500
+) & {
 	headers: Headers;
 };
-export type getSessionResponseError = getSessionResponse404 & {
-	headers: Headers;
+
+export type getApiV1SessionsIdResponse =
+	| getApiV1SessionsIdResponseSuccess
+	| getApiV1SessionsIdResponseError;
+
+export const getGetApiV1SessionsIdUrl = (id: string) => {
+	return `/api/v1/sessions/${id}`;
 };
 
-export type getSessionResponse =
-	| getSessionResponseSuccess
-	| getSessionResponseError;
-
-export const getGetSessionUrl = (id: string) => {
-	return `/sessions/${id}`;
-};
-
-export const getSession = async (
+export const getApiV1SessionsId = async (
 	id: string,
+	getApiV1SessionsIdBody: GetApiV1SessionsIdBody,
 	options?: RequestInit,
-): Promise<getSessionResponse> => {
-	const res = await fetch(getGetSessionUrl(id), {
+): Promise<getApiV1SessionsIdResponse> => {
+	const res = await fetch(getGetApiV1SessionsIdUrl(id), {
 		...options,
 		method: "GET",
+		headers: { "Content-Type": "application/json", ...options?.headers },
+		body: JSON.stringify(getApiV1SessionsIdBody),
 	});
 
 	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
 
-	const data: getSessionResponse["data"] = body ? JSON.parse(body) : {};
+	const data: getApiV1SessionsIdResponse["data"] = body ? JSON.parse(body) : {};
 	return {
 		data,
 		status: res.status,
 		headers: res.headers,
-	} as getSessionResponse;
+	} as getApiV1SessionsIdResponse;
 };
 
-export const getGetSessionQueryKey = (id: string) => {
-	return [`/sessions/${id}`] as const;
+export const getGetApiV1SessionsIdQueryKey = (
+	id: string,
+	getApiV1SessionsIdBody?: GetApiV1SessionsIdBody,
+) => {
+	return [`/api/v1/sessions/${id}`, getApiV1SessionsIdBody] as const;
 };
 
-export const getGetSessionQueryOptions = <
-	TData = Awaited<ReturnType<typeof getSession>>,
-	TError = ErrorResponse,
+export const getGetApiV1SessionsIdQueryOptions = <
+	TData = Awaited<ReturnType<typeof getApiV1SessionsId>>,
+	TError = ApiError,
 >(
 	id: string,
+	getApiV1SessionsIdBody: GetApiV1SessionsIdBody,
 	options?: {
 		query?: Partial<
-			UseQueryOptions<Awaited<ReturnType<typeof getSession>>, TError, TData>
+			UseQueryOptions<
+				Awaited<ReturnType<typeof getApiV1SessionsId>>,
+				TError,
+				TData
+			>
 		>;
 		fetch?: RequestInit;
 	},
 ) => {
 	const { query: queryOptions, fetch: fetchOptions } = options ?? {};
 
-	const queryKey = queryOptions?.queryKey ?? getGetSessionQueryKey(id);
+	const queryKey =
+		queryOptions?.queryKey ??
+		getGetApiV1SessionsIdQueryKey(id, getApiV1SessionsIdBody);
 
-	const queryFn: QueryFunction<Awaited<ReturnType<typeof getSession>>> = ({
-		signal,
-	}) => getSession(id, { signal, ...fetchOptions });
+	const queryFn: QueryFunction<
+		Awaited<ReturnType<typeof getApiV1SessionsId>>
+	> = ({ signal }) =>
+		getApiV1SessionsId(id, getApiV1SessionsIdBody, { signal, ...fetchOptions });
 
 	return {
 		queryKey,
@@ -290,31 +380,36 @@ export const getGetSessionQueryOptions = <
 		enabled: !!id,
 		...queryOptions,
 	} as UseQueryOptions<
-		Awaited<ReturnType<typeof getSession>>,
+		Awaited<ReturnType<typeof getApiV1SessionsId>>,
 		TError,
 		TData
 	> & { queryKey: DataTag<QueryKey, TData, TError> };
 };
 
-export type GetSessionQueryResult = NonNullable<
-	Awaited<ReturnType<typeof getSession>>
+export type GetApiV1SessionsIdQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getApiV1SessionsId>>
 >;
-export type GetSessionQueryError = ErrorResponse;
+export type GetApiV1SessionsIdQueryError = ApiError;
 
-export function useGetSession<
-	TData = Awaited<ReturnType<typeof getSession>>,
-	TError = ErrorResponse,
+export function useGetApiV1SessionsId<
+	TData = Awaited<ReturnType<typeof getApiV1SessionsId>>,
+	TError = ApiError,
 >(
 	id: string,
+	getApiV1SessionsIdBody: GetApiV1SessionsIdBody,
 	options: {
 		query: Partial<
-			UseQueryOptions<Awaited<ReturnType<typeof getSession>>, TError, TData>
+			UseQueryOptions<
+				Awaited<ReturnType<typeof getApiV1SessionsId>>,
+				TError,
+				TData
+			>
 		> &
 			Pick<
 				DefinedInitialDataOptions<
-					Awaited<ReturnType<typeof getSession>>,
+					Awaited<ReturnType<typeof getApiV1SessionsId>>,
 					TError,
-					Awaited<ReturnType<typeof getSession>>
+					Awaited<ReturnType<typeof getApiV1SessionsId>>
 				>,
 				"initialData"
 			>;
@@ -324,20 +419,25 @@ export function useGetSession<
 ): DefinedUseQueryResult<TData, TError> & {
 	queryKey: DataTag<QueryKey, TData, TError>;
 };
-export function useGetSession<
-	TData = Awaited<ReturnType<typeof getSession>>,
-	TError = ErrorResponse,
+export function useGetApiV1SessionsId<
+	TData = Awaited<ReturnType<typeof getApiV1SessionsId>>,
+	TError = ApiError,
 >(
 	id: string,
+	getApiV1SessionsIdBody: GetApiV1SessionsIdBody,
 	options?: {
 		query?: Partial<
-			UseQueryOptions<Awaited<ReturnType<typeof getSession>>, TError, TData>
+			UseQueryOptions<
+				Awaited<ReturnType<typeof getApiV1SessionsId>>,
+				TError,
+				TData
+			>
 		> &
 			Pick<
 				UndefinedInitialDataOptions<
-					Awaited<ReturnType<typeof getSession>>,
+					Awaited<ReturnType<typeof getApiV1SessionsId>>,
 					TError,
-					Awaited<ReturnType<typeof getSession>>
+					Awaited<ReturnType<typeof getApiV1SessionsId>>
 				>,
 				"initialData"
 			>;
@@ -347,14 +447,19 @@ export function useGetSession<
 ): UseQueryResult<TData, TError> & {
 	queryKey: DataTag<QueryKey, TData, TError>;
 };
-export function useGetSession<
-	TData = Awaited<ReturnType<typeof getSession>>,
-	TError = ErrorResponse,
+export function useGetApiV1SessionsId<
+	TData = Awaited<ReturnType<typeof getApiV1SessionsId>>,
+	TError = ApiError,
 >(
 	id: string,
+	getApiV1SessionsIdBody: GetApiV1SessionsIdBody,
 	options?: {
 		query?: Partial<
-			UseQueryOptions<Awaited<ReturnType<typeof getSession>>, TError, TData>
+			UseQueryOptions<
+				Awaited<ReturnType<typeof getApiV1SessionsId>>,
+				TError,
+				TData
+			>
 		>;
 		fetch?: RequestInit;
 	},
@@ -363,17 +468,22 @@ export function useGetSession<
 	queryKey: DataTag<QueryKey, TData, TError>;
 };
 /**
- * @summary Get work session by ID
+ * @summary Get work session
  */
 
-export function useGetSession<
-	TData = Awaited<ReturnType<typeof getSession>>,
-	TError = ErrorResponse,
+export function useGetApiV1SessionsId<
+	TData = Awaited<ReturnType<typeof getApiV1SessionsId>>,
+	TError = ApiError,
 >(
 	id: string,
+	getApiV1SessionsIdBody: GetApiV1SessionsIdBody,
 	options?: {
 		query?: Partial<
-			UseQueryOptions<Awaited<ReturnType<typeof getSession>>, TError, TData>
+			UseQueryOptions<
+				Awaited<ReturnType<typeof getApiV1SessionsId>>,
+				TError,
+				TData
+			>
 		>;
 		fetch?: RequestInit;
 	},
@@ -381,7 +491,11 @@ export function useGetSession<
 ): UseQueryResult<TData, TError> & {
 	queryKey: DataTag<QueryKey, TData, TError>;
 } {
-	const queryOptions = getGetSessionQueryOptions(id, options);
+	const queryOptions = getGetApiV1SessionsIdQueryOptions(
+		id,
+		getApiV1SessionsIdBody,
+		options,
+	);
 
 	const query = useQuery(queryOptions, queryClient) as UseQueryResult<
 		TData,
@@ -390,3 +504,978 @@ export function useGetSession<
 
 	return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * Retrieves a work session with complete details including issue info, design content, task list, and execution context
+ * @summary Get session details
+ */
+export type getApiV1SessionsIdDetailResponse200 = {
+	data: Session;
+	status: 200;
+};
+
+export type getApiV1SessionsIdDetailResponse400 = {
+	data: ApiError;
+	status: 400;
+};
+
+export type getApiV1SessionsIdDetailResponse404 = {
+	data: ApiError;
+	status: 404;
+};
+
+export type getApiV1SessionsIdDetailResponse500 = {
+	data: ApiError;
+	status: 500;
+};
+
+export type getApiV1SessionsIdDetailResponseSuccess =
+	getApiV1SessionsIdDetailResponse200 & {
+		headers: Headers;
+	};
+export type getApiV1SessionsIdDetailResponseError = (
+	| getApiV1SessionsIdDetailResponse400
+	| getApiV1SessionsIdDetailResponse404
+	| getApiV1SessionsIdDetailResponse500
+) & {
+	headers: Headers;
+};
+
+export type getApiV1SessionsIdDetailResponse =
+	| getApiV1SessionsIdDetailResponseSuccess
+	| getApiV1SessionsIdDetailResponseError;
+
+export const getGetApiV1SessionsIdDetailUrl = (id: string) => {
+	return `/api/v1/sessions/${id}/detail`;
+};
+
+export const getApiV1SessionsIdDetail = async (
+	id: string,
+	getApiV1SessionsIdDetailBody: GetApiV1SessionsIdDetailBody,
+	options?: RequestInit,
+): Promise<getApiV1SessionsIdDetailResponse> => {
+	const res = await fetch(getGetApiV1SessionsIdDetailUrl(id), {
+		...options,
+		method: "GET",
+		headers: { "Content-Type": "application/json", ...options?.headers },
+		body: JSON.stringify(getApiV1SessionsIdDetailBody),
+	});
+
+	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+	const data: getApiV1SessionsIdDetailResponse["data"] = body
+		? JSON.parse(body)
+		: {};
+	return {
+		data,
+		status: res.status,
+		headers: res.headers,
+	} as getApiV1SessionsIdDetailResponse;
+};
+
+export const getGetApiV1SessionsIdDetailQueryKey = (
+	id: string,
+	getApiV1SessionsIdDetailBody?: GetApiV1SessionsIdDetailBody,
+) => {
+	return [
+		`/api/v1/sessions/${id}/detail`,
+		getApiV1SessionsIdDetailBody,
+	] as const;
+};
+
+export const getGetApiV1SessionsIdDetailQueryOptions = <
+	TData = Awaited<ReturnType<typeof getApiV1SessionsIdDetail>>,
+	TError = ApiError,
+>(
+	id: string,
+	getApiV1SessionsIdDetailBody: GetApiV1SessionsIdDetailBody,
+	options?: {
+		query?: Partial<
+			UseQueryOptions<
+				Awaited<ReturnType<typeof getApiV1SessionsIdDetail>>,
+				TError,
+				TData
+			>
+		>;
+		fetch?: RequestInit;
+	},
+) => {
+	const { query: queryOptions, fetch: fetchOptions } = options ?? {};
+
+	const queryKey =
+		queryOptions?.queryKey ??
+		getGetApiV1SessionsIdDetailQueryKey(id, getApiV1SessionsIdDetailBody);
+
+	const queryFn: QueryFunction<
+		Awaited<ReturnType<typeof getApiV1SessionsIdDetail>>
+	> = ({ signal }) =>
+		getApiV1SessionsIdDetail(id, getApiV1SessionsIdDetailBody, {
+			signal,
+			...fetchOptions,
+		});
+
+	return {
+		queryKey,
+		queryFn,
+		enabled: !!id,
+		...queryOptions,
+	} as UseQueryOptions<
+		Awaited<ReturnType<typeof getApiV1SessionsIdDetail>>,
+		TError,
+		TData
+	> & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetApiV1SessionsIdDetailQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getApiV1SessionsIdDetail>>
+>;
+export type GetApiV1SessionsIdDetailQueryError = ApiError;
+
+export function useGetApiV1SessionsIdDetail<
+	TData = Awaited<ReturnType<typeof getApiV1SessionsIdDetail>>,
+	TError = ApiError,
+>(
+	id: string,
+	getApiV1SessionsIdDetailBody: GetApiV1SessionsIdDetailBody,
+	options: {
+		query: Partial<
+			UseQueryOptions<
+				Awaited<ReturnType<typeof getApiV1SessionsIdDetail>>,
+				TError,
+				TData
+			>
+		> &
+			Pick<
+				DefinedInitialDataOptions<
+					Awaited<ReturnType<typeof getApiV1SessionsIdDetail>>,
+					TError,
+					Awaited<ReturnType<typeof getApiV1SessionsIdDetail>>
+				>,
+				"initialData"
+			>;
+		fetch?: RequestInit;
+	},
+	queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+	queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetApiV1SessionsIdDetail<
+	TData = Awaited<ReturnType<typeof getApiV1SessionsIdDetail>>,
+	TError = ApiError,
+>(
+	id: string,
+	getApiV1SessionsIdDetailBody: GetApiV1SessionsIdDetailBody,
+	options?: {
+		query?: Partial<
+			UseQueryOptions<
+				Awaited<ReturnType<typeof getApiV1SessionsIdDetail>>,
+				TError,
+				TData
+			>
+		> &
+			Pick<
+				UndefinedInitialDataOptions<
+					Awaited<ReturnType<typeof getApiV1SessionsIdDetail>>,
+					TError,
+					Awaited<ReturnType<typeof getApiV1SessionsIdDetail>>
+				>,
+				"initialData"
+			>;
+		fetch?: RequestInit;
+	},
+	queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+	queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetApiV1SessionsIdDetail<
+	TData = Awaited<ReturnType<typeof getApiV1SessionsIdDetail>>,
+	TError = ApiError,
+>(
+	id: string,
+	getApiV1SessionsIdDetailBody: GetApiV1SessionsIdDetailBody,
+	options?: {
+		query?: Partial<
+			UseQueryOptions<
+				Awaited<ReturnType<typeof getApiV1SessionsIdDetail>>,
+				TError,
+				TData
+			>
+		>;
+		fetch?: RequestInit;
+	},
+	queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+	queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary Get session details
+ */
+
+export function useGetApiV1SessionsIdDetail<
+	TData = Awaited<ReturnType<typeof getApiV1SessionsIdDetail>>,
+	TError = ApiError,
+>(
+	id: string,
+	getApiV1SessionsIdDetailBody: GetApiV1SessionsIdDetailBody,
+	options?: {
+		query?: Partial<
+			UseQueryOptions<
+				Awaited<ReturnType<typeof getApiV1SessionsIdDetail>>,
+				TError,
+				TData
+			>
+		>;
+		fetch?: RequestInit;
+	},
+	queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+	queryKey: DataTag<QueryKey, TData, TError>;
+} {
+	const queryOptions = getGetApiV1SessionsIdDetailQueryOptions(
+		id,
+		getApiV1SessionsIdDetailBody,
+		options,
+	);
+
+	const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+		TData,
+		TError
+	> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+	return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * Pauses an active work session with a specified reason. Only active sessions can be paused.
+ * @summary Pause work session
+ */
+export type postApiV1SessionsIdPauseResponse200 = {
+	data: Session;
+	status: 200;
+};
+
+export type postApiV1SessionsIdPauseResponse400 = {
+	data: ApiError;
+	status: 400;
+};
+
+export type postApiV1SessionsIdPauseResponse404 = {
+	data: ApiError;
+	status: 404;
+};
+
+export type postApiV1SessionsIdPauseResponse409 = {
+	data: ApiError;
+	status: 409;
+};
+
+export type postApiV1SessionsIdPauseResponse500 = {
+	data: ApiError;
+	status: 500;
+};
+
+export type postApiV1SessionsIdPauseResponseSuccess =
+	postApiV1SessionsIdPauseResponse200 & {
+		headers: Headers;
+	};
+export type postApiV1SessionsIdPauseResponseError = (
+	| postApiV1SessionsIdPauseResponse400
+	| postApiV1SessionsIdPauseResponse404
+	| postApiV1SessionsIdPauseResponse409
+	| postApiV1SessionsIdPauseResponse500
+) & {
+	headers: Headers;
+};
+
+export type postApiV1SessionsIdPauseResponse =
+	| postApiV1SessionsIdPauseResponseSuccess
+	| postApiV1SessionsIdPauseResponseError;
+
+export const getPostApiV1SessionsIdPauseUrl = (id: string) => {
+	return `/api/v1/sessions/${id}/pause`;
+};
+
+export const postApiV1SessionsIdPause = async (
+	id: string,
+	postApiV1SessionsIdPauseBody: PostApiV1SessionsIdPauseBody,
+	options?: RequestInit,
+): Promise<postApiV1SessionsIdPauseResponse> => {
+	const res = await fetch(getPostApiV1SessionsIdPauseUrl(id), {
+		...options,
+		method: "POST",
+		headers: { "Content-Type": "application/json", ...options?.headers },
+		body: JSON.stringify(postApiV1SessionsIdPauseBody),
+	});
+
+	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+	const data: postApiV1SessionsIdPauseResponse["data"] = body
+		? JSON.parse(body)
+		: {};
+	return {
+		data,
+		status: res.status,
+		headers: res.headers,
+	} as postApiV1SessionsIdPauseResponse;
+};
+
+export const getPostApiV1SessionsIdPauseMutationOptions = <
+	TError = ApiError,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof postApiV1SessionsIdPause>>,
+		TError,
+		{ id: string; data: PostApiV1SessionsIdPauseBody },
+		TContext
+	>;
+	fetch?: RequestInit;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof postApiV1SessionsIdPause>>,
+	TError,
+	{ id: string; data: PostApiV1SessionsIdPauseBody },
+	TContext
+> => {
+	const mutationKey = ["postApiV1SessionsIdPause"];
+	const { mutation: mutationOptions, fetch: fetchOptions } = options
+		? options.mutation &&
+			"mutationKey" in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey }, fetch: undefined };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof postApiV1SessionsIdPause>>,
+		{ id: string; data: PostApiV1SessionsIdPauseBody }
+	> = (props) => {
+		const { id, data } = props ?? {};
+
+		return postApiV1SessionsIdPause(id, data, fetchOptions);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type PostApiV1SessionsIdPauseMutationResult = NonNullable<
+	Awaited<ReturnType<typeof postApiV1SessionsIdPause>>
+>;
+export type PostApiV1SessionsIdPauseMutationBody = PostApiV1SessionsIdPauseBody;
+export type PostApiV1SessionsIdPauseMutationError = ApiError;
+
+/**
+ * @summary Pause work session
+ */
+export const usePostApiV1SessionsIdPause = <
+	TError = ApiError,
+	TContext = unknown,
+>(
+	options?: {
+		mutation?: UseMutationOptions<
+			Awaited<ReturnType<typeof postApiV1SessionsIdPause>>,
+			TError,
+			{ id: string; data: PostApiV1SessionsIdPauseBody },
+			TContext
+		>;
+		fetch?: RequestInit;
+	},
+	queryClient?: QueryClient,
+): UseMutationResult<
+	Awaited<ReturnType<typeof postApiV1SessionsIdPause>>,
+	TError,
+	{ id: string; data: PostApiV1SessionsIdPauseBody },
+	TContext
+> => {
+	return useMutation(
+		getPostApiV1SessionsIdPauseMutationOptions(options),
+		queryClient,
+	);
+};
+/**
+ * Creates a new work session for the same GitHub issue as a terminated session. The new session starts from the clarification stage.
+ * @summary Restart work session
+ */
+export type postApiV1SessionsIdRestartResponse201 = {
+	data: Session;
+	status: 201;
+};
+
+export type postApiV1SessionsIdRestartResponse400 = {
+	data: ApiError;
+	status: 400;
+};
+
+export type postApiV1SessionsIdRestartResponse404 = {
+	data: ApiError;
+	status: 404;
+};
+
+export type postApiV1SessionsIdRestartResponse409 = {
+	data: ApiError;
+	status: 409;
+};
+
+export type postApiV1SessionsIdRestartResponse500 = {
+	data: ApiError;
+	status: 500;
+};
+
+export type postApiV1SessionsIdRestartResponseSuccess =
+	postApiV1SessionsIdRestartResponse201 & {
+		headers: Headers;
+	};
+export type postApiV1SessionsIdRestartResponseError = (
+	| postApiV1SessionsIdRestartResponse400
+	| postApiV1SessionsIdRestartResponse404
+	| postApiV1SessionsIdRestartResponse409
+	| postApiV1SessionsIdRestartResponse500
+) & {
+	headers: Headers;
+};
+
+export type postApiV1SessionsIdRestartResponse =
+	| postApiV1SessionsIdRestartResponseSuccess
+	| postApiV1SessionsIdRestartResponseError;
+
+export const getPostApiV1SessionsIdRestartUrl = (id: string) => {
+	return `/api/v1/sessions/${id}/restart`;
+};
+
+export const postApiV1SessionsIdRestart = async (
+	id: string,
+	postApiV1SessionsIdRestartBody: PostApiV1SessionsIdRestartBody,
+	options?: RequestInit,
+): Promise<postApiV1SessionsIdRestartResponse> => {
+	const res = await fetch(getPostApiV1SessionsIdRestartUrl(id), {
+		...options,
+		method: "POST",
+		headers: { "Content-Type": "application/json", ...options?.headers },
+		body: JSON.stringify(postApiV1SessionsIdRestartBody),
+	});
+
+	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+	const data: postApiV1SessionsIdRestartResponse["data"] = body
+		? JSON.parse(body)
+		: {};
+	return {
+		data,
+		status: res.status,
+		headers: res.headers,
+	} as postApiV1SessionsIdRestartResponse;
+};
+
+export const getPostApiV1SessionsIdRestartMutationOptions = <
+	TError = ApiError,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof postApiV1SessionsIdRestart>>,
+		TError,
+		{ id: string; data: PostApiV1SessionsIdRestartBody },
+		TContext
+	>;
+	fetch?: RequestInit;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof postApiV1SessionsIdRestart>>,
+	TError,
+	{ id: string; data: PostApiV1SessionsIdRestartBody },
+	TContext
+> => {
+	const mutationKey = ["postApiV1SessionsIdRestart"];
+	const { mutation: mutationOptions, fetch: fetchOptions } = options
+		? options.mutation &&
+			"mutationKey" in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey }, fetch: undefined };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof postApiV1SessionsIdRestart>>,
+		{ id: string; data: PostApiV1SessionsIdRestartBody }
+	> = (props) => {
+		const { id, data } = props ?? {};
+
+		return postApiV1SessionsIdRestart(id, data, fetchOptions);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type PostApiV1SessionsIdRestartMutationResult = NonNullable<
+	Awaited<ReturnType<typeof postApiV1SessionsIdRestart>>
+>;
+export type PostApiV1SessionsIdRestartMutationBody =
+	PostApiV1SessionsIdRestartBody;
+export type PostApiV1SessionsIdRestartMutationError = ApiError;
+
+/**
+ * @summary Restart work session
+ */
+export const usePostApiV1SessionsIdRestart = <
+	TError = ApiError,
+	TContext = unknown,
+>(
+	options?: {
+		mutation?: UseMutationOptions<
+			Awaited<ReturnType<typeof postApiV1SessionsIdRestart>>,
+			TError,
+			{ id: string; data: PostApiV1SessionsIdRestartBody },
+			TContext
+		>;
+		fetch?: RequestInit;
+	},
+	queryClient?: QueryClient,
+): UseMutationResult<
+	Awaited<ReturnType<typeof postApiV1SessionsIdRestart>>,
+	TError,
+	{ id: string; data: PostApiV1SessionsIdRestartBody },
+	TContext
+> => {
+	return useMutation(
+		getPostApiV1SessionsIdRestartMutationOptions(options),
+		queryClient,
+	);
+};
+/**
+ * Resumes a paused work session. Only paused sessions can be resumed.
+ * @summary Resume work session
+ */
+export type postApiV1SessionsIdResumeResponse200 = {
+	data: Session;
+	status: 200;
+};
+
+export type postApiV1SessionsIdResumeResponse400 = {
+	data: ApiError;
+	status: 400;
+};
+
+export type postApiV1SessionsIdResumeResponse404 = {
+	data: ApiError;
+	status: 404;
+};
+
+export type postApiV1SessionsIdResumeResponse409 = {
+	data: ApiError;
+	status: 409;
+};
+
+export type postApiV1SessionsIdResumeResponse500 = {
+	data: ApiError;
+	status: 500;
+};
+
+export type postApiV1SessionsIdResumeResponseSuccess =
+	postApiV1SessionsIdResumeResponse200 & {
+		headers: Headers;
+	};
+export type postApiV1SessionsIdResumeResponseError = (
+	| postApiV1SessionsIdResumeResponse400
+	| postApiV1SessionsIdResumeResponse404
+	| postApiV1SessionsIdResumeResponse409
+	| postApiV1SessionsIdResumeResponse500
+) & {
+	headers: Headers;
+};
+
+export type postApiV1SessionsIdResumeResponse =
+	| postApiV1SessionsIdResumeResponseSuccess
+	| postApiV1SessionsIdResumeResponseError;
+
+export const getPostApiV1SessionsIdResumeUrl = (id: string) => {
+	return `/api/v1/sessions/${id}/resume`;
+};
+
+export const postApiV1SessionsIdResume = async (
+	id: string,
+	postApiV1SessionsIdResumeBody: PostApiV1SessionsIdResumeBody,
+	options?: RequestInit,
+): Promise<postApiV1SessionsIdResumeResponse> => {
+	const res = await fetch(getPostApiV1SessionsIdResumeUrl(id), {
+		...options,
+		method: "POST",
+		headers: { "Content-Type": "application/json", ...options?.headers },
+		body: JSON.stringify(postApiV1SessionsIdResumeBody),
+	});
+
+	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+	const data: postApiV1SessionsIdResumeResponse["data"] = body
+		? JSON.parse(body)
+		: {};
+	return {
+		data,
+		status: res.status,
+		headers: res.headers,
+	} as postApiV1SessionsIdResumeResponse;
+};
+
+export const getPostApiV1SessionsIdResumeMutationOptions = <
+	TError = ApiError,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof postApiV1SessionsIdResume>>,
+		TError,
+		{ id: string; data: PostApiV1SessionsIdResumeBody },
+		TContext
+	>;
+	fetch?: RequestInit;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof postApiV1SessionsIdResume>>,
+	TError,
+	{ id: string; data: PostApiV1SessionsIdResumeBody },
+	TContext
+> => {
+	const mutationKey = ["postApiV1SessionsIdResume"];
+	const { mutation: mutationOptions, fetch: fetchOptions } = options
+		? options.mutation &&
+			"mutationKey" in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey }, fetch: undefined };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof postApiV1SessionsIdResume>>,
+		{ id: string; data: PostApiV1SessionsIdResumeBody }
+	> = (props) => {
+		const { id, data } = props ?? {};
+
+		return postApiV1SessionsIdResume(id, data, fetchOptions);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type PostApiV1SessionsIdResumeMutationResult = NonNullable<
+	Awaited<ReturnType<typeof postApiV1SessionsIdResume>>
+>;
+export type PostApiV1SessionsIdResumeMutationBody =
+	PostApiV1SessionsIdResumeBody;
+export type PostApiV1SessionsIdResumeMutationError = ApiError;
+
+/**
+ * @summary Resume work session
+ */
+export const usePostApiV1SessionsIdResume = <
+	TError = ApiError,
+	TContext = unknown,
+>(
+	options?: {
+		mutation?: UseMutationOptions<
+			Awaited<ReturnType<typeof postApiV1SessionsIdResume>>,
+			TError,
+			{ id: string; data: PostApiV1SessionsIdResumeBody },
+			TContext
+		>;
+		fetch?: RequestInit;
+	},
+	queryClient?: QueryClient,
+): UseMutationResult<
+	Awaited<ReturnType<typeof postApiV1SessionsIdResume>>,
+	TError,
+	{ id: string; data: PostApiV1SessionsIdResumeBody },
+	TContext
+> => {
+	return useMutation(
+		getPostApiV1SessionsIdResumeMutationOptions(options),
+		queryClient,
+	);
+};
+/**
+ * Rolls back a work session to a specified previous stage (clarification, design, or task_breakdown). Only active sessions can be rolled back.
+ * @summary Rollback work session
+ */
+export type postApiV1SessionsIdRollbackResponse200 = {
+	data: Session;
+	status: 200;
+};
+
+export type postApiV1SessionsIdRollbackResponse400 = {
+	data: ApiError;
+	status: 400;
+};
+
+export type postApiV1SessionsIdRollbackResponse404 = {
+	data: ApiError;
+	status: 404;
+};
+
+export type postApiV1SessionsIdRollbackResponse409 = {
+	data: ApiError;
+	status: 409;
+};
+
+export type postApiV1SessionsIdRollbackResponse500 = {
+	data: ApiError;
+	status: 500;
+};
+
+export type postApiV1SessionsIdRollbackResponseSuccess =
+	postApiV1SessionsIdRollbackResponse200 & {
+		headers: Headers;
+	};
+export type postApiV1SessionsIdRollbackResponseError = (
+	| postApiV1SessionsIdRollbackResponse400
+	| postApiV1SessionsIdRollbackResponse404
+	| postApiV1SessionsIdRollbackResponse409
+	| postApiV1SessionsIdRollbackResponse500
+) & {
+	headers: Headers;
+};
+
+export type postApiV1SessionsIdRollbackResponse =
+	| postApiV1SessionsIdRollbackResponseSuccess
+	| postApiV1SessionsIdRollbackResponseError;
+
+export const getPostApiV1SessionsIdRollbackUrl = (id: string) => {
+	return `/api/v1/sessions/${id}/rollback`;
+};
+
+export const postApiV1SessionsIdRollback = async (
+	id: string,
+	postApiV1SessionsIdRollbackBody: PostApiV1SessionsIdRollbackBody,
+	options?: RequestInit,
+): Promise<postApiV1SessionsIdRollbackResponse> => {
+	const res = await fetch(getPostApiV1SessionsIdRollbackUrl(id), {
+		...options,
+		method: "POST",
+		headers: { "Content-Type": "application/json", ...options?.headers },
+		body: JSON.stringify(postApiV1SessionsIdRollbackBody),
+	});
+
+	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+	const data: postApiV1SessionsIdRollbackResponse["data"] = body
+		? JSON.parse(body)
+		: {};
+	return {
+		data,
+		status: res.status,
+		headers: res.headers,
+	} as postApiV1SessionsIdRollbackResponse;
+};
+
+export const getPostApiV1SessionsIdRollbackMutationOptions = <
+	TError = ApiError,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof postApiV1SessionsIdRollback>>,
+		TError,
+		{ id: string; data: PostApiV1SessionsIdRollbackBody },
+		TContext
+	>;
+	fetch?: RequestInit;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof postApiV1SessionsIdRollback>>,
+	TError,
+	{ id: string; data: PostApiV1SessionsIdRollbackBody },
+	TContext
+> => {
+	const mutationKey = ["postApiV1SessionsIdRollback"];
+	const { mutation: mutationOptions, fetch: fetchOptions } = options
+		? options.mutation &&
+			"mutationKey" in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey }, fetch: undefined };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof postApiV1SessionsIdRollback>>,
+		{ id: string; data: PostApiV1SessionsIdRollbackBody }
+	> = (props) => {
+		const { id, data } = props ?? {};
+
+		return postApiV1SessionsIdRollback(id, data, fetchOptions);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type PostApiV1SessionsIdRollbackMutationResult = NonNullable<
+	Awaited<ReturnType<typeof postApiV1SessionsIdRollback>>
+>;
+export type PostApiV1SessionsIdRollbackMutationBody =
+	PostApiV1SessionsIdRollbackBody;
+export type PostApiV1SessionsIdRollbackMutationError = ApiError;
+
+/**
+ * @summary Rollback work session
+ */
+export const usePostApiV1SessionsIdRollback = <
+	TError = ApiError,
+	TContext = unknown,
+>(
+	options?: {
+		mutation?: UseMutationOptions<
+			Awaited<ReturnType<typeof postApiV1SessionsIdRollback>>,
+			TError,
+			{ id: string; data: PostApiV1SessionsIdRollbackBody },
+			TContext
+		>;
+		fetch?: RequestInit;
+	},
+	queryClient?: QueryClient,
+): UseMutationResult<
+	Awaited<ReturnType<typeof postApiV1SessionsIdRollback>>,
+	TError,
+	{ id: string; data: PostApiV1SessionsIdRollbackBody },
+	TContext
+> => {
+	return useMutation(
+		getPostApiV1SessionsIdRollbackMutationOptions(options),
+		queryClient,
+	);
+};
+/**
+ * Terminates a work session permanently. Active or paused sessions can be terminated.
+ * @summary Terminate work session
+ */
+export type postApiV1SessionsIdTerminateResponse200 = {
+	data: Session;
+	status: 200;
+};
+
+export type postApiV1SessionsIdTerminateResponse400 = {
+	data: ApiError;
+	status: 400;
+};
+
+export type postApiV1SessionsIdTerminateResponse404 = {
+	data: ApiError;
+	status: 404;
+};
+
+export type postApiV1SessionsIdTerminateResponse409 = {
+	data: ApiError;
+	status: 409;
+};
+
+export type postApiV1SessionsIdTerminateResponse500 = {
+	data: ApiError;
+	status: 500;
+};
+
+export type postApiV1SessionsIdTerminateResponseSuccess =
+	postApiV1SessionsIdTerminateResponse200 & {
+		headers: Headers;
+	};
+export type postApiV1SessionsIdTerminateResponseError = (
+	| postApiV1SessionsIdTerminateResponse400
+	| postApiV1SessionsIdTerminateResponse404
+	| postApiV1SessionsIdTerminateResponse409
+	| postApiV1SessionsIdTerminateResponse500
+) & {
+	headers: Headers;
+};
+
+export type postApiV1SessionsIdTerminateResponse =
+	| postApiV1SessionsIdTerminateResponseSuccess
+	| postApiV1SessionsIdTerminateResponseError;
+
+export const getPostApiV1SessionsIdTerminateUrl = (id: string) => {
+	return `/api/v1/sessions/${id}/terminate`;
+};
+
+export const postApiV1SessionsIdTerminate = async (
+	id: string,
+	postApiV1SessionsIdTerminateBody: PostApiV1SessionsIdTerminateBody,
+	options?: RequestInit,
+): Promise<postApiV1SessionsIdTerminateResponse> => {
+	const res = await fetch(getPostApiV1SessionsIdTerminateUrl(id), {
+		...options,
+		method: "POST",
+		headers: { "Content-Type": "application/json", ...options?.headers },
+		body: JSON.stringify(postApiV1SessionsIdTerminateBody),
+	});
+
+	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+	const data: postApiV1SessionsIdTerminateResponse["data"] = body
+		? JSON.parse(body)
+		: {};
+	return {
+		data,
+		status: res.status,
+		headers: res.headers,
+	} as postApiV1SessionsIdTerminateResponse;
+};
+
+export const getPostApiV1SessionsIdTerminateMutationOptions = <
+	TError = ApiError,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof postApiV1SessionsIdTerminate>>,
+		TError,
+		{ id: string; data: PostApiV1SessionsIdTerminateBody },
+		TContext
+	>;
+	fetch?: RequestInit;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof postApiV1SessionsIdTerminate>>,
+	TError,
+	{ id: string; data: PostApiV1SessionsIdTerminateBody },
+	TContext
+> => {
+	const mutationKey = ["postApiV1SessionsIdTerminate"];
+	const { mutation: mutationOptions, fetch: fetchOptions } = options
+		? options.mutation &&
+			"mutationKey" in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey }, fetch: undefined };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof postApiV1SessionsIdTerminate>>,
+		{ id: string; data: PostApiV1SessionsIdTerminateBody }
+	> = (props) => {
+		const { id, data } = props ?? {};
+
+		return postApiV1SessionsIdTerminate(id, data, fetchOptions);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type PostApiV1SessionsIdTerminateMutationResult = NonNullable<
+	Awaited<ReturnType<typeof postApiV1SessionsIdTerminate>>
+>;
+export type PostApiV1SessionsIdTerminateMutationBody =
+	PostApiV1SessionsIdTerminateBody;
+export type PostApiV1SessionsIdTerminateMutationError = ApiError;
+
+/**
+ * @summary Terminate work session
+ */
+export const usePostApiV1SessionsIdTerminate = <
+	TError = ApiError,
+	TContext = unknown,
+>(
+	options?: {
+		mutation?: UseMutationOptions<
+			Awaited<ReturnType<typeof postApiV1SessionsIdTerminate>>,
+			TError,
+			{ id: string; data: PostApiV1SessionsIdTerminateBody },
+			TContext
+		>;
+		fetch?: RequestInit;
+	},
+	queryClient?: QueryClient,
+): UseMutationResult<
+	Awaited<ReturnType<typeof postApiV1SessionsIdTerminate>>,
+	TError,
+	{ id: string; data: PostApiV1SessionsIdTerminateBody },
+	TContext
+> => {
+	return useMutation(
+		getPostApiV1SessionsIdTerminateMutationOptions(options),
+		queryClient,
+	);
+};

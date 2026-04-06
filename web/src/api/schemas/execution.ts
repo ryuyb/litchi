@@ -5,17 +5,9 @@
  * Automated development agent system - from GitHub Issue to Pull Request
  * OpenAPI spec version: 0.1.0
  */
-import type { DeprecatedBranch } from "./deprecatedBranch";
-import type { FailedTask } from "./failedTask";
-import type { Task } from "./task";
 
 export interface Execution {
-	id?: string;
-	worktreePath?: string;
-	branch?: string;
-	completedTasks?: string[];
-	currentTask?: string;
-	failedTask?: FailedTask;
-	fixTasks?: Task[];
-	rollbackHistory?: DeprecatedBranch[];
+	currentTaskDesc?: string;
+	currentTaskId?: string;
+	startedAt?: string;
 }

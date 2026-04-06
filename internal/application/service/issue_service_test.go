@@ -164,6 +164,51 @@ func (m *mockRepoRepo) ExistsByName(ctx context.Context, name string) (bool, err
 	return ok, nil
 }
 
+func (m *mockRepoRepo) ListWithPagination(ctx context.Context, params repository.PaginationParams, filter *repository.RepositoryFilter) ([]*entity.Repository, *repository.PaginationResult, error) {
+	// Apply filter
+	var filtered []*entity.Repository
+	for _, repo := range m.repos {
+		if filter != nil && filter.Enabled != nil {
+			if repo.Enabled != *filter.Enabled {
+				continue
+			}
+		}
+		filtered = append(filtered, repo)
+	}
+
+	// Calculate pagination
+	total := len(filtered)
+	page := params.Page
+	if page < 1 {
+		page = 1
+	}
+	pageSize := params.PageSize
+	if pageSize < 1 {
+		pageSize = 20
+	}
+
+	totalPages := total / pageSize
+	if total%pageSize > 0 {
+		totalPages++
+	}
+
+	start := (page - 1) * pageSize
+	end := start + pageSize
+	if start > total {
+		start = total
+	}
+	if end > total {
+		end = total
+	}
+
+	return filtered[start:end], &repository.PaginationResult{
+		Page:       page,
+		PageSize:   pageSize,
+		TotalItems: total,
+		TotalPages: totalPages,
+	}, nil
+}
+
 // mockAuditRepo is a mock implementation of AuditLogRepository.
 type mockAuditRepo struct {
 	logs    []*entity.AuditLog

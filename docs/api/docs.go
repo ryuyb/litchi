@@ -8,7 +8,42 @@ const docTemplate = `{
     "schemes": {{ marshal .Schemes }},
     "components": {
         "schemas": {
-            "dto.ErrorResponse": {
+            "AgentConfig": {
+                "properties": {
+                    "approvalTimeout": {
+                        "example": "24h",
+                        "type": "string"
+                    },
+                    "maxConcurrency": {
+                        "example": 3,
+                        "type": "integer"
+                    },
+                    "taskRetryLimit": {
+                        "example": 3,
+                        "type": "integer"
+                    },
+                    "type": {
+                        "example": "claude-code",
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "AgentConfigUpdate": {
+                "properties": {
+                    "approvalTimeout": {
+                        "type": "string"
+                    },
+                    "maxConcurrency": {
+                        "type": "integer"
+                    },
+                    "taskRetryLimit": {
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
+            "ApiError": {
                 "properties": {
                     "code": {
                         "example": "BAD_REQUEST",
@@ -25,7 +60,410 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
-            "dto.HealthCheckResponse": {
+            "AuditConfigDTO": {
+                "properties": {
+                    "enabled": {
+                        "example": true,
+                        "type": "boolean"
+                    },
+                    "maxOutputLength": {
+                        "example": 1000,
+                        "type": "integer"
+                    },
+                    "retentionDays": {
+                        "example": 90,
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
+            "AuditConfigUpdate": {
+                "properties": {
+                    "enabled": {
+                        "type": "boolean"
+                    },
+                    "maxOutputLength": {
+                        "type": "integer"
+                    },
+                    "retentionDays": {
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
+            "AuditLog": {
+                "properties": {
+                    "actor": {
+                        "type": "string"
+                    },
+                    "actorRole": {
+                        "type": "string"
+                    },
+                    "duration": {
+                        "description": "milliseconds",
+                        "type": "integer"
+                    },
+                    "error": {
+                        "type": "string"
+                    },
+                    "id": {
+                        "type": "string"
+                    },
+                    "issueNumber": {
+                        "type": "integer"
+                    },
+                    "operation": {
+                        "type": "string"
+                    },
+                    "output": {
+                        "type": "string"
+                    },
+                    "repository": {
+                        "type": "string"
+                    },
+                    "resourceId": {
+                        "type": "string"
+                    },
+                    "resourceType": {
+                        "type": "string"
+                    },
+                    "result": {
+                        "type": "string"
+                    },
+                    "sessionId": {
+                        "type": "string"
+                    },
+                    "timestamp": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "AuditSummary": {
+                "properties": {
+                    "averageDurationMs": {
+                        "type": "integer"
+                    },
+                    "byOperation": {
+                        "additionalProperties": {
+                            "type": "integer"
+                        },
+                        "type": "object"
+                    },
+                    "byResult": {
+                        "additionalProperties": {
+                            "type": "integer"
+                        },
+                        "type": "object"
+                    },
+                    "firstTimestamp": {
+                        "type": "string"
+                    },
+                    "lastTimestamp": {
+                        "type": "string"
+                    },
+                    "sessionId": {
+                        "type": "string"
+                    },
+                    "totalCount": {
+                        "type": "integer"
+                    },
+                    "totalDurationMs": {
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
+            "ClarityConfig": {
+                "properties": {
+                    "autoProceedThreshold": {
+                        "example": 80,
+                        "type": "integer"
+                    },
+                    "forceClarifyThreshold": {
+                        "example": 40,
+                        "type": "integer"
+                    },
+                    "threshold": {
+                        "example": 60,
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
+            "ClarityConfigUpdate": {
+                "properties": {
+                    "autoProceedThreshold": {
+                        "type": "integer"
+                    },
+                    "forceClarifyThreshold": {
+                        "type": "integer"
+                    },
+                    "threshold": {
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
+            "ComplexityConfig": {
+                "properties": {
+                    "forceDesignConfirm": {
+                        "example": false,
+                        "type": "boolean"
+                    },
+                    "threshold": {
+                        "example": 70,
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
+            "ComplexityConfigUpdate": {
+                "properties": {
+                    "forceDesignConfirm": {
+                        "type": "boolean"
+                    },
+                    "threshold": {
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
+            "Config": {
+                "properties": {
+                    "agent": {
+                        "$ref": "#/components/schemas/AgentConfig"
+                    },
+                    "audit": {
+                        "$ref": "#/components/schemas/AuditConfigDTO"
+                    },
+                    "clarity": {
+                        "$ref": "#/components/schemas/ClarityConfig"
+                    },
+                    "complexity": {
+                        "$ref": "#/components/schemas/ComplexityConfig"
+                    },
+                    "database": {
+                        "$ref": "#/components/schemas/DatabaseConfig"
+                    },
+                    "git": {
+                        "$ref": "#/components/schemas/GitConfig"
+                    },
+                    "server": {
+                        "$ref": "#/components/schemas/ServerConfig"
+                    },
+                    "webhook": {
+                        "$ref": "#/components/schemas/WebhookConfig"
+                    }
+                },
+                "type": "object"
+            },
+            "CreateRepository": {
+                "properties": {
+                    "config": {
+                        "$ref": "#/components/schemas/RepoConfig"
+                    },
+                    "name": {
+                        "example": "owner/repo",
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "name"
+                ],
+                "type": "object"
+            },
+            "DatabaseConfig": {
+                "properties": {
+                    "connMaxLifetime": {
+                        "example": "1h",
+                        "type": "string"
+                    },
+                    "host": {
+                        "example": "localhost",
+                        "type": "string"
+                    },
+                    "maxIdleConns": {
+                        "example": 10,
+                        "type": "integer"
+                    },
+                    "maxOpenConns": {
+                        "example": 100,
+                        "type": "integer"
+                    },
+                    "name": {
+                        "example": "litchi",
+                        "type": "string"
+                    },
+                    "port": {
+                        "example": 5432,
+                        "type": "integer"
+                    },
+                    "sslmode": {
+                        "example": "disable",
+                        "type": "string"
+                    },
+                    "user": {
+                        "example": "postgres",
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "DependencyStatus": {
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "isCompleted": {
+                        "type": "boolean"
+                    },
+                    "status": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "Design": {
+                "properties": {
+                    "confirmed": {
+                        "example": false,
+                        "type": "boolean"
+                    },
+                    "content": {
+                        "example": "Design document content",
+                        "type": "string"
+                    },
+                    "currentVersion": {
+                        "example": 1,
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
+            "EffectiveConfig": {
+                "properties": {
+                    "effective": {
+                        "$ref": "#/components/schemas/RepoConfig"
+                    },
+                    "enabled": {
+                        "type": "boolean"
+                    },
+                    "globalConfig": {
+                        "$ref": "#/components/schemas/RepoConfig"
+                    },
+                    "hasRepoConfig": {
+                        "type": "boolean"
+                    },
+                    "repoConfig": {
+                        "$ref": "#/components/schemas/RepoConfig"
+                    },
+                    "repositoryId": {
+                        "type": "string"
+                    },
+                    "repositoryName": {
+                        "example": "owner/repo",
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "Execution": {
+                "properties": {
+                    "currentTaskDesc": {
+                        "type": "string"
+                    },
+                    "currentTaskId": {
+                        "type": "string"
+                    },
+                    "startedAt": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "ExecutionResult": {
+                "properties": {
+                    "duration": {
+                        "description": "Execution duration in milliseconds",
+                        "type": "integer"
+                    },
+                    "output": {
+                        "description": "Execution output/logs",
+                        "type": "string"
+                    },
+                    "success": {
+                        "description": "Whether execution succeeded",
+                        "type": "boolean"
+                    },
+                    "testResults": {
+                        "description": "Test results (if applicable)",
+                        "items": {
+                            "$ref": "#/components/schemas/TestResult"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    }
+                },
+                "type": "object"
+            },
+            "GitConfig": {
+                "properties": {
+                    "branchNamingPattern": {
+                        "example": "issue-{number}-{slug}",
+                        "type": "string"
+                    },
+                    "commandTimeout": {
+                        "example": "5m",
+                        "type": "string"
+                    },
+                    "commitSignOff": {
+                        "example": true,
+                        "type": "boolean"
+                    },
+                    "defaultBaseBranch": {
+                        "example": "main",
+                        "type": "string"
+                    },
+                    "gitBinaryPath": {
+                        "example": "git",
+                        "type": "string"
+                    },
+                    "worktreeAutoClean": {
+                        "example": true,
+                        "type": "boolean"
+                    },
+                    "worktreeBasePath": {
+                        "example": "/var/litchi/worktrees",
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "GitConfigUpdate": {
+                "properties": {
+                    "branchNamingPattern": {
+                        "type": "string"
+                    },
+                    "commandTimeout": {
+                        "type": "string"
+                    },
+                    "commitSignOff": {
+                        "type": "boolean"
+                    },
+                    "defaultBaseBranch": {
+                        "type": "string"
+                    },
+                    "worktreeAutoClean": {
+                        "type": "boolean"
+                    },
+                    "worktreeBasePath": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "HealthCheck": {
                 "properties": {
                     "status": {
                         "example": "healthy",
@@ -38,7 +476,602 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
-            "dto.WebhookHealthResponse": {
+            "HealthCheckItem": {
+                "properties": {
+                    "details": {
+                        "additionalProperties": {},
+                        "type": "object"
+                    },
+                    "error": {
+                        "example": "Connection timeout",
+                        "type": "string"
+                    },
+                    "latencyMs": {
+                        "example": 5,
+                        "type": "integer"
+                    },
+                    "message": {
+                        "example": "Connection OK",
+                        "type": "string"
+                    },
+                    "name": {
+                        "description": "database, github, git",
+                        "example": "database",
+                        "type": "string"
+                    },
+                    "status": {
+                        "description": "pass, fail, warn",
+                        "example": "pass",
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "HealthDetail": {
+                "properties": {
+                    "checks": {
+                        "items": {
+                            "$ref": "#/components/schemas/HealthCheckItem"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "status": {
+                        "description": "healthy, degraded, unhealthy",
+                        "example": "healthy",
+                        "type": "string"
+                    },
+                    "timestamp": {
+                        "example": "2024-01-01T00:00:00Z",
+                        "type": "string"
+                    },
+                    "version": {
+                        "example": "0.1.0",
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "Issue": {
+                "description": "Optional embedded details",
+                "properties": {
+                    "author": {
+                        "example": "username",
+                        "type": "string"
+                    },
+                    "body": {
+                        "example": "Issue description",
+                        "type": "string"
+                    },
+                    "number": {
+                        "example": 123,
+                        "type": "integer"
+                    },
+                    "title": {
+                        "example": "Fix bug in login",
+                        "type": "string"
+                    },
+                    "url": {
+                        "example": "https://github.com/owner/repo/issues/123",
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "PaginatedResponse-AuditLog": {
+                "properties": {
+                    "data": {
+                        "items": {
+                            "$ref": "#/components/schemas/AuditLog"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "pagination": {
+                        "$ref": "#/components/schemas/Pagination"
+                    }
+                },
+                "type": "object"
+            },
+            "PaginatedResponse-Repository": {
+                "properties": {
+                    "data": {
+                        "items": {
+                            "$ref": "#/components/schemas/Repository"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "pagination": {
+                        "$ref": "#/components/schemas/Pagination"
+                    }
+                },
+                "type": "object"
+            },
+            "PaginatedResponse-Session": {
+                "properties": {
+                    "data": {
+                        "items": {
+                            "$ref": "#/components/schemas/Session"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "pagination": {
+                        "$ref": "#/components/schemas/Pagination"
+                    }
+                },
+                "type": "object"
+            },
+            "Pagination": {
+                "properties": {
+                    "page": {
+                        "example": 1,
+                        "type": "integer"
+                    },
+                    "pageSize": {
+                        "example": 20,
+                        "type": "integer"
+                    },
+                    "totalItems": {
+                        "example": 100,
+                        "type": "integer"
+                    },
+                    "totalPages": {
+                        "example": 5,
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
+            "PauseSession": {
+                "properties": {
+                    "reason": {
+                        "example": "user_request",
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "reason"
+                ],
+                "type": "object"
+            },
+            "RepoConfig": {
+                "properties": {
+                    "complexityThreshold": {
+                        "example": 70,
+                        "type": "integer"
+                    },
+                    "defaultModel": {
+                        "example": "claude-3",
+                        "type": "string"
+                    },
+                    "forceDesignConfirm": {
+                        "example": false,
+                        "type": "boolean"
+                    },
+                    "maxConcurrency": {
+                        "example": 5,
+                        "type": "integer"
+                    },
+                    "taskRetryLimit": {
+                        "example": 3,
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
+            "Repository": {
+                "properties": {
+                    "config": {
+                        "$ref": "#/components/schemas/RepoConfig"
+                    },
+                    "enabled": {
+                        "example": true,
+                        "type": "boolean"
+                    },
+                    "id": {
+                        "example": "550e8400-e29b-41d4-a716-446655440000",
+                        "type": "string"
+                    },
+                    "name": {
+                        "example": "owner/repo",
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "ResumeSession": {
+                "properties": {
+                    "action": {
+                        "example": "manual_resume",
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "RetryTask": {
+                "properties": {
+                    "force": {
+                        "description": "Force retry even if dependencies not met",
+                        "example": false,
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "RollbackSession": {
+                "properties": {
+                    "reason": {
+                        "example": "design_needs_update",
+                        "type": "string"
+                    },
+                    "targetStage": {
+                        "enum": [
+                            "clarification",
+                            "design",
+                            "task_breakdown"
+                        ],
+                        "example": "design",
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "reason",
+                    "targetStage"
+                ],
+                "type": "object"
+            },
+            "ServerConfig": {
+                "properties": {
+                    "host": {
+                        "example": "0.0.0.0",
+                        "type": "string"
+                    },
+                    "mode": {
+                        "example": "debug",
+                        "type": "string"
+                    },
+                    "port": {
+                        "example": 8080,
+                        "type": "integer"
+                    },
+                    "version": {
+                        "example": "0.1.0",
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "Session": {
+                "properties": {
+                    "createdAt": {
+                        "example": "2024-01-01T00:00:00Z",
+                        "type": "string"
+                    },
+                    "currentStage": {
+                        "enum": [
+                            "clarification",
+                            "design",
+                            "task_breakdown",
+                            "execution",
+                            "pull_request",
+                            "completed"
+                        ],
+                        "example": "execution",
+                        "type": "string"
+                    },
+                    "design": {
+                        "$ref": "#/components/schemas/Design"
+                    },
+                    "execution": {
+                        "$ref": "#/components/schemas/Execution"
+                    },
+                    "id": {
+                        "example": "550e8400-e29b-41d4-a716-446655440000",
+                        "type": "string"
+                    },
+                    "issue": {
+                        "$ref": "#/components/schemas/Issue"
+                    },
+                    "issueNumber": {
+                        "example": 123,
+                        "type": "integer"
+                    },
+                    "issueTitle": {
+                        "example": "Fix bug in login",
+                        "type": "string"
+                    },
+                    "prNumber": {
+                        "example": 456,
+                        "type": "integer"
+                    },
+                    "repository": {
+                        "example": "owner/repo",
+                        "type": "string"
+                    },
+                    "status": {
+                        "enum": [
+                            "active",
+                            "paused",
+                            "completed",
+                            "terminated"
+                        ],
+                        "example": "active",
+                        "type": "string"
+                    },
+                    "tasks": {
+                        "items": {
+                            "$ref": "#/components/schemas/Task"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "updatedAt": {
+                        "example": "2024-01-01T00:00:00Z",
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "SkipTask": {
+                "properties": {
+                    "reason": {
+                        "example": "not_applicable",
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "reason"
+                ],
+                "type": "object"
+            },
+            "Success": {
+                "properties": {
+                    "message": {
+                        "example": "Operation completed",
+                        "type": "string"
+                    },
+                    "status": {
+                        "example": "success",
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "Task": {
+                "properties": {
+                    "canExecute": {
+                        "example": true,
+                        "type": "boolean"
+                    },
+                    "dependencies": {
+                        "example": [
+                            "[\"task-id-1\"]"
+                        ],
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "description": {
+                        "example": "Implement login logic",
+                        "type": "string"
+                    },
+                    "failureReason": {
+                        "example": "Test failed",
+                        "type": "string"
+                    },
+                    "id": {
+                        "example": "550e8400-e29b-41d4-a716-446655440000",
+                        "type": "string"
+                    },
+                    "order": {
+                        "example": 1,
+                        "type": "integer"
+                    },
+                    "retryCount": {
+                        "example": 0,
+                        "type": "integer"
+                    },
+                    "status": {
+                        "example": "completed",
+                        "type": "string"
+                    },
+                    "statusDisplay": {
+                        "example": "Completed",
+                        "type": "string"
+                    },
+                    "suggestion": {
+                        "example": "Fix the test",
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "TaskList": {
+                "properties": {
+                    "allCompleted": {
+                        "type": "boolean"
+                    },
+                    "completed": {
+                        "type": "integer"
+                    },
+                    "failed": {
+                        "type": "integer"
+                    },
+                    "hasFailedTask": {
+                        "type": "boolean"
+                    },
+                    "inProgress": {
+                        "type": "integer"
+                    },
+                    "maxRetryLimit": {
+                        "type": "integer"
+                    },
+                    "page": {
+                        "type": "integer"
+                    },
+                    "pageSize": {
+                        "type": "integer"
+                    },
+                    "pending": {
+                        "type": "integer"
+                    },
+                    "sessionId": {
+                        "type": "string"
+                    },
+                    "skipped": {
+                        "type": "integer"
+                    },
+                    "tasks": {
+                        "items": {
+                            "$ref": "#/components/schemas/Task"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "totalItems": {
+                        "description": "Pagination info (based on filtered results)",
+                        "type": "integer"
+                    },
+                    "totalPages": {
+                        "type": "integer"
+                    },
+                    "totalTasks": {
+                        "description": "Total tasks in session (unfiltered)",
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
+            "TaskStatus": {
+                "properties": {
+                    "dependencies": {
+                        "items": {
+                            "$ref": "#/components/schemas/DependencyStatus"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "description": {
+                        "example": "Implement login logic",
+                        "type": "string"
+                    },
+                    "executionResult": {
+                        "$ref": "#/components/schemas/ExecutionResult"
+                    },
+                    "failureReason": {
+                        "example": "Test failed",
+                        "type": "string"
+                    },
+                    "order": {
+                        "example": 1,
+                        "type": "integer"
+                    },
+                    "retryCount": {
+                        "example": 0,
+                        "type": "integer"
+                    },
+                    "sessionId": {
+                        "example": "550e8400-e29b-41d4-a716-446655440000",
+                        "type": "string"
+                    },
+                    "status": {
+                        "example": "completed",
+                        "type": "string"
+                    },
+                    "statusDisplayName": {
+                        "example": "Completed",
+                        "type": "string"
+                    },
+                    "suggestion": {
+                        "example": "Fix the test",
+                        "type": "string"
+                    },
+                    "taskId": {
+                        "example": "660e8400-e29b-41d4-a716-446655440001",
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "TerminateSession": {
+                "properties": {
+                    "reason": {
+                        "example": "user_request",
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "reason"
+                ],
+                "type": "object"
+            },
+            "TestResult": {
+                "properties": {
+                    "message": {
+                        "description": "Error message (if failed)",
+                        "type": "string"
+                    },
+                    "name": {
+                        "description": "Test name",
+                        "type": "string"
+                    },
+                    "status": {
+                        "description": "passed, failed, skipped",
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "UpdateConfig": {
+                "properties": {
+                    "agent": {
+                        "$ref": "#/components/schemas/AgentConfigUpdate"
+                    },
+                    "audit": {
+                        "$ref": "#/components/schemas/AuditConfigUpdate"
+                    },
+                    "clarity": {
+                        "$ref": "#/components/schemas/ClarityConfigUpdate"
+                    },
+                    "complexity": {
+                        "$ref": "#/components/schemas/ComplexityConfigUpdate"
+                    },
+                    "git": {
+                        "$ref": "#/components/schemas/GitConfigUpdate"
+                    }
+                },
+                "type": "object"
+            },
+            "UpdateRepository": {
+                "properties": {
+                    "config": {
+                        "$ref": "#/components/schemas/RepoConfig"
+                    }
+                },
+                "type": "object"
+            },
+            "WebhookConfig": {
+                "properties": {
+                    "idempotencyAutoCleanup": {
+                        "example": true,
+                        "type": "boolean"
+                    },
+                    "idempotencyEnabled": {
+                        "example": true,
+                        "type": "boolean"
+                    },
+                    "idempotencyTTL": {
+                        "example": "24h",
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "WebhookHealth": {
                 "properties": {
                     "idempotency_enabled": {
                         "example": true,
@@ -62,7 +1095,7 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
-            "dto.WebhookResponse": {
+            "WebhookResp": {
                 "properties": {
                     "error_code": {
                         "example": "DISPATCH_FAILED",
@@ -95,9 +1128,101 @@ const docTemplate = `{
         "url": ""
     },
     "paths": {
-        "/health": {
+        "/api/v1/audit": {
             "get": {
-                "description": "Returns the server health status and version",
+                "description": "Retrieve audit logs with filtering by session, repository, actor, operation, result, and time range. Supports pagination.",
+                "parameters": [
+                    {
+                        "description": "Page number (default: 1)",
+                        "example": 1,
+                        "in": "query",
+                        "name": "page",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "description": "Page size (default: 50, max: 100)",
+                        "example": 50,
+                        "in": "query",
+                        "name": "pageSize",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "description": "Filter by session ID",
+                        "example": "\"550e8400-e29b-41d4-a716-446655440000\"",
+                        "in": "query",
+                        "name": "sessionId",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Filter by repository (owner/repo)",
+                        "example": "\"owner/repo\"",
+                        "in": "query",
+                        "name": "repository",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Filter by actor username",
+                        "example": "\"username\"",
+                        "in": "query",
+                        "name": "actor",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Filter by operation type",
+                        "example": "\"session_start\"",
+                        "in": "query",
+                        "name": "operation",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Filter by result (success/failed/denied)",
+                        "example": "\"success\"",
+                        "in": "query",
+                        "name": "result",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Filter by start time (RFC3339)",
+                        "example": "\"2024-01-01T00:00:00Z\"",
+                        "in": "query",
+                        "name": "startTime",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Filter by end time (RFC3339)",
+                        "example": "\"2024-01-02T00:00:00Z\"",
+                        "in": "query",
+                        "name": "endTime",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Order by field (default: timestamp desc)",
+                        "example": "\"timestamp desc\"",
+                        "in": "query",
+                        "name": "orderBy",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
                 "requestBody": {
                     "content": {
                         "application/json": {
@@ -112,20 +1237,2083 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/dto.HealthCheckResponse"
+                                    "$ref": "#/components/schemas/PaginatedResponse-AuditLog"
+                                }
+                            }
+                        },
+                        "description": "Audit logs retrieved successfully"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        },
+                        "description": "Invalid query parameters"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        },
+                        "description": "Internal server error"
+                    }
+                },
+                "summary": "List audit logs",
+                "tags": [
+                    "audit"
+                ]
+            }
+        },
+        "/api/v1/audit/repositories/{repository}": {
+            "get": {
+                "description": "Retrieve all audit logs for a specific repository (owner/repo format). Supports pagination.",
+                "parameters": [
+                    {
+                        "description": "Repository name (owner/repo)",
+                        "example": "\"owner/repo\"",
+                        "in": "path",
+                        "name": "repository",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Page number (default: 1)",
+                        "example": 1,
+                        "in": "query",
+                        "name": "page",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "description": "Page size (default: 50)",
+                        "example": 50,
+                        "in": "query",
+                        "name": "pageSize",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PaginatedResponse-AuditLog"
+                                }
+                            }
+                        },
+                        "description": "Audit logs retrieved successfully"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        },
+                        "description": "Invalid repository name or query parameters"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        },
+                        "description": "Internal server error"
+                    }
+                },
+                "summary": "List audit logs by repository",
+                "tags": [
+                    "audit"
+                ]
+            }
+        },
+        "/api/v1/audit/sessions/{sessionId}": {
+            "get": {
+                "description": "Retrieve all audit logs associated with a specific work session. Supports pagination.",
+                "parameters": [
+                    {
+                        "description": "Session ID (UUID format)",
+                        "example": "\"550e8400-e29b-41d4-a716-446655440000\"",
+                        "in": "path",
+                        "name": "sessionId",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Page number (default: 1)",
+                        "example": 1,
+                        "in": "query",
+                        "name": "page",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "description": "Page size (default: 50)",
+                        "example": 50,
+                        "in": "query",
+                        "name": "pageSize",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PaginatedResponse-AuditLog"
+                                }
+                            }
+                        },
+                        "description": "Audit logs retrieved successfully"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        },
+                        "description": "Invalid session ID or query parameters"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        },
+                        "description": "Internal server error"
+                    }
+                },
+                "summary": "List audit logs by session",
+                "tags": [
+                    "audit"
+                ]
+            }
+        },
+        "/api/v1/audit/sessions/{sessionId}/summary": {
+            "get": {
+                "description": "Retrieve aggregated statistics of audit logs for a specific work session, including counts by operation type and result status.",
+                "parameters": [
+                    {
+                        "description": "Session ID (UUID format)",
+                        "example": "\"550e8400-e29b-41d4-a716-446655440000\"",
+                        "in": "path",
+                        "name": "sessionId",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AuditSummary"
+                                }
+                            }
+                        },
+                        "description": "Audit summary retrieved successfully"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        },
+                        "description": "Invalid session ID format"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        },
+                        "description": "Internal server error"
+                    }
+                },
+                "summary": "Get session audit summary",
+                "tags": [
+                    "audit"
+                ]
+            }
+        },
+        "/api/v1/audit/{id}": {
+            "get": {
+                "description": "Retrieve a single audit log entry by its unique identifier.",
+                "parameters": [
+                    {
+                        "description": "Audit log ID (UUID format)",
+                        "example": "\"550e8400-e29b-41d4-a716-446655440000\"",
+                        "in": "path",
+                        "name": "id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AuditLog"
+                                }
+                            }
+                        },
+                        "description": "Audit log retrieved successfully"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        },
+                        "description": "Invalid audit log ID format"
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        },
+                        "description": "Audit log not found"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        },
+                        "description": "Internal server error"
+                    }
+                },
+                "summary": "Get audit log",
+                "tags": [
+                    "audit"
+                ]
+            }
+        },
+        "/api/v1/config": {
+            "get": {
+                "description": "Returns the current application configuration (sensitive fields excluded)",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Config"
+                                }
+                            }
+                        },
+                        "description": "Configuration retrieved successfully"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        },
+                        "description": "Internal server error"
+                    }
+                },
+                "summary": "Get configuration",
+                "tags": [
+                    "config"
+                ]
+            },
+            "put": {
+                "description": "Updates application configuration (only certain fields are updatable at runtime)",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "oneOf": [
+                                    {
+                                        "type": "object"
+                                    },
+                                    {
+                                        "$ref": "#/components/schemas/UpdateConfig",
+                                        "summary": "request",
+                                        "description": "Configuration update request"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "description": "Configuration update request",
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Config"
+                                }
+                            }
+                        },
+                        "description": "Configuration updated successfully"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        },
+                        "description": "Invalid request or validation failed"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        },
+                        "description": "Internal server error"
+                    }
+                },
+                "summary": "Update configuration",
+                "tags": [
+                    "config"
+                ]
+            }
+        },
+        "/api/v1/health": {
+            "get": {
+                "description": "Returns the basic API health status and version",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HealthCheck"
                                 }
                             }
                         },
                         "description": "Server is healthy"
                     }
                 },
-                "summary": "Health check",
+                "summary": "API health check",
                 "tags": [
                     "system"
                 ]
             }
         },
-        "/webhooks/github": {
+        "/api/v1/health/detail": {
+            "get": {
+                "description": "Returns detailed health status including database, GitHub, and Git checks",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HealthDetail"
+                                }
+                            }
+                        },
+                        "description": "Detailed health status"
+                    }
+                },
+                "summary": "Detailed health check",
+                "tags": [
+                    "system"
+                ]
+            }
+        },
+        "/api/v1/repositories": {
+            "get": {
+                "description": "Get all repository configurations with optional pagination and filtering",
+                "parameters": [
+                    {
+                        "description": "Page number (1-based)",
+                        "in": "query",
+                        "name": "page",
+                        "schema": {
+                            "default": 1,
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "description": "Items per page",
+                        "in": "query",
+                        "name": "pageSize",
+                        "schema": {
+                            "default": 20,
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "description": "Filter by enabled status (true, false, all)",
+                        "in": "query",
+                        "name": "enabled",
+                        "schema": {
+                            "default": "all",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PaginatedResponse-Repository"
+                                }
+                            }
+                        },
+                        "description": "List of repositories"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        },
+                        "description": "Internal server error"
+                    }
+                },
+                "summary": "List repositories",
+                "tags": [
+                    "repositories"
+                ]
+            },
+            "post": {
+                "description": "Create a new repository configuration for processing",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "oneOf": [
+                                    {
+                                        "type": "object"
+                                    },
+                                    {
+                                        "$ref": "#/components/schemas/CreateRepository",
+                                        "summary": "body",
+                                        "description": "Repository creation request"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "description": "Repository creation request",
+                    "required": true
+                },
+                "responses": {
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Repository"
+                                }
+                            }
+                        },
+                        "description": "Created repository"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        },
+                        "description": "Invalid request body"
+                    },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        },
+                        "description": "Repository already exists"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        },
+                        "description": "Internal server error"
+                    }
+                },
+                "summary": "Create repository",
+                "tags": [
+                    "repositories"
+                ]
+            }
+        },
+        "/api/v1/repositories/{name}": {
+            "delete": {
+                "description": "Delete repository configuration by name",
+                "parameters": [
+                    {
+                        "description": "Repository name (owner/repo)",
+                        "in": "path",
+                        "name": "name",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Success"
+                                }
+                            }
+                        },
+                        "description": "Repository deleted"
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        },
+                        "description": "Repository not found"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        },
+                        "description": "Internal server error"
+                    }
+                },
+                "summary": "Delete repository",
+                "tags": [
+                    "repositories"
+                ]
+            },
+            "get": {
+                "description": "Get repository configuration by name (owner/repo format)",
+                "parameters": [
+                    {
+                        "description": "Repository name (owner/repo)",
+                        "in": "path",
+                        "name": "name",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Repository"
+                                }
+                            }
+                        },
+                        "description": "Repository configuration"
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        },
+                        "description": "Repository not found"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        },
+                        "description": "Internal server error"
+                    }
+                },
+                "summary": "Get repository",
+                "tags": [
+                    "repositories"
+                ]
+            },
+            "put": {
+                "description": "Update repository configuration by name",
+                "parameters": [
+                    {
+                        "description": "Repository name (owner/repo)",
+                        "in": "path",
+                        "name": "name",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "oneOf": [
+                                    {
+                                        "type": "object"
+                                    },
+                                    {
+                                        "$ref": "#/components/schemas/UpdateRepository",
+                                        "summary": "body",
+                                        "description": "Repository update request"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "description": "Repository update request",
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Repository"
+                                }
+                            }
+                        },
+                        "description": "Updated repository"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        },
+                        "description": "Invalid request body"
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        },
+                        "description": "Repository not found"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        },
+                        "description": "Internal server error"
+                    }
+                },
+                "summary": "Update repository",
+                "tags": [
+                    "repositories"
+                ]
+            }
+        },
+        "/api/v1/repositories/{name}/disable": {
+            "post": {
+                "description": "Disable a repository from processing incoming GitHub events",
+                "parameters": [
+                    {
+                        "description": "Repository name (owner/repo)",
+                        "in": "path",
+                        "name": "name",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Success"
+                                }
+                            }
+                        },
+                        "description": "Repository disabled"
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        },
+                        "description": "Repository not found"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        },
+                        "description": "Internal server error"
+                    }
+                },
+                "summary": "Disable repository",
+                "tags": [
+                    "repositories"
+                ]
+            }
+        },
+        "/api/v1/repositories/{name}/effective-config": {
+            "get": {
+                "description": "Get the merged effective configuration (global + repository overrides)",
+                "parameters": [
+                    {
+                        "description": "Repository name (owner/repo)",
+                        "in": "path",
+                        "name": "name",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EffectiveConfig"
+                                }
+                            }
+                        },
+                        "description": "Effective configuration"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        },
+                        "description": "Internal server error"
+                    }
+                },
+                "summary": "Get effective config",
+                "tags": [
+                    "repositories"
+                ]
+            }
+        },
+        "/api/v1/repositories/{name}/enable": {
+            "post": {
+                "description": "Enable a repository to process incoming GitHub events",
+                "parameters": [
+                    {
+                        "description": "Repository name (owner/repo)",
+                        "in": "path",
+                        "name": "name",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Success"
+                                }
+                            }
+                        },
+                        "description": "Repository enabled"
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        },
+                        "description": "Repository not found"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        },
+                        "description": "Internal server error"
+                    }
+                },
+                "summary": "Enable repository",
+                "tags": [
+                    "repositories"
+                ]
+            }
+        },
+        "/api/v1/sessions": {
+            "get": {
+                "description": "Retrieves a paginated list of work sessions with optional filtering by status, stage, and repository",
+                "parameters": [
+                    {
+                        "description": "Page number (1-based)",
+                        "in": "query",
+                        "name": "page",
+                        "schema": {
+                            "default": 1,
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "description": "Number of items per page",
+                        "in": "query",
+                        "name": "pageSize",
+                        "schema": {
+                            "default": 20,
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "description": "Filter by session status",
+                        "in": "query",
+                        "name": "status",
+                        "schema": {
+                            "enum": [
+                                "active",
+                                "paused",
+                                "completed",
+                                "terminated"
+                            ],
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Filter by current stage",
+                        "in": "query",
+                        "name": "stage",
+                        "schema": {
+                            "enum": [
+                                "clarification",
+                                "design",
+                                "task_breakdown",
+                                "execution",
+                                "pull_request",
+                                "completed"
+                            ],
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Filter by repository (owner/repo format)",
+                        "in": "query",
+                        "name": "repo",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PaginatedResponse-Session"
+                                }
+                            }
+                        },
+                        "description": "Sessions retrieved successfully"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        },
+                        "description": "Invalid query parameters"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        },
+                        "description": "Internal server error"
+                    }
+                },
+                "summary": "List work sessions",
+                "tags": [
+                    "sessions"
+                ]
+            }
+        },
+        "/api/v1/sessions/{id}": {
+            "get": {
+                "description": "Retrieves a work session by its unique identifier",
+                "parameters": [
+                    {
+                        "description": "Session ID (UUID format)",
+                        "in": "path",
+                        "name": "id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Session"
+                                }
+                            }
+                        },
+                        "description": "Session retrieved successfully"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        },
+                        "description": "Invalid session ID format"
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        },
+                        "description": "Session not found"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        },
+                        "description": "Internal server error"
+                    }
+                },
+                "summary": "Get work session",
+                "tags": [
+                    "sessions"
+                ]
+            }
+        },
+        "/api/v1/sessions/{id}/detail": {
+            "get": {
+                "description": "Retrieves a work session with complete details including issue info, design content, task list, and execution context",
+                "parameters": [
+                    {
+                        "description": "Session ID (UUID format)",
+                        "in": "path",
+                        "name": "id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Session"
+                                }
+                            }
+                        },
+                        "description": "Session details retrieved successfully"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        },
+                        "description": "Invalid session ID format"
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        },
+                        "description": "Session not found"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        },
+                        "description": "Internal server error"
+                    }
+                },
+                "summary": "Get session details",
+                "tags": [
+                    "sessions"
+                ]
+            }
+        },
+        "/api/v1/sessions/{id}/pause": {
+            "post": {
+                "description": "Pauses an active work session with a specified reason. Only active sessions can be paused.",
+                "parameters": [
+                    {
+                        "description": "Session ID (UUID format)",
+                        "in": "path",
+                        "name": "id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "oneOf": [
+                                    {
+                                        "type": "object"
+                                    },
+                                    {
+                                        "$ref": "#/components/schemas/PauseSession",
+                                        "summary": "body",
+                                        "description": "Pause request with reason"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "description": "Pause request with reason",
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Session"
+                                }
+                            }
+                        },
+                        "description": "Session paused successfully"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        },
+                        "description": "Invalid request or session ID"
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        },
+                        "description": "Session not found"
+                    },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        },
+                        "description": "Session cannot be paused (not active)"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        },
+                        "description": "Internal server error"
+                    }
+                },
+                "summary": "Pause work session",
+                "tags": [
+                    "sessions"
+                ]
+            }
+        },
+        "/api/v1/sessions/{id}/restart": {
+            "post": {
+                "description": "Creates a new work session for the same GitHub issue as a terminated session. The new session starts from the clarification stage.",
+                "parameters": [
+                    {
+                        "description": "Session ID (UUID format) - the terminated session to restart",
+                        "in": "path",
+                        "name": "id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Session"
+                                }
+                            }
+                        },
+                        "description": "New session created successfully"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        },
+                        "description": "Invalid session ID format"
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        },
+                        "description": "Session not found"
+                    },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        },
+                        "description": "Session is not terminated"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        },
+                        "description": "Internal server error"
+                    }
+                },
+                "summary": "Restart work session",
+                "tags": [
+                    "sessions"
+                ]
+            }
+        },
+        "/api/v1/sessions/{id}/resume": {
+            "post": {
+                "description": "Resumes a paused work session. Only paused sessions can be resumed.",
+                "parameters": [
+                    {
+                        "description": "Session ID (UUID format)",
+                        "in": "path",
+                        "name": "id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "oneOf": [
+                                    {
+                                        "type": "object"
+                                    },
+                                    {
+                                        "$ref": "#/components/schemas/ResumeSession",
+                                        "summary": "body",
+                                        "description": "Resume request with optional action"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "description": "Resume request with optional action",
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Session"
+                                }
+                            }
+                        },
+                        "description": "Session resumed successfully"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        },
+                        "description": "Invalid request or session ID"
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        },
+                        "description": "Session not found"
+                    },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        },
+                        "description": "Session cannot be resumed (not paused)"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        },
+                        "description": "Internal server error"
+                    }
+                },
+                "summary": "Resume work session",
+                "tags": [
+                    "sessions"
+                ]
+            }
+        },
+        "/api/v1/sessions/{id}/rollback": {
+            "post": {
+                "description": "Rolls back a work session to a specified previous stage (clarification, design, or task_breakdown). Only active sessions can be rolled back.",
+                "parameters": [
+                    {
+                        "description": "Session ID (UUID format)",
+                        "in": "path",
+                        "name": "id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "oneOf": [
+                                    {
+                                        "type": "object"
+                                    },
+                                    {
+                                        "$ref": "#/components/schemas/RollbackSession",
+                                        "summary": "body",
+                                        "description": "Rollback request with target stage and reason"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "description": "Rollback request with target stage and reason",
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Session"
+                                }
+                            }
+                        },
+                        "description": "Session rolled back successfully"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        },
+                        "description": "Invalid request or session ID"
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        },
+                        "description": "Session not found"
+                    },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        },
+                        "description": "Session cannot be rolled back"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        },
+                        "description": "Internal server error"
+                    }
+                },
+                "summary": "Rollback work session",
+                "tags": [
+                    "sessions"
+                ]
+            }
+        },
+        "/api/v1/sessions/{id}/terminate": {
+            "post": {
+                "description": "Terminates a work session permanently. Active or paused sessions can be terminated.",
+                "parameters": [
+                    {
+                        "description": "Session ID (UUID format)",
+                        "in": "path",
+                        "name": "id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "oneOf": [
+                                    {
+                                        "type": "object"
+                                    },
+                                    {
+                                        "$ref": "#/components/schemas/TerminateSession",
+                                        "summary": "body",
+                                        "description": "Terminate request with reason"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "description": "Terminate request with reason",
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Session"
+                                }
+                            }
+                        },
+                        "description": "Session terminated successfully"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        },
+                        "description": "Invalid request or session ID"
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        },
+                        "description": "Session not found"
+                    },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        },
+                        "description": "Session cannot be terminated"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        },
+                        "description": "Internal server error"
+                    }
+                },
+                "summary": "Terminate work session",
+                "tags": [
+                    "sessions"
+                ]
+            }
+        },
+        "/api/v1/sessions/{sessionId}/tasks": {
+            "get": {
+                "description": "Retrieve all tasks for a work session with status statistics and execution progress",
+                "parameters": [
+                    {
+                        "description": "Session ID (UUID format)",
+                        "in": "path",
+                        "name": "sessionId",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Page number (default: 1)",
+                        "in": "query",
+                        "name": "page",
+                        "schema": {
+                            "minimum": 1,
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "description": "Page size (default: 20, max: 100)",
+                        "in": "query",
+                        "name": "pageSize",
+                        "schema": {
+                            "maximum": 100,
+                            "minimum": 1,
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "description": "Filter by status (pending, in_progress, completed, failed, skipped)",
+                        "in": "query",
+                        "name": "status",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TaskList"
+                                }
+                            }
+                        },
+                        "description": "Task list retrieved successfully"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        },
+                        "description": "Invalid session ID format"
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        },
+                        "description": "Session not found"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        },
+                        "description": "Internal server error"
+                    }
+                },
+                "summary": "Get task list",
+                "tags": [
+                    "tasks"
+                ]
+            }
+        },
+        "/api/v1/sessions/{sessionId}/tasks/{taskId}": {
+            "get": {
+                "description": "Retrieve detailed status information for a specific task including dependencies and execution result",
+                "parameters": [
+                    {
+                        "description": "Session ID (UUID format)",
+                        "in": "path",
+                        "name": "sessionId",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Task ID (UUID format)",
+                        "in": "path",
+                        "name": "taskId",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TaskStatus"
+                                }
+                            }
+                        },
+                        "description": "Task status retrieved successfully"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        },
+                        "description": "Invalid session ID or task ID format"
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        },
+                        "description": "Session or task not found"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        },
+                        "description": "Internal server error"
+                    }
+                },
+                "summary": "Get task status",
+                "tags": [
+                    "tasks"
+                ]
+            }
+        },
+        "/api/v1/sessions/{sessionId}/tasks/{taskId}/retry": {
+            "post": {
+                "description": "Reset a failed task to in-progress status for re-execution. Task must be in failed status and not exceed retry limit.",
+                "parameters": [
+                    {
+                        "description": "Session ID (UUID format)",
+                        "in": "path",
+                        "name": "sessionId",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Task ID (UUID format)",
+                        "in": "path",
+                        "name": "taskId",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "oneOf": [
+                                    {
+                                        "type": "object"
+                                    },
+                                    {
+                                        "$ref": "#/components/schemas/RetryTask",
+                                        "summary": "body",
+                                        "description": "Retry options"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "description": "Retry options",
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Success"
+                                }
+                            }
+                        },
+                        "description": "Task retry initiated successfully"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        },
+                        "description": "Invalid request body, session ID, or task ID"
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        },
+                        "description": "Session or task not found"
+                    },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        },
+                        "description": "Task cannot be retried (not failed or exceeded retry limit)"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        },
+                        "description": "Internal server error"
+                    }
+                },
+                "summary": "Retry task",
+                "tags": [
+                    "tasks"
+                ]
+            }
+        },
+        "/api/v1/sessions/{sessionId}/tasks/{taskId}/skip": {
+            "post": {
+                "description": "Mark a task as skipped, removing it from execution queue. Skipped tasks are considered completed for dependency resolution.",
+                "parameters": [
+                    {
+                        "description": "Session ID (UUID format)",
+                        "in": "path",
+                        "name": "sessionId",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Task ID (UUID format)",
+                        "in": "path",
+                        "name": "taskId",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "oneOf": [
+                                    {
+                                        "type": "object"
+                                    },
+                                    {
+                                        "$ref": "#/components/schemas/SkipTask",
+                                        "summary": "body",
+                                        "description": "Skip reason"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "description": "Skip reason",
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Success"
+                                }
+                            }
+                        },
+                        "description": "Task skipped successfully"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        },
+                        "description": "Invalid request body, session ID, or task ID"
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        },
+                        "description": "Session or task not found"
+                    },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        },
+                        "description": "Task cannot be skipped (invalid status)"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        },
+                        "description": "Internal server error"
+                    }
+                },
+                "summary": "Skip task",
+                "tags": [
+                    "tasks"
+                ]
+            }
+        },
+        "/api/v1/webhooks/github": {
             "post": {
                 "description": "Receives and processes GitHub webhook events with signature verification",
                 "parameters": [
@@ -179,7 +3367,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/dto.WebhookResponse"
+                                    "$ref": "#/components/schemas/WebhookResp"
                                 }
                             }
                         },
@@ -189,7 +3377,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/dto.ErrorResponse"
+                                    "$ref": "#/components/schemas/ApiError"
                                 }
                             }
                         },
@@ -199,7 +3387,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/dto.ErrorResponse"
+                                    "$ref": "#/components/schemas/ApiError"
                                 }
                             }
                         },
@@ -209,7 +3397,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/dto.ErrorResponse"
+                                    "$ref": "#/components/schemas/ApiError"
                                 }
                             }
                         },
@@ -222,7 +3410,7 @@ const docTemplate = `{
                 ]
             }
         },
-        "/webhooks/health": {
+        "/api/v1/webhooks/health": {
             "get": {
                 "description": "Returns health status including registered event handlers",
                 "requestBody": {
@@ -239,7 +3427,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/dto.WebhookHealthResponse"
+                                    "$ref": "#/components/schemas/WebhookHealth"
                                 }
                             }
                         },
@@ -251,14 +3439,39 @@ const docTemplate = `{
                     "webhooks"
                 ]
             }
+        },
+        "/health": {
+            "get": {
+                "description": "Returns the server health status and version (legacy endpoint)",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HealthCheck"
+                                }
+                            }
+                        },
+                        "description": "Server is healthy"
+                    }
+                },
+                "summary": "Basic health check",
+                "tags": [
+                    "system"
+                ]
+            }
         }
     },
-    "openapi": "3.1.0",
-    "servers": [
-        {
-            "url": "localhost:8080/api/v1"
-        }
-    ]
+    "openapi": "3.1.0"
 }`
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it

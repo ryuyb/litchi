@@ -5,14 +5,11 @@
  * Automated development agent system - from GitHub Issue to Pull Request
  * OpenAPI spec version: 0.1.0
  */
-import type { RepositoryConfig } from "./repositoryConfig";
+import type { RepoConfig } from "./repoConfig";
 
 export interface Repository {
-	id: string;
-	/** @pattern ^[^/]+/[^/]+$ */
-	name: string;
+	config?: RepoConfig;
 	enabled?: boolean;
-	config?: RepositoryConfig;
-	createdAt?: string;
-	updatedAt?: string;
+	id?: string;
+	name?: string;
 }

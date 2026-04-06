@@ -22,14 +22,14 @@ type ExecutionResult struct {
 	TestResults []TestResult `json:"testResults"` // Test results (if applicable)
 	Duration    int          `json:"duration"`    // Execution duration in milliseconds
 	Success     bool         `json:"success"`     // Whether execution succeeded
-}
+} // @name ExecutionResult
 
 // TestResult represents a single test result.
 type TestResult struct {
 	Name    string `json:"name"`    // Test name
 	Status  string `json:"status"`  // passed, failed, skipped
 	Message string `json:"message"` // Error message (if failed)
-}
+} // @name TestResult
 
 // NewExecutionResult creates a new execution result.
 func NewExecutionResult(output string, success bool, duration int) ExecutionResult {

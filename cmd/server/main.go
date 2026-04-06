@@ -13,8 +13,7 @@ import (
 // @version         0.1.0
 // @description     Automated development agent system - from GitHub Issue to Pull Request
 
-// @host      localhost:8080
-// @BasePath  /api/v1
+// @servers         [{"url": "http://localhost:8080/api/v1", "description": "Local development server"}]
 
 func main() {
 	fx.New(

@@ -8,11 +8,13 @@
 import type { Design } from "./design";
 import type { Execution } from "./execution";
 import type { Issue } from "./issue";
+import type { SessionCurrentStage } from "./sessionCurrentStage";
+import type { SessionStatus } from "./sessionStatus";
 import type { Task } from "./task";
 
 export interface Session {
 	createdAt?: string;
-	currentStage?: string;
+	currentStage?: SessionCurrentStage;
 	design?: Design;
 	execution?: Execution;
 	id?: string;
@@ -21,7 +23,7 @@ export interface Session {
 	issueTitle?: string;
 	prNumber?: number;
 	repository?: string;
-	status?: string;
+	status?: SessionStatus;
 	tasks?: Task[];
 	updatedAt?: string;
 }

@@ -39,6 +39,36 @@ func (c *Config) Validate() error {
 	return nil
 }
 
+// Clone creates a deep copy of the configuration.
+func (c *Config) Clone() *Config {
+	clone := &Config{
+		Server:     c.Server,
+		Database:   c.Database,
+		GitHub:     c.GitHub,
+		Git:        c.Git,
+		Webhook:    c.Webhook,
+		Agent:      c.Agent,
+		Clarity:    c.Clarity,
+		Complexity: c.Complexity,
+		Audit:      c.Audit,
+		Failure:    c.Failure,
+		Logging:    c.Logging,
+		Redis:      c.Redis,
+	}
+
+	// Deep copy slices
+	if len(c.Audit.SensitiveOperations) > 0 {
+		clone.Audit.SensitiveOperations = make([]string, len(c.Audit.SensitiveOperations))
+		copy(clone.Audit.SensitiveOperations, c.Audit.SensitiveOperations)
+	}
+	if len(c.Failure.Retry.RetryableErrors) > 0 {
+		clone.Failure.Retry.RetryableErrors = make([]string, len(c.Failure.Retry.RetryableErrors))
+		copy(clone.Failure.Retry.RetryableErrors, c.Failure.Retry.RetryableErrors)
+	}
+
+	return clone
+}
+
 type ServerConfig struct {
 	Host            string `mapstructure:"host"`
 	Port            int    `mapstructure:"port"`

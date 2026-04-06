@@ -24,7 +24,7 @@ type TaskDTO struct {
 // TaskListResponse represents the task list for a session.
 type TaskListResponse struct {
 	SessionID      uuid.UUID `json:"sessionId"`
-	TotalTasks     int       `json:"totalTasks"`
+	TotalTasks     int       `json:"totalTasks"`    // Total tasks in session (unfiltered)
 	Completed      int       `json:"completed"`
 	InProgress     int       `json:"inProgress"`
 	Pending        int       `json:"pending"`
@@ -34,6 +34,11 @@ type TaskListResponse struct {
 	HasFailedTask  bool      `json:"hasFailedTask"`
 	MaxRetryLimit  int       `json:"maxRetryLimit"`
 	Tasks          []TaskDTO `json:"tasks"`
+	// Pagination info (based on filtered results)
+	TotalItems int `json:"totalItems"` // Total items after filter
+	Page       int `json:"page"`
+	PageSize   int `json:"pageSize"`
+	TotalPages int `json:"totalPages"`
 } // @name TaskList
 
 // SkipTaskRequest represents skip task request body.

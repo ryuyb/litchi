@@ -5,9 +5,15 @@
  * Automated development agent system - from GitHub Issue to Pull Request
  * OpenAPI spec version: 0.1.0
  */
-import type { ExecutionResultTestResultsItem } from "./executionResultTestResultsItem";
+import type { TestResult } from "./testResult";
 
 export interface ExecutionResult {
+	/** Execution duration in milliseconds */
+	duration?: number;
+	/** Execution output/logs */
 	output?: string;
-	testResults?: ExecutionResultTestResultsItem[];
+	/** Whether execution succeeded */
+	success?: boolean;
+	/** Test results (if applicable) */
+	testResults?: TestResult[];
 }

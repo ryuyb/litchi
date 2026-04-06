@@ -74,7 +74,7 @@ func NewHandler(p HandlerParams) *Handler {
 // @Failure        400  {object}  dto.ErrorResponse    "Invalid payload or missing headers"
 // @Failure        401  {object}  dto.ErrorResponse    "Invalid signature"
 // @Failure        503  {object}  dto.ErrorResponse    "Service temporarily unavailable"
-// @Router         /webhooks/github [post]
+// @Router         /api/v1/webhooks/github [post]
 func (h *Handler) Handle(c fiber.Ctx) error {
 	ctx := c.Context()
 
@@ -221,7 +221,7 @@ func computePayloadHash(payload []byte) string {
 // @Accept         json
 // @Produce        json
 // @Success        200  {object}  dto.WebhookHealthResponse  "Health check successful"
-// @Router         /webhooks/health [get]
+// @Router         /api/v1/webhooks/health [get]
 func (h *Handler) HealthCheck(c fiber.Ctx) error {
 	return c.JSON(fiber.Map{
 		"status":             "healthy",

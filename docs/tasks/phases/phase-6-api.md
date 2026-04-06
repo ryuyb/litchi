@@ -14,7 +14,7 @@
     - [x] Swagger UI 可访问（/swagger/*）
     - [x] 文档自动更新（随 API 变化）
     - [x] 导出 swagger.json 供 Orval 使用 (docs/api/swagger.json)
-    - [ ] 替换 T1.3.5 手写的临时 swagger.json (等 T6.1 完成后切换)
+    - [x] 替换 T1.3.5 手写的临时 swagger.json (等 T6.1 完成后切换)
     - [x] 更新前端 Orval 配置指向新文档路径 (暂保留 web/swagger.json 作为设计文档)
     - [x] 执行 `orval:generate` 重新生成 API 客户端代码
   - 依赖：T5.1.*
@@ -29,89 +29,89 @@
 
 ## 6.1 REST API（Fiber v3 + Fx）
 
-- [ ] **T6.1.1** 实现会话管理 API（Fx Provider）
+- [x] **T6.1.1** 实现会话管理 API（Fx Provider）
   - 验收标准：
-    - [ ] Fiber v3 路由组配置正确
-    - [ ] CRUD 操作正确
-    - [ ] 暂停/恢复/回退/终止操作正确
-    - [ ] Handler 作为 Fx Provider 注册
-    - [ ] 路由通过 Fx Invoke 注册到 Fiber App
-    - [ ] Swagger 注释完整，文档正确生成
+    - [x] Fiber v3 路由组配置正确
+    - [x] CRUD 操作正确
+    - [x] 暂停/恢复/回退/终止操作正确
+    - [x] Handler 作为 Fx Provider 注册
+    - [x] 路由通过 Fx Invoke 注册到 Fiber App
+    - [x] Swagger 注释完整，文档正确生成
   - 依赖：T6.0.1
   - 风险：低
   - 预估：1d
   - 可并行：是（与 T6.1.2~T6.1.7）
 
-- [ ] **T6.1.2** 实现任务管理 API（Fx Provider）
+- [x] **T6.1.2** 实现任务管理 API（Fx Provider）
   - 验收标准：
-    - [ ] Fiber v3 路由配置正确
-    - [ ] 列表查询正确
-    - [ ] 跳过/重试操作正确
-    - [ ] 分页支持
-    - [ ] Handler 作为 Fx Provider 注册
-    - [ ] Swagger 注释完整
+    - [x] Fiber v3 路由配置正确
+    - [x] 列表查询正确
+    - [x] 跳过/重试操作正确
+    - [x] 分页支持
+    - [x] Handler 作为 Fx Provider 注册
+    - [x] Swagger 注释完整
   - 依赖：T6.0.1, T5.1.4
   - 风险：低
   - 预估：0.5d
   - 可并行：是（与 T6.1.*）
 
-- [ ] **T6.1.3** 实现配置管理 API（Fx Provider）
-  - 醇收标准：
-    - [ ] 获取配置正确
-    - [ ] 更新配置正确
-    - [ ] 配置验证正确
-    - [ ] Handler 作为 Fx Provider 注册
-    - [ ] Swagger 注释完整
+- [x] **T6.1.3** 实现配置管理 API（Fx Provider）
+  - 验收标准：
+    - [x] 获取配置正确
+    - [x] 更新配置正确
+    - [x] 配置验证正确
+    - [x] Handler 作为 Fx Provider 注册
+    - [x] Swagger 注释完整
   - 依赖：T6.0.1
   - 风险：低
   - 预估：0.5d
   - 可并行：是（与 T6.1.*）
 
-- [ ] **T6.1.4** 实现仓库管理 API（Fx Provider）
+- [x] **T6.1.4** 实现仓库管理 API（Fx Provider）
   - 验收标准：
-    - [ ] 仓库 CRUD 正确
-    - [ ] 验证配置编辑正确
-    - [ ] 启用/禁用操作正确
-    - [ ] Handler 作为 Fx Provider 注册
-    - [ ] Swagger 注释完整
+    - [x] 仓库 CRUD 正确
+    - [x] 验证配置编辑正确
+    - [x] 启用/禁用操作正确
+    - [x] Handler 作为 Fx Provider 注册
+    - [x] Swagger 注释完整
   - 依赖：T6.0.1
   - 风险：低
   - 预估：0.5d
   - 可并行：是（与 T6.1.*）
 
-- [ ] **T6.1.5** 实现 Webhook 接收 API（Fx Provider）
+- [x] **T6.1.5** 实现 Webhook 接收 API（Fx Provider）
   - 验收标准：
-    - [ ] Fiber v3 Webhook 路由配置
-    - [ ] GitHub Webhook 正确处理
-    - [ ] 签名验证正确（使用 Fiber 中间件）
-    - [ ] 异步处理支持
-    - [ ] Handler 作为 Fx Provider 注册
-    - [ ] Swagger 注释完整
+    - [x] Fiber v3 Webhook 路由配置
+    - [x] GitHub Webhook 正确处理
+    - [x] 签名验证正确（使用 Fiber 中间件）
+    - [x] 异步处理支持
+    - [x] Handler 作为 Fx Provider 注册
+    - [x] Swagger 注释完整
   - 依赖：T6.0.1, T4.1.5
   - 风险：中
   - 预估：1d
   - 可并行：是（与 T6.1.*）
 
-- [ ] **T6.1.6** 实现审计日志 API（Fx Provider）
+- [x] **T6.1.6** 实现审计日志 API（Fx Provider）
   - 验收标准：
-    - [ ] 查询方法正确
-    - [ ] 多条件过滤支持
-    - [ ] 分页支持
-    - [ ] Handler 作为 Fx Provider 注册
-    - [ ] Swagger 注释完整
+    - [x] 查询方法正确
+    - [x] 多条件过滤支持
+    - [x] 分页支持
+    - [x] Handler 作为 Fx Provider 注册
+    - [x] Swagger 注释完整
   - 依赖：T6.0.1
   - 风险：低
   - 预估：0.5d
   - 可并行：是（与 T6.1.*）
 
-- [ ] **T6.1.7** 实现健康检查 API（Fx Provider）
+- [x] **T6.1.7** 实现健康检查 API（Fx Provider）
   - 验收标准：
-    - [ ] 数据库检查正确
-    - [ ] GitHub 连接检查
-    - [ ] Git 可用性检查
-    - [ ] Fiber v3 健康检查中间件配置
-    - [ ] Handler 作为 Fx Provider 注册
-    - [ ] Swagger 注释完整
+    - [x] 数据库检查正确
+    - [x] GitHub 连接检查
+    - [x] Git 可用性检查
+    - [x] Fiber v3 健康检查中间件配置
+    - [x] Handler 作为 Fx Provider 注册
+    - [x] Swagger 注释完整
   - 依赖：T6.0.1
   - 风险：低
   - 预估：0.5d

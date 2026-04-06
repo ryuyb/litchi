@@ -5,19 +5,16 @@
  * Automated development agent system - from GitHub Issue to Pull Request
  * OpenAPI spec version: 0.1.0
  */
-import type { ExecutionResult } from "./executionResult";
-import type { TaskStatus } from "./taskStatus";
 
 export interface Task {
-	id: string;
-	description: string;
-	status: TaskStatus;
+	canExecute?: boolean;
 	dependencies?: string[];
-	executionResult?: ExecutionResult;
-	/** @minimum 0 */
-	retryCount?: number;
+	description?: string;
 	failureReason?: string;
+	id?: string;
+	order?: number;
+	retryCount?: number;
+	status?: string;
+	statusDisplay?: string;
 	suggestion?: string;
-	createdAt?: string;
-	updatedAt?: string;
 }

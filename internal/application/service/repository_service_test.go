@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"testing"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/ryuyb/litchi/internal/domain/entity"
@@ -13,130 +12,9 @@ import (
 	"github.com/ryuyb/litchi/internal/domain/valueobject"
 	"github.com/ryuyb/litchi/internal/infrastructure/config"
 	litchierrors "github.com/ryuyb/litchi/internal/pkg/errors"
+	"github.com/stretchr/testify/mock"
 	"go.uber.org/zap"
 )
-
-// --- Mocks for RepositoryService tests (following design_service_test.go pattern) ---
-
-type mockRepoRepository struct {
-	repos      map[string]*entity.Repository
-	saveErr    error
-	findErr    error
-	deleteErr  error
-	existsErr  error
-	findAllErr error
-}
-
-func newMockRepoRepository() *mockRepoRepository {
-	return &mockRepoRepository{
-		repos: make(map[string]*entity.Repository),
-	}
-}
-
-func (m *mockRepoRepository) FindByName(ctx context.Context, name string) (*entity.Repository, error) {
-	if m.findErr != nil {
-		return nil, m.findErr
-	}
-	return m.repos[name], nil
-}
-
-func (m *mockRepoRepository) Save(ctx context.Context, repo *entity.Repository) error {
-	if m.saveErr != nil {
-		return m.saveErr
-	}
-	m.repos[repo.Name] = repo
-	return nil
-}
-
-func (m *mockRepoRepository) Delete(ctx context.Context, name string) error {
-	if m.deleteErr != nil {
-		return m.deleteErr
-	}
-	delete(m.repos, name)
-	return nil
-}
-
-func (m *mockRepoRepository) FindAll(ctx context.Context) ([]*entity.Repository, error) {
-	if m.findAllErr != nil {
-		return nil, m.findAllErr
-	}
-	result := make([]*entity.Repository, 0, len(m.repos))
-	for _, repo := range m.repos {
-		result = append(result, repo)
-	}
-	return result, nil
-}
-
-func (m *mockRepoRepository) FindEnabled(ctx context.Context) ([]*entity.Repository, error) {
-	if m.findAllErr != nil {
-		return nil, m.findAllErr
-	}
-	result := make([]*entity.Repository, 0)
-	for _, repo := range m.repos {
-		if repo.Enabled {
-			result = append(result, repo)
-		}
-	}
-	return result, nil
-}
-
-func (m *mockRepoRepository) ExistsByName(ctx context.Context, name string) (bool, error) {
-	if m.existsErr != nil {
-		return false, m.existsErr
-	}
-	return m.repos[name] != nil, nil
-}
-
-type mockAuditLogRepositoryForRepo struct {
-	logs   []*entity.AuditLog
-	saveErr error
-}
-
-func newMockAuditLogRepositoryForRepo() *mockAuditLogRepositoryForRepo {
-	return &mockAuditLogRepositoryForRepo{
-		logs: make([]*entity.AuditLog, 0),
-	}
-}
-
-func (m *mockAuditLogRepositoryForRepo) Save(ctx context.Context, log *entity.AuditLog) error {
-	if m.saveErr != nil {
-		return m.saveErr
-	}
-	m.logs = append(m.logs, log)
-	return nil
-}
-
-func (m *mockAuditLogRepositoryForRepo) FindByID(ctx context.Context, id uuid.UUID) (*entity.AuditLog, error) {
-	return nil, nil
-}
-
-func (m *mockAuditLogRepositoryForRepo) List(ctx context.Context, opts repository.AuditLogListOptions) ([]*entity.AuditLog, int64, error) {
-	return m.logs, int64(len(m.logs)), nil
-}
-
-func (m *mockAuditLogRepositoryForRepo) ListBySessionID(ctx context.Context, sessionID uuid.UUID, offset, limit int) ([]*entity.AuditLog, int64, error) {
-	return nil, 0, nil
-}
-
-func (m *mockAuditLogRepositoryForRepo) ListByRepository(ctx context.Context, repo string, offset, limit int) ([]*entity.AuditLog, int64, error) {
-	return nil, 0, nil
-}
-
-func (m *mockAuditLogRepositoryForRepo) ListByActor(ctx context.Context, actor string, offset, limit int) ([]*entity.AuditLog, int64, error) {
-	return nil, 0, nil
-}
-
-func (m *mockAuditLogRepositoryForRepo) ListByTimeRange(ctx context.Context, startTime, endTime time.Time, offset, limit int) ([]*entity.AuditLog, int64, error) {
-	return nil, 0, nil
-}
-
-func (m *mockAuditLogRepositoryForRepo) CountBySession(ctx context.Context, sessionID uuid.UUID) (int64, error) {
-	return 0, nil
-}
-
-func (m *mockAuditLogRepositoryForRepo) DeleteBeforeTime(ctx context.Context, before time.Time) (int64, error) {
-	return 0, nil
-}
 
 // --- Helper functions for tests ---
 
@@ -171,9 +49,13 @@ func newTestRepositoryService(
 
 func TestRepositoryService_CreateRepository_Success(t *testing.T) {
 	ctx := context.Background()
-	repoRepo := newMockRepoRepository()
-	auditRepo := newMockAuditLogRepositoryForRepo()
+	repoRepo := repository.NewMockRepositoryRepository(t)
+	auditRepo := repository.NewMockAuditLogRepository(t)
 	svc := newTestRepositoryService(repoRepo, auditRepo)
+
+	repoRepo.EXPECT().ExistsByName(ctx, "owner/repo").Return(false, nil)
+	repoRepo.EXPECT().Save(ctx, mockRepoSaved("owner/repo")).Return(nil)
+	auditRepo.EXPECT().Save(ctx, mockAuditLogSaved()).Return(nil)
 
 	repo, err := svc.CreateRepository(ctx, "owner/repo", nil, "admin", valueobject.ActorRoleAdmin)
 	if err != nil {
@@ -189,17 +71,12 @@ func TestRepositoryService_CreateRepository_Success(t *testing.T) {
 	if repo.ID == uuid.Nil {
 		t.Errorf("expected repo to have a valid ID")
 	}
-
-	// Verify audit log was recorded
-	if len(auditRepo.logs) != 1 {
-		t.Errorf("expected 1 audit log, got %d", len(auditRepo.logs))
-	}
 }
 
 func TestRepositoryService_CreateRepository_WithConfigOverrides(t *testing.T) {
 	ctx := context.Background()
-	repoRepo := newMockRepoRepository()
-	auditRepo := newMockAuditLogRepositoryForRepo()
+	repoRepo := repository.NewMockRepositoryRepository(t)
+	auditRepo := repository.NewMockAuditLogRepository(t)
 	svc := newTestRepositoryService(repoRepo, auditRepo)
 
 	maxConcurrency := 10
@@ -215,6 +92,10 @@ func TestRepositoryService_CreateRepository_WithConfigOverrides(t *testing.T) {
 		DefaultModel:        &defaultModel,
 		TaskRetryLimit:      &taskRetryLimit,
 	}
+
+	repoRepo.EXPECT().ExistsByName(ctx, "owner/repo").Return(false, nil)
+	repoRepo.EXPECT().Save(ctx, mockRepoSaved("owner/repo")).Return(nil)
+	auditRepo.EXPECT().Save(ctx, mockAuditLogSaved()).Return(nil)
 
 	repo, err := svc.CreateRepository(ctx, "owner/repo", configOverrides, "admin", valueobject.ActorRoleAdmin)
 	if err != nil {
@@ -241,21 +122,18 @@ func TestRepositoryService_CreateRepository_WithConfigOverrides(t *testing.T) {
 
 func TestRepositoryService_CreateRepository_AlreadyExists(t *testing.T) {
 	ctx := context.Background()
-	repoRepo := newMockRepoRepository()
-	auditRepo := newMockAuditLogRepositoryForRepo()
+	repoRepo := repository.NewMockRepositoryRepository(t)
+	auditRepo := repository.NewMockAuditLogRepository(t)
 	svc := newTestRepositoryService(repoRepo, auditRepo)
 
-	// Create a repository first
-	existingRepo := entity.NewRepository("owner/repo")
-	repoRepo.repos["owner/repo"] = existingRepo
+	repoRepo.EXPECT().ExistsByName(ctx, "owner/repo").Return(true, nil)
+	auditRepo.EXPECT().Save(ctx, mockAuditLogSaved()).Return(nil)
 
-	// Try to create the same repository again
 	_, err := svc.CreateRepository(ctx, "owner/repo", nil, "admin", valueobject.ActorRoleAdmin)
 	if err == nil {
 		t.Fatal("expected error for duplicate repository")
 	}
 
-	// Verify error type
 	var litchiErr *litchierrors.Error
 	if !errors.As(err, &litchiErr) {
 		t.Errorf("expected litchierrors.Error, got %T", err)
@@ -267,17 +145,17 @@ func TestRepositoryService_CreateRepository_AlreadyExists(t *testing.T) {
 
 func TestRepositoryService_CreateRepository_InvalidName(t *testing.T) {
 	ctx := context.Background()
-	repoRepo := newMockRepoRepository()
-	auditRepo := newMockAuditLogRepositoryForRepo()
+	repoRepo := repository.NewMockRepositoryRepository(t)
+	auditRepo := repository.NewMockAuditLogRepository(t)
 	svc := newTestRepositoryService(repoRepo, auditRepo)
 
-	// Invalid name without slash
+	auditRepo.EXPECT().Save(ctx, mockAuditLogSaved()).Return(nil)
+
 	_, err := svc.CreateRepository(ctx, "invalidname", nil, "admin", valueobject.ActorRoleAdmin)
 	if err == nil {
 		t.Fatal("expected error for invalid name")
 	}
 
-	// Verify error type
 	var litchiErr *litchierrors.Error
 	if !errors.As(err, &litchiErr) {
 		t.Errorf("expected litchierrors.Error, got %T", err)
@@ -286,17 +164,19 @@ func TestRepositoryService_CreateRepository_InvalidName(t *testing.T) {
 
 func TestRepositoryService_CreateRepository_DatabaseError(t *testing.T) {
 	ctx := context.Background()
-	repoRepo := newMockRepoRepository()
-	repoRepo.saveErr = errors.New("database error")
-	auditRepo := newMockAuditLogRepositoryForRepo()
+	repoRepo := repository.NewMockRepositoryRepository(t)
+	auditRepo := repository.NewMockAuditLogRepository(t)
 	svc := newTestRepositoryService(repoRepo, auditRepo)
+
+	repoRepo.EXPECT().ExistsByName(ctx, "owner/repo").Return(false, nil)
+	repoRepo.EXPECT().Save(ctx, mockRepoSaved("owner/repo")).Return(errors.New("database error"))
+	auditRepo.EXPECT().Save(ctx, mockAuditLogSaved()).Return(nil)
 
 	_, err := svc.CreateRepository(ctx, "owner/repo", nil, "admin", valueobject.ActorRoleAdmin)
 	if err == nil {
 		t.Fatal("expected error for database failure")
 	}
 
-	// Verify error type
 	var litchiErr *litchierrors.Error
 	if !errors.As(err, &litchiErr) {
 		t.Errorf("expected litchierrors.Error, got %T", err)
@@ -310,15 +190,15 @@ func TestRepositoryService_CreateRepository_DatabaseError(t *testing.T) {
 
 func TestRepositoryService_UpdateRepository_Success(t *testing.T) {
 	ctx := context.Background()
-	repoRepo := newMockRepoRepository()
-	auditRepo := newMockAuditLogRepositoryForRepo()
+	repoRepo := repository.NewMockRepositoryRepository(t)
+	auditRepo := repository.NewMockAuditLogRepository(t)
 	svc := newTestRepositoryService(repoRepo, auditRepo)
 
-	// Create a repository first
 	existingRepo := entity.NewRepository("owner/repo")
-	repoRepo.repos["owner/repo"] = existingRepo
+	repoRepo.EXPECT().FindByName(ctx, "owner/repo").Return(existingRepo, nil)
+	repoRepo.EXPECT().Save(ctx, mockRepoSaved("owner/repo")).Return(nil)
+	auditRepo.EXPECT().Save(ctx, mockAuditLogSaved()).Return(nil)
 
-	// Update with new config
 	maxConcurrency := 15
 	configOverrides := &entity.RepoConfig{
 		MaxConcurrency: &maxConcurrency,
@@ -336,9 +216,11 @@ func TestRepositoryService_UpdateRepository_Success(t *testing.T) {
 
 func TestRepositoryService_UpdateRepository_NotFound(t *testing.T) {
 	ctx := context.Background()
-	repoRepo := newMockRepoRepository()
-	auditRepo := newMockAuditLogRepositoryForRepo()
+	repoRepo := repository.NewMockRepositoryRepository(t)
+	auditRepo := repository.NewMockAuditLogRepository(t)
 	svc := newTestRepositoryService(repoRepo, auditRepo)
+
+	repoRepo.EXPECT().FindByName(ctx, "owner/repo").Return(nil, nil)
 
 	maxConcurrency := 15
 	configOverrides := &entity.RepoConfig{
@@ -350,7 +232,6 @@ func TestRepositoryService_UpdateRepository_NotFound(t *testing.T) {
 		t.Fatal("expected error for repository not found")
 	}
 
-	// Verify error type
 	var litchiErr *litchierrors.Error
 	if !errors.As(err, &litchiErr) {
 		t.Errorf("expected litchierrors.Error, got %T", err)
@@ -359,15 +240,14 @@ func TestRepositoryService_UpdateRepository_NotFound(t *testing.T) {
 
 func TestRepositoryService_UpdateRepository_InvalidConfig(t *testing.T) {
 	ctx := context.Background()
-	repoRepo := newMockRepoRepository()
-	auditRepo := newMockAuditLogRepositoryForRepo()
+	repoRepo := repository.NewMockRepositoryRepository(t)
+	auditRepo := repository.NewMockAuditLogRepository(t)
 	svc := newTestRepositoryService(repoRepo, auditRepo)
 
-	// Create a repository first
 	existingRepo := entity.NewRepository("owner/repo")
-	repoRepo.repos["owner/repo"] = existingRepo
+	repoRepo.EXPECT().FindByName(ctx, "owner/repo").Return(existingRepo, nil)
+	auditRepo.EXPECT().Save(ctx, mockAuditLogSaved()).Return(nil)
 
-	// Invalid config: MaxConcurrency < 1
 	maxConcurrency := 0
 	configOverrides := &entity.RepoConfig{
 		MaxConcurrency: &maxConcurrency,
@@ -378,7 +258,6 @@ func TestRepositoryService_UpdateRepository_InvalidConfig(t *testing.T) {
 		t.Fatal("expected error for invalid config")
 	}
 
-	// Verify error type
 	var litchiErr *litchierrors.Error
 	if !errors.As(err, &litchiErr) {
 		t.Errorf("expected litchierrors.Error, got %T", err)
@@ -389,42 +268,34 @@ func TestRepositoryService_UpdateRepository_InvalidConfig(t *testing.T) {
 
 func TestRepositoryService_DeleteRepository_Success(t *testing.T) {
 	ctx := context.Background()
-	repoRepo := newMockRepoRepository()
-	auditRepo := newMockAuditLogRepositoryForRepo()
+	repoRepo := repository.NewMockRepositoryRepository(t)
+	auditRepo := repository.NewMockAuditLogRepository(t)
 	svc := newTestRepositoryService(repoRepo, auditRepo)
 
-	// Create a repository first
 	existingRepo := entity.NewRepository("owner/repo")
-	repoRepo.repos["owner/repo"] = existingRepo
+	repoRepo.EXPECT().FindByName(ctx, "owner/repo").Return(existingRepo, nil)
+	repoRepo.EXPECT().Delete(ctx, "owner/repo").Return(nil)
+	auditRepo.EXPECT().Save(ctx, mockAuditLogSaved()).Return(nil)
 
 	err := svc.DeleteRepository(ctx, "owner/repo", "admin", valueobject.ActorRoleAdmin)
 	if err != nil {
 		t.Fatalf("DeleteRepository failed: %v", err)
 	}
-
-	// Verify repository is deleted
-	if repoRepo.repos["owner/repo"] != nil {
-		t.Errorf("expected repository to be deleted")
-	}
-
-	// Verify audit log was recorded
-	if len(auditRepo.logs) != 1 {
-		t.Errorf("expected 1 audit log, got %d", len(auditRepo.logs))
-	}
 }
 
 func TestRepositoryService_DeleteRepository_NotFound(t *testing.T) {
 	ctx := context.Background()
-	repoRepo := newMockRepoRepository()
-	auditRepo := newMockAuditLogRepositoryForRepo()
+	repoRepo := repository.NewMockRepositoryRepository(t)
+	auditRepo := repository.NewMockAuditLogRepository(t)
 	svc := newTestRepositoryService(repoRepo, auditRepo)
+
+	repoRepo.EXPECT().FindByName(ctx, "owner/repo").Return(nil, nil)
 
 	err := svc.DeleteRepository(ctx, "owner/repo", "admin", valueobject.ActorRoleAdmin)
 	if err == nil {
 		t.Fatal("expected error for repository not found")
 	}
 
-	// Verify error type
 	var litchiErr *litchierrors.Error
 	if !errors.As(err, &litchiErr) {
 		t.Errorf("expected litchierrors.Error, got %T", err)
@@ -435,13 +306,12 @@ func TestRepositoryService_DeleteRepository_NotFound(t *testing.T) {
 
 func TestRepositoryService_GetRepository_Success(t *testing.T) {
 	ctx := context.Background()
-	repoRepo := newMockRepoRepository()
-	auditRepo := newMockAuditLogRepositoryForRepo()
+	repoRepo := repository.NewMockRepositoryRepository(t)
+	auditRepo := repository.NewMockAuditLogRepository(t)
 	svc := newTestRepositoryService(repoRepo, auditRepo)
 
-	// Create a repository first
 	existingRepo := entity.NewRepository("owner/repo")
-	repoRepo.repos["owner/repo"] = existingRepo
+	repoRepo.EXPECT().FindByName(ctx, "owner/repo").Return(existingRepo, nil)
 
 	repo, err := svc.GetRepository(ctx, "owner/repo")
 	if err != nil {
@@ -458,9 +328,11 @@ func TestRepositoryService_GetRepository_Success(t *testing.T) {
 
 func TestRepositoryService_GetRepository_NotFound(t *testing.T) {
 	ctx := context.Background()
-	repoRepo := newMockRepoRepository()
-	auditRepo := newMockAuditLogRepositoryForRepo()
+	repoRepo := repository.NewMockRepositoryRepository(t)
+	auditRepo := repository.NewMockAuditLogRepository(t)
 	svc := newTestRepositoryService(repoRepo, auditRepo)
+
+	repoRepo.EXPECT().FindByName(ctx, "owner/repo").Return(nil, nil)
 
 	repo, err := svc.GetRepository(ctx, "owner/repo")
 	if err != nil {
@@ -476,29 +348,33 @@ func TestRepositoryService_GetRepository_NotFound(t *testing.T) {
 
 func TestRepositoryService_ListRepositories_Success(t *testing.T) {
 	ctx := context.Background()
-	repoRepo := newMockRepoRepository()
-	auditRepo := newMockAuditLogRepositoryForRepo()
+	repoRepo := repository.NewMockRepositoryRepository(t)
+	auditRepo := repository.NewMockAuditLogRepository(t)
 	svc := newTestRepositoryService(repoRepo, auditRepo)
 
-	// Create some repositories
-	repoRepo.repos["owner/repo1"] = entity.NewRepository("owner/repo1")
-	repoRepo.repos["owner/repo2"] = entity.NewRepository("owner/repo2")
+	repos := []*entity.Repository{
+		entity.NewRepository("owner/repo1"),
+		entity.NewRepository("owner/repo2"),
+	}
+	repoRepo.EXPECT().FindAll(ctx).Return(repos, nil)
 
-	repos, err := svc.ListRepositories(ctx)
+	result, err := svc.ListRepositories(ctx)
 	if err != nil {
 		t.Fatalf("ListRepositories failed: %v", err)
 	}
 
-	if len(repos) != 2 {
-		t.Errorf("expected 2 repositories, got %d", len(repos))
+	if len(result) != 2 {
+		t.Errorf("expected 2 repositories, got %d", len(result))
 	}
 }
 
 func TestRepositoryService_ListRepositories_Empty(t *testing.T) {
 	ctx := context.Background()
-	repoRepo := newMockRepoRepository()
-	auditRepo := newMockAuditLogRepositoryForRepo()
+	repoRepo := repository.NewMockRepositoryRepository(t)
+	auditRepo := repository.NewMockAuditLogRepository(t)
 	svc := newTestRepositoryService(repoRepo, auditRepo)
+
+	repoRepo.EXPECT().FindAll(ctx).Return([]*entity.Repository{}, nil)
 
 	repos, err := svc.ListRepositories(ctx)
 	if err != nil {
@@ -514,27 +390,24 @@ func TestRepositoryService_ListRepositories_Empty(t *testing.T) {
 
 func TestRepositoryService_ListEnabledRepositories_Success(t *testing.T) {
 	ctx := context.Background()
-	repoRepo := newMockRepoRepository()
-	auditRepo := newMockAuditLogRepositoryForRepo()
+	repoRepo := repository.NewMockRepositoryRepository(t)
+	auditRepo := repository.NewMockAuditLogRepository(t)
 	svc := newTestRepositoryService(repoRepo, auditRepo)
 
-	// Create some repositories, one disabled
 	repo1 := entity.NewRepository("owner/repo1")
-	repo2 := entity.NewRepository("owner/repo2")
-	repo2.Disable()
-	repoRepo.repos["owner/repo1"] = repo1
-	repoRepo.repos["owner/repo2"] = repo2
+	repos := []*entity.Repository{repo1}
+	repoRepo.EXPECT().FindEnabled(ctx).Return(repos, nil)
 
-	repos, err := svc.ListEnabledRepositories(ctx)
+	result, err := svc.ListEnabledRepositories(ctx)
 	if err != nil {
 		t.Fatalf("ListEnabledRepositories failed: %v", err)
 	}
 
-	if len(repos) != 1 {
-		t.Errorf("expected 1 enabled repository, got %d", len(repos))
+	if len(result) != 1 {
+		t.Errorf("expected 1 enabled repository, got %d", len(result))
 	}
-	if repos[0].Name != "owner/repo1" {
-		t.Errorf("expected 'owner/repo1', got '%s'", repos[0].Name)
+	if result[0].Name != "owner/repo1" {
+		t.Errorf("expected 'owner/repo1', got '%s'", result[0].Name)
 	}
 }
 
@@ -542,38 +415,39 @@ func TestRepositoryService_ListEnabledRepositories_Success(t *testing.T) {
 
 func TestRepositoryService_EnableRepository_Success(t *testing.T) {
 	ctx := context.Background()
-	repoRepo := newMockRepoRepository()
-	auditRepo := newMockAuditLogRepositoryForRepo()
+	repoRepo := repository.NewMockRepositoryRepository(t)
+	auditRepo := repository.NewMockAuditLogRepository(t)
 	svc := newTestRepositoryService(repoRepo, auditRepo)
 
-	// Create a disabled repository
 	repo := entity.NewRepository("owner/repo")
 	repo.Disable()
-	repoRepo.repos["owner/repo"] = repo
+	repoRepo.EXPECT().FindByName(ctx, "owner/repo").Return(repo, nil)
+	repoRepo.EXPECT().Save(ctx, repo).Return(nil)
+	auditRepo.EXPECT().Save(ctx, mockAuditLogSaved()).Return(nil)
 
 	err := svc.EnableRepository(ctx, "owner/repo", "admin", valueobject.ActorRoleAdmin)
 	if err != nil {
 		t.Fatalf("EnableRepository failed: %v", err)
 	}
 
-	// Verify repository is enabled
-	if !repoRepo.repos["owner/repo"].Enabled {
+	if !repo.Enabled {
 		t.Errorf("expected repository to be enabled")
 	}
 }
 
 func TestRepositoryService_EnableRepository_NotFound(t *testing.T) {
 	ctx := context.Background()
-	repoRepo := newMockRepoRepository()
-	auditRepo := newMockAuditLogRepositoryForRepo()
+	repoRepo := repository.NewMockRepositoryRepository(t)
+	auditRepo := repository.NewMockAuditLogRepository(t)
 	svc := newTestRepositoryService(repoRepo, auditRepo)
+
+	repoRepo.EXPECT().FindByName(ctx, "owner/repo").Return(nil, nil)
 
 	err := svc.EnableRepository(ctx, "owner/repo", "admin", valueobject.ActorRoleAdmin)
 	if err == nil {
 		t.Fatal("expected error for repository not found")
 	}
 
-	// Verify error type
 	var litchiErr *litchierrors.Error
 	if !errors.As(err, &litchiErr) {
 		t.Errorf("expected litchierrors.Error, got %T", err)
@@ -584,37 +458,38 @@ func TestRepositoryService_EnableRepository_NotFound(t *testing.T) {
 
 func TestRepositoryService_DisableRepository_Success(t *testing.T) {
 	ctx := context.Background()
-	repoRepo := newMockRepoRepository()
-	auditRepo := newMockAuditLogRepositoryForRepo()
+	repoRepo := repository.NewMockRepositoryRepository(t)
+	auditRepo := repository.NewMockAuditLogRepository(t)
 	svc := newTestRepositoryService(repoRepo, auditRepo)
 
-	// Create an enabled repository
 	repo := entity.NewRepository("owner/repo")
-	repoRepo.repos["owner/repo"] = repo
+	repoRepo.EXPECT().FindByName(ctx, "owner/repo").Return(repo, nil)
+	repoRepo.EXPECT().Save(ctx, repo).Return(nil)
+	auditRepo.EXPECT().Save(ctx, mockAuditLogSaved()).Return(nil)
 
 	err := svc.DisableRepository(ctx, "owner/repo", "admin", valueobject.ActorRoleAdmin)
 	if err != nil {
 		t.Fatalf("DisableRepository failed: %v", err)
 	}
 
-	// Verify repository is disabled
-	if repoRepo.repos["owner/repo"].Enabled {
+	if repo.Enabled {
 		t.Errorf("expected repository to be disabled")
 	}
 }
 
 func TestRepositoryService_DisableRepository_NotFound(t *testing.T) {
 	ctx := context.Background()
-	repoRepo := newMockRepoRepository()
-	auditRepo := newMockAuditLogRepositoryForRepo()
+	repoRepo := repository.NewMockRepositoryRepository(t)
+	auditRepo := repository.NewMockAuditLogRepository(t)
 	svc := newTestRepositoryService(repoRepo, auditRepo)
+
+	repoRepo.EXPECT().FindByName(ctx, "owner/repo").Return(nil, nil)
 
 	err := svc.DisableRepository(ctx, "owner/repo", "admin", valueobject.ActorRoleAdmin)
 	if err == nil {
 		t.Fatal("expected error for repository not found")
 	}
 
-	// Verify error type
 	var litchiErr *litchierrors.Error
 	if !errors.As(err, &litchiErr) {
 		t.Errorf("expected litchierrors.Error, got %T", err)
@@ -625,15 +500,14 @@ func TestRepositoryService_DisableRepository_NotFound(t *testing.T) {
 
 func TestRepositoryService_GetEffectiveConfig_Success(t *testing.T) {
 	ctx := context.Background()
-	repoRepo := newMockRepoRepository()
-	auditRepo := newMockAuditLogRepositoryForRepo()
+	repoRepo := repository.NewMockRepositoryRepository(t)
+	auditRepo := repository.NewMockAuditLogRepository(t)
 	svc := newTestRepositoryService(repoRepo, auditRepo)
 
-	// Create a repository with custom config
 	repo := entity.NewRepository("owner/repo")
 	maxConcurrency := 10
 	repo.SetMaxConcurrency(maxConcurrency)
-	repoRepo.repos["owner/repo"] = repo
+	repoRepo.EXPECT().FindByName(ctx, "owner/repo").Return(repo, nil)
 
 	effectiveConfig, err := svc.GetEffectiveConfig(ctx, "owner/repo")
 	if err != nil {
@@ -650,7 +524,6 @@ func TestRepositoryService_GetEffectiveConfig_Success(t *testing.T) {
 		t.Errorf("expected Enabled to be true")
 	}
 
-	// Verify effective config: MaxConcurrency from repo (10), others from global
 	if *effectiveConfig.Effective.MaxConcurrency != 10 {
 		t.Errorf("expected Effective.MaxConcurrency 10 (from repo), got %d", *effectiveConfig.Effective.MaxConcurrency)
 	}
@@ -661,11 +534,12 @@ func TestRepositoryService_GetEffectiveConfig_Success(t *testing.T) {
 
 func TestRepositoryService_GetEffectiveConfig_NoRepository(t *testing.T) {
 	ctx := context.Background()
-	repoRepo := newMockRepoRepository()
-	auditRepo := newMockAuditLogRepositoryForRepo()
+	repoRepo := repository.NewMockRepositoryRepository(t)
+	auditRepo := repository.NewMockAuditLogRepository(t)
 	svc := newTestRepositoryService(repoRepo, auditRepo)
 
-	// No repository in storage
+	repoRepo.EXPECT().FindByName(ctx, "owner/repo").Return(nil, nil)
+
 	effectiveConfig, err := svc.GetEffectiveConfig(ctx, "owner/repo")
 	if err != nil {
 		t.Fatalf("GetEffectiveConfig failed: %v", err)
@@ -678,7 +552,6 @@ func TestRepositoryService_GetEffectiveConfig_NoRepository(t *testing.T) {
 		t.Errorf("expected Enabled to be false for non-existent repo")
 	}
 
-	// Verify effective config equals global config
 	if *effectiveConfig.Effective.MaxConcurrency != 5 {
 		t.Errorf("expected Effective.MaxConcurrency 5 (from global), got %d", *effectiveConfig.Effective.MaxConcurrency)
 	}
@@ -688,8 +561,8 @@ func TestRepositoryService_GetEffectiveConfig_NoRepository(t *testing.T) {
 
 func TestRepositoryService_ValidateConfig_Valid(t *testing.T) {
 	ctx := context.Background()
-	repoRepo := newMockRepoRepository()
-	auditRepo := newMockAuditLogRepositoryForRepo()
+	repoRepo := repository.NewMockRepositoryRepository(t)
+	auditRepo := repository.NewMockAuditLogRepository(t)
 	svc := newTestRepositoryService(repoRepo, auditRepo)
 
 	maxConcurrency := 10
@@ -712,11 +585,11 @@ func TestRepositoryService_ValidateConfig_Valid(t *testing.T) {
 
 func TestRepositoryService_ValidateConfig_InvalidMaxConcurrency(t *testing.T) {
 	ctx := context.Background()
-	repoRepo := newMockRepoRepository()
-	auditRepo := newMockAuditLogRepositoryForRepo()
+	repoRepo := repository.NewMockRepositoryRepository(t)
+	auditRepo := repository.NewMockAuditLogRepository(t)
 	svc := newTestRepositoryService(repoRepo, auditRepo)
 
-	maxConcurrency := 0 // Invalid: must be >= 1
+	maxConcurrency := 0
 	config := entity.RepoConfig{
 		MaxConcurrency: &maxConcurrency,
 	}
@@ -726,7 +599,6 @@ func TestRepositoryService_ValidateConfig_InvalidMaxConcurrency(t *testing.T) {
 		t.Fatal("expected error for invalid MaxConcurrency")
 	}
 
-	// Verify error type
 	var litchiErr *litchierrors.Error
 	if !errors.As(err, &litchiErr) {
 		t.Errorf("expected litchierrors.Error, got %T", err)
@@ -735,11 +607,10 @@ func TestRepositoryService_ValidateConfig_InvalidMaxConcurrency(t *testing.T) {
 
 func TestRepositoryService_ValidateConfig_InvalidComplexityThreshold(t *testing.T) {
 	ctx := context.Background()
-	repoRepo := newMockRepoRepository()
-	auditRepo := newMockAuditLogRepositoryForRepo()
+	repoRepo := repository.NewMockRepositoryRepository(t)
+	auditRepo := repository.NewMockAuditLogRepository(t)
 	svc := newTestRepositoryService(repoRepo, auditRepo)
 
-	// Test negative threshold
 	complexityThreshold := -1
 	config := entity.RepoConfig{
 		ComplexityThreshold: &complexityThreshold,
@@ -750,7 +621,6 @@ func TestRepositoryService_ValidateConfig_InvalidComplexityThreshold(t *testing.
 		t.Fatal("expected error for negative ComplexityThreshold")
 	}
 
-	// Test threshold > 100
 	complexityThreshold = 101
 	config = entity.RepoConfig{
 		ComplexityThreshold: &complexityThreshold,
@@ -764,11 +634,11 @@ func TestRepositoryService_ValidateConfig_InvalidComplexityThreshold(t *testing.
 
 func TestRepositoryService_ValidateConfig_InvalidTaskRetryLimit(t *testing.T) {
 	ctx := context.Background()
-	repoRepo := newMockRepoRepository()
-	auditRepo := newMockAuditLogRepositoryForRepo()
+	repoRepo := repository.NewMockRepositoryRepository(t)
+	auditRepo := repository.NewMockAuditLogRepository(t)
 	svc := newTestRepositoryService(repoRepo, auditRepo)
 
-	taskRetryLimit := -1 // Invalid: must be >= 0
+	taskRetryLimit := -1
 	config := entity.RepoConfig{
 		TaskRetryLimit: &taskRetryLimit,
 	}
@@ -778,7 +648,6 @@ func TestRepositoryService_ValidateConfig_InvalidTaskRetryLimit(t *testing.T) {
 		t.Fatal("expected error for invalid TaskRetryLimit")
 	}
 
-	// Verify error type
 	var litchiErr *litchierrors.Error
 	if !errors.As(err, &litchiErr) {
 		t.Errorf("expected litchierrors.Error, got %T", err)
@@ -787,11 +656,11 @@ func TestRepositoryService_ValidateConfig_InvalidTaskRetryLimit(t *testing.T) {
 
 func TestRepositoryService_ValidateConfig_EmptyDefaultModel(t *testing.T) {
 	ctx := context.Background()
-	repoRepo := newMockRepoRepository()
-	auditRepo := newMockAuditLogRepositoryForRepo()
+	repoRepo := repository.NewMockRepositoryRepository(t)
+	auditRepo := repository.NewMockAuditLogRepository(t)
 	svc := newTestRepositoryService(repoRepo, auditRepo)
 
-	defaultModel := "" // Invalid: must be non-empty if set
+	defaultModel := ""
 	config := entity.RepoConfig{
 		DefaultModel: &defaultModel,
 	}
@@ -801,7 +670,6 @@ func TestRepositoryService_ValidateConfig_EmptyDefaultModel(t *testing.T) {
 		t.Fatal("expected error for empty DefaultModel")
 	}
 
-	// Verify error type
 	var litchiErr *litchierrors.Error
 	if !errors.As(err, &litchiErr) {
 		t.Errorf("expected litchierrors.Error, got %T", err)
@@ -810,15 +678,30 @@ func TestRepositoryService_ValidateConfig_EmptyDefaultModel(t *testing.T) {
 
 func TestRepositoryService_ValidateConfig_EmptyConfig(t *testing.T) {
 	ctx := context.Background()
-	repoRepo := newMockRepoRepository()
-	auditRepo := newMockAuditLogRepositoryForRepo()
+	repoRepo := repository.NewMockRepositoryRepository(t)
+	auditRepo := repository.NewMockAuditLogRepository(t)
 	svc := newTestRepositoryService(repoRepo, auditRepo)
 
-	// Empty config with all nil values should be valid
 	config := entity.RepoConfig{}
 
 	err := svc.ValidateConfig(ctx, config)
 	if err != nil {
 		t.Fatalf("ValidateConfig failed for empty config: %v", err)
 	}
+}
+
+// --- Mock matchers for testify mock ---
+
+// mockRepoSaved matches any repository with the given name
+func mockRepoSaved(name string) any {
+	return mock.MatchedBy(func(repo *entity.Repository) bool {
+		return repo.Name == name
+	})
+}
+
+// mockAuditLogSaved matches any audit log
+func mockAuditLogSaved() any {
+	return mock.MatchedBy(func(log *entity.AuditLog) bool {
+		return log != nil
+	})
 }

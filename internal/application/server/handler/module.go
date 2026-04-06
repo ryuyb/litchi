@@ -15,19 +15,19 @@ import (
 
 // Module provides all REST API handlers for Fx.
 var Module = fx.Module("api-handlers",
-	// Middleware
+	// Middleware (ErrorHandler must be created before App)
 	fx.Options(middleware.Module),
 
 	// Handler sub-modules (each handler as independent Fx Module)
 	fx.Options(
-		session.Module,   // T6.1.1
-		task.Module,      // T6.1.2
-		config.Module,    // T6.1.3
-		repository.Module, // T6.1.4
-		audit.Module,     // T6.1.6
-		health.Module,    // T6.1.7
+		session.Module,
+		task.Module,
+		config.Module,
+		repository.Module,
+		audit.Module,
+		health.Module,
 	),
 
-	// Register middleware (error handler)
-	fx.Invoke(middleware.RegisterErrorHandler),
+	// Note: Error handler is now set in fiber.Config during App creation.
+	// See internal/application/server/app.go - NewApp takes ErrorHandler as dependency.
 )

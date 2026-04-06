@@ -15,11 +15,19 @@ import (
 	"gorm.io/gorm/logger"
 
 	"github.com/ryuyb/litchi/internal/infrastructure/config"
+	"github.com/ryuyb/litchi/internal/pkg/health"
 )
 
 // DatabaseModule provides GORM database connection via Fx.
 var DatabaseModule = fx.Module("database",
-	fx.Provide(NewDB),
+	fx.Provide(
+		NewDB,
+		// Provide DB as health.Checker
+		fx.Annotate(
+			func(db *DB) health.Checker { return db },
+			fx.ResultTags(`group:"health_checkers"`),
+		),
+	),
 	fx.Invoke(RegisterLifecycle),
 )
 
@@ -176,6 +184,46 @@ func (db *DB) Stats() (map[string]interface{}, error) {
 		"max_idle_closed":      stats.MaxIdleClosed,
 		"max_lifetime_closed":  stats.MaxLifetimeClosed,
 	}, nil
+}
+
+// Name returns the health check component name.
+func (db *DB) Name() string {
+	return "database"
+}
+
+// Check performs the health check for the database.
+func (db *DB) Check(ctx context.Context) health.CheckResult {
+	start := time.Now()
+
+	err := db.Ping(ctx)
+	latency := time.Since(start)
+
+	result := health.CheckResult{
+		Name:      db.Name(),
+		LatencyMs: int(latency.Milliseconds()),
+	}
+
+	if err != nil {
+		result.Status = "fail"
+		result.Error = err.Error()
+		result.Message = "Database connection failed"
+		db.logger.Error("database health check failed", zap.Error(err))
+	} else {
+		result.Status = "pass"
+		result.Message = "Connection OK"
+
+		// Get connection pool stats
+		stats, err := db.Stats()
+		if err == nil {
+			result.Details = map[string]any{
+				"open_connections": stats["open_connections"],
+				"idle_connections": stats["idle"],
+				"in_use":           stats["in_use"],
+			}
+		}
+	}
+
+	return result
 }
 
 // ============================================

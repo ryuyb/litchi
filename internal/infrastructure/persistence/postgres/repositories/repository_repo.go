@@ -119,5 +119,69 @@ func (r *RepositoryRepo) ExistsByName(ctx context.Context, name string) (bool, e
 	return count > 0, nil
 }
 
+// ListWithPagination lists repositories with pagination and optional filtering.
+func (r *RepositoryRepo) ListWithPagination(ctx context.Context, params repository.PaginationParams, filter *repository.RepositoryFilter) ([]*entity.Repository, *repository.PaginationResult, error) {
+	// Validate and set defaults
+	page := params.Page
+	if page < 1 {
+		page = 1
+	}
+	pageSize := params.PageSize
+	if pageSize < 1 {
+		pageSize = 20
+	}
+	if pageSize > 100 {
+		pageSize = 100
+	}
+
+	// Build query with filters
+	query := r.db.WithContext(ctx).Model(&models.Repository{})
+
+	if filter != nil && filter.Enabled != nil {
+		query = query.Where("enabled = ?", *filter.Enabled)
+	}
+
+	// Count total items
+	var totalItems int64
+	if err := query.Count(&totalItems).Error; err != nil {
+		return nil, nil, err
+	}
+
+	// Calculate pagination metadata
+	totalPages := int(totalItems) / pageSize
+	if int(totalItems)%pageSize > 0 {
+		totalPages++
+	}
+
+	// Query with pagination
+	var modelList []*models.Repository
+	offset := (page - 1) * pageSize
+
+	err := query.
+		Order("created_at desc").
+		Offset(offset).
+		Limit(pageSize).
+		Find(&modelList).Error
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// Convert models to domain entities
+	entities := make([]*entity.Repository, len(modelList))
+	for i, m := range modelList {
+		entities[i] = converter.RepositoryFromModel(m)
+	}
+
+	paginationResult := &repository.PaginationResult{
+		Page:       page,
+		PageSize:   pageSize,
+		TotalItems: int(totalItems),
+		TotalPages: totalPages,
+	}
+
+	return entities, paginationResult, nil
+}
+
 // Ensure RepositoryRepo implements repository.RepositoryRepository interface.
 var _ repository.RepositoryRepository = (*RepositoryRepo)(nil)

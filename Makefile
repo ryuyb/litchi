@@ -25,7 +25,7 @@ swagger-gen:
 	@echo "Generating Swagger documentation (OpenAPI 3.1)..."
 	@mkdir -p ./docs/api
 	swag init --v3.1 -g cmd/server/main.go -d . -o ./docs/api \
-		--parseInternal --outputTypes go,json,yaml --propertyStrategy camelcase
+		--parseInternal --parseDependencyLevel 3 --outputTypes go,json,yaml --propertyStrategy camelcase
 	@echo "Swagger documentation generated in ./docs/api"
 
 # Run all tests (including integration tests with Docker)
@@ -48,5 +48,5 @@ build:
 # Clean generated mock files
 clean-mocks:
 	@echo "Cleaning generated mock files..."
-	find ./internal -name "mocks_test.go" -type f -delete
+	find ./internal -name "mocks.go" -path "*/domain/*" -type f -delete
 	@echo "Mock files cleaned"

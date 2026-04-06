@@ -684,10 +684,12 @@ func (s *TaskService) GetTaskStatus(
 	}, nil
 }
 
-// GetTaskList returns the status of all tasks in a session.
+// GetTaskList returns the status of all tasks in a session with optional filtering and pagination.
 func (s *TaskService) GetTaskList(
 	ctx context.Context,
 	sessionID uuid.UUID,
+	page, pageSize int,
+	statusFilter *valueobject.TaskStatus,
 ) (*TaskListStatus, error) {
 	session, err := s.sessionRepo.FindByID(ctx, sessionID)
 	if err != nil {
@@ -700,16 +702,17 @@ func (s *TaskService) GetTaskList(
 	}
 
 	tasks := session.GetTasks()
-	taskStatuses := make([]TaskSummary, len(tasks))
 
 	maxRetryLimit := s.config.Agent.TaskRetryLimit
 	if maxRetryLimit <= 0 {
 		maxRetryLimit = 3
 	}
 
+	// Build task summaries
+	allTaskSummaries := make([]TaskSummary, 0, len(tasks))
 	var completedCount, inProgressCount, pendingCount, failedCount, skippedCount int
 
-	for i, task := range tasks {
+	for _, task := range tasks {
 		summary := TaskSummary{
 			ID:          task.ID,
 			Description: task.Description,
@@ -728,9 +731,7 @@ func (s *TaskService) GetTaskList(
 			summary.CanExecute = true
 		}
 
-		taskStatuses[i] = summary
-
-		// Count by status
+		// Count by status (for overall statistics)
 		switch task.Status {
 		case valueobject.TaskStatusCompleted:
 			completedCount++
@@ -743,7 +744,54 @@ func (s *TaskService) GetTaskList(
 		case valueobject.TaskStatusSkipped:
 			skippedCount++
 		}
+
+		allTaskSummaries = append(allTaskSummaries, summary)
 	}
+
+	// Apply status filter if provided
+	var filteredSummaries []TaskSummary
+	if statusFilter != nil {
+		filteredSummaries = make([]TaskSummary, 0)
+		for _, summary := range allTaskSummaries {
+			if summary.Status == statusFilter.String() {
+				filteredSummaries = append(filteredSummaries, summary)
+			}
+		}
+	} else {
+		filteredSummaries = allTaskSummaries
+	}
+
+	// Calculate pagination
+	totalItems := len(filteredSummaries)
+	if page < 1 {
+		page = 1
+	}
+	if pageSize < 1 {
+		pageSize = 20
+	}
+	if pageSize > 100 {
+		pageSize = 100
+	}
+
+	totalPages := totalItems / pageSize
+	if totalItems%pageSize > 0 {
+		totalPages++
+	}
+	if totalPages == 0 {
+		totalPages = 1
+	}
+
+	// Apply pagination
+	startIndex := (page - 1) * pageSize
+	endIndex := startIndex + pageSize
+	if startIndex >= totalItems {
+		startIndex = totalItems
+	}
+	if endIndex > totalItems {
+		endIndex = totalItems
+	}
+
+	paginatedSummaries := filteredSummaries[startIndex:endIndex]
 
 	return &TaskListStatus{
 		SessionID:      sessionID,
@@ -756,8 +804,12 @@ func (s *TaskService) GetTaskList(
 		AllCompleted:   session.AreAllTasksCompleted(),
 		HasFailedTask:  session.HasFailedTask(),
 		CurrentTaskID:  session.GetExecution().CurrentTaskID,
-		Tasks:          taskStatuses,
+		Tasks:          paginatedSummaries,
 		MaxRetryLimit:  maxRetryLimit,
+		TotalItems:     totalItems,
+		Page:           page,
+		PageSize:       pageSize,
+		TotalPages:     totalPages,
 	}, nil
 }
 
@@ -792,7 +844,7 @@ type DependencyStatus struct {
 	ID          uuid.UUID `json:"id"`
 	Status      string    `json:"status"`
 	IsCompleted bool      `json:"isCompleted"`
-}
+} // @name DependencyStatus
 
 // TaskSummary represents a summary of a task in the list.
 type TaskSummary struct {
@@ -808,17 +860,22 @@ type TaskSummary struct {
 // TaskListStatus represents the status of all tasks in a session.
 type TaskListStatus struct {
 	SessionID     uuid.UUID      `json:"sessionId"`
-	TotalTasks    int            `json:"totalTasks"`
-	Completed     int            `json:"completed"`
-	InProgress    int            `json:"inProgress"`
-	Pending       int            `json:"pending"`
-	Failed        int            `json:"failed"`
-	Skipped       int            `json:"skipped"`
+	TotalTasks    int            `json:"totalTasks"`    // Total tasks in session (unfiltered)
+	Completed     int            `json:"completed"`     // Completed tasks count
+	InProgress    int            `json:"inProgress"`    // In progress tasks count
+	Pending       int            `json:"pending"`       // Pending tasks count
+	Failed        int            `json:"failed"`        // Failed tasks count
+	Skipped       int            `json:"skipped"`       // Skipped tasks count
 	AllCompleted  bool           `json:"allCompleted"`
 	HasFailedTask bool           `json:"hasFailedTask"`
 	CurrentTaskID *uuid.UUID     `json:"currentTaskId,omitempty"`
 	Tasks         []TaskSummary  `json:"tasks"`
 	MaxRetryLimit int            `json:"maxRetryLimit"`
+	// Pagination info (based on filtered results)
+	TotalItems int `json:"totalItems"` // Total items after filter
+	Page       int `json:"page"`
+	PageSize   int `json:"pageSize"`
+	TotalPages int `json:"totalPages"`
 }
 
 // --- Internal Helper Methods ---
