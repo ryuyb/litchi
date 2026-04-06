@@ -40,7 +40,6 @@ func NewHandler(p HandlerParams) *Handler {
 // @Summary        Get task list
 // @Description    Retrieve all tasks for a work session with status statistics and execution progress
 // @Tags           tasks
-// @Accept         json
 // @Produce        json
 // @Param          sessionId  path      string  true  "Session ID (UUID format)"
 // @Param          page       query     int     false "Page number (default: 1)"           minimum(1)
@@ -143,7 +142,6 @@ func (h *Handler) GetTaskList(c fiber.Ctx) error {
 // @Summary        Get task status
 // @Description    Retrieve detailed status information for a specific task including dependencies and execution result
 // @Tags           tasks
-// @Accept         json
 // @Produce        json
 // @Param          sessionId  path      string  true  "Session ID (UUID format)"
 // @Param          taskId     path      string  true  "Task ID (UUID format)"

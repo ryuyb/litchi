@@ -51,7 +51,6 @@ func NewHandler(p HandlerParams) *Handler {
 // @Summary        List work sessions
 // @Description    Retrieves a paginated list of work sessions with optional filtering by status, stage, and repository
 // @Tags           sessions
-// @Accept         json
 // @Produce        json
 // @Param          page      query     int     false  "Page number (1-based)"           default(1)
 // @Param          pageSize  query     int     false  "Number of items per page"        default(20)
@@ -113,7 +112,6 @@ func (h *Handler) ListSessions(c fiber.Ctx) error {
 // @Summary        Get work session
 // @Description    Retrieves a work session by its unique identifier
 // @Tags           sessions
-// @Accept         json
 // @Produce        json
 // @Param          id   path      string  true  "Session ID (UUID format)"
 // @Success        200  {object}  dto.SessionResponse  "Session retrieved successfully"
@@ -144,7 +142,6 @@ func (h *Handler) GetSession(c fiber.Ctx) error {
 // @Summary        Get session details
 // @Description    Retrieves a work session with complete details including issue info, design content, task list, and execution context
 // @Tags           sessions
-// @Accept         json
 // @Produce        json
 // @Param          id   path      string  true  "Session ID (UUID format)"
 // @Success        200  {object}  dto.SessionResponse  "Session details retrieved successfully"

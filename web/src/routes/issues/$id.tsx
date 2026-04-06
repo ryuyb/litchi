@@ -78,11 +78,7 @@ function IssueDetailPage() {
 		useState<RollbackSessionTargetStage | null>(null);
 
 	// Fetch session details
-	const {
-		data: response,
-		isLoading,
-		error,
-	} = useGetApiV1SessionsIdDetail(id, {});
+	const { data: response, isLoading, error } = useGetApiV1SessionsIdDetail(id);
 
 	// Check if response is successful
 	const isSuccess = isSuccessResponse(response);
@@ -93,7 +89,7 @@ function IssueDetailPage() {
 		mutation: {
 			onSuccess: () => {
 				queryClient.invalidateQueries({
-					queryKey: getGetApiV1SessionsIdDetailQueryKey(id, {}),
+					queryKey: getGetApiV1SessionsIdDetailQueryKey(id),
 				});
 			},
 		},
@@ -103,7 +99,7 @@ function IssueDetailPage() {
 		mutation: {
 			onSuccess: () => {
 				queryClient.invalidateQueries({
-					queryKey: getGetApiV1SessionsIdDetailQueryKey(id, {}),
+					queryKey: getGetApiV1SessionsIdDetailQueryKey(id),
 				});
 			},
 		},
@@ -113,7 +109,7 @@ function IssueDetailPage() {
 		mutation: {
 			onSuccess: () => {
 				queryClient.invalidateQueries({
-					queryKey: getGetApiV1SessionsIdDetailQueryKey(id, {}),
+					queryKey: getGetApiV1SessionsIdDetailQueryKey(id),
 				});
 				setRollbackStage(null);
 			},
@@ -124,7 +120,7 @@ function IssueDetailPage() {
 		mutation: {
 			onSuccess: () => {
 				queryClient.invalidateQueries({
-					queryKey: getGetApiV1SessionsIdDetailQueryKey(id, {}),
+					queryKey: getGetApiV1SessionsIdDetailQueryKey(id),
 				});
 			},
 		},
@@ -134,7 +130,7 @@ function IssueDetailPage() {
 		mutation: {
 			onSuccess: () => {
 				queryClient.invalidateQueries({
-					queryKey: getGetApiV1SessionsIdDetailQueryKey(id, {}),
+					queryKey: getGetApiV1SessionsIdDetailQueryKey(id),
 				});
 			},
 		},

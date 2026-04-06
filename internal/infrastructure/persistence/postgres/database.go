@@ -22,6 +22,11 @@ import (
 var DatabaseModule = fx.Module("database",
 	fx.Provide(
 		NewDB,
+		// Extract gorm.DB from DB wrapper for other modules
+		fx.Annotate(
+			func(db *DB) *gorm.DB { return db.DB },
+			fx.ResultTags(`name:"gorm_db"`),
+		),
 		// Provide DB as health.Checker
 		fx.Annotate(
 			func(db *DB) health.Checker { return db },
@@ -42,14 +47,14 @@ type DB struct {
 type Params struct {
 	fx.In
 
-	DatabaseConfig *config.DatabaseConfig
-	ServerConfig   *config.ServerConfig // for mode (debug/release/test)
-	Logger         *zap.Logger
+	Config *config.Config
+	Logger *zap.Logger
 }
 
 // NewDB creates a new GORM database instance with connection pool configuration.
 func NewDB(p Params) (*DB, error) {
-	dbConfig := p.DatabaseConfig
+	dbConfig := &p.Config.Database
+	serverConfig := &p.Config.Server
 
 	// Build connection string with proper URL encoding for special characters in password
 	dsn := fmt.Sprintf(
@@ -63,7 +68,7 @@ func NewDB(p Params) (*DB, error) {
 	)
 
 	// Configure GORM logger based on application mode
-	gormLogger := NewGormLogger(p.Logger, p.ServerConfig.Mode)
+	gormLogger := NewGormLogger(p.Logger, serverConfig.Mode)
 
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
 		Logger: gormLogger,

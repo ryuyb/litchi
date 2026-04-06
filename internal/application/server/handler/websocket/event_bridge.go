@@ -5,6 +5,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
+	"go.uber.org/fx"
 	"go.uber.org/zap"
 
 	"github.com/ryuyb/litchi/internal/domain/event"
@@ -21,6 +22,8 @@ type EventBridge struct {
 
 // EventBridgeParams contains dependencies for creating an event bridge.
 type EventBridgeParams struct {
+	fx.In
+
 	Hub        *Hub
 	Dispatcher *event.Dispatcher
 	Logger     *zap.Logger

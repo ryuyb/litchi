@@ -9,6 +9,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/ryuyb/litchi/internal/application/dto"
+	"github.com/ryuyb/litchi/internal/infrastructure/config"
 	litchierrors "github.com/ryuyb/litchi/internal/pkg/errors"
 )
 
@@ -23,14 +24,14 @@ type ErrorHandlerParams struct {
 	fx.In
 
 	Logger *zap.Logger
-	Debug  bool `name:"debug_mode"` // Optional: set via config
+	Config *config.Config
 }
 
 // NewErrorHandler creates a new error handler middleware.
 func NewErrorHandler(p ErrorHandlerParams) *ErrorHandler {
 	return &ErrorHandler{
 		logger: p.Logger.Named("error-handler"),
-		debug:  p.Debug,
+		debug:  p.Config.Server.Mode == "debug",
 	}
 }
 

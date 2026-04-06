@@ -80,7 +80,7 @@ function TaskActionButtons({
 		mutation: {
 			onSuccess: () => {
 				queryClient.invalidateQueries({
-					queryKey: getGetApiV1SessionsIdDetailQueryKey(sessionId, {}),
+					queryKey: getGetApiV1SessionsIdDetailQueryKey(sessionId),
 				});
 				onSuccess?.();
 			},
@@ -92,7 +92,7 @@ function TaskActionButtons({
 		mutation: {
 			onSuccess: () => {
 				queryClient.invalidateQueries({
-					queryKey: getGetApiV1SessionsIdDetailQueryKey(sessionId, {}),
+					queryKey: getGetApiV1SessionsIdDetailQueryKey(sessionId),
 				});
 				onSuccess?.();
 			},

@@ -113,7 +113,7 @@ function IssuesPage() {
 		isLoading,
 		isError,
 		error,
-	} = useGetApiV1Sessions({}, params);
+	} = useGetApiV1Sessions(params);
 
 	// Extract data from response - check if success (status 200)
 	const isSuccess = response?.status === 200;

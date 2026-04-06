@@ -47,7 +47,6 @@ func NewHandler(p HandlerParams) *Handler {
 // @Summary        List audit logs
 // @Description    Retrieve audit logs with filtering by session, repository, actor, operation, result, and time range. Supports pagination.
 // @Tags           audit
-// @Accept         json
 // @Produce        json
 // @Param          page        query     int     false  "Page number (default: 1)"                example(1)
 // @Param          pageSize    query     int     false  "Page size (default: 50, max: 100)"       example(50)
@@ -171,7 +170,6 @@ func (h *Handler) ListAuditLogs(c fiber.Ctx) error {
 // @Summary        Get audit log
 // @Description    Retrieve a single audit log entry by its unique identifier.
 // @Tags           audit
-// @Accept         json
 // @Produce        json
 // @Param          id   path      string  true  "Audit log ID (UUID format)"  example("550e8400-e29b-41d4-a716-446655440000")
 // @Success        200  {object}  dto.AuditLogResponse  "Audit log retrieved successfully"
@@ -221,7 +219,6 @@ func (h *Handler) GetAuditLog(c fiber.Ctx) error {
 // @Summary        List audit logs by session
 // @Description    Retrieve all audit logs associated with a specific work session. Supports pagination.
 // @Tags           audit
-// @Accept         json
 // @Produce        json
 // @Param          sessionId  path      string  true  "Session ID (UUID format)"  example("550e8400-e29b-41d4-a716-446655440000")
 // @Param          page       query     int     false "Page number (default: 1)"   example(1)
@@ -279,7 +276,6 @@ func (h *Handler) ListBySession(c fiber.Ctx) error {
 // @Summary        Get session audit summary
 // @Description    Retrieve aggregated statistics of audit logs for a specific work session, including counts by operation type and result status.
 // @Tags           audit
-// @Accept         json
 // @Produce        json
 // @Param          sessionId  path      string  true  "Session ID (UUID format)"  example("550e8400-e29b-41d4-a716-446655440000")
 // @Success        200        {object}  dto.AuditSummaryResponse  "Audit summary retrieved successfully"
@@ -334,7 +330,6 @@ func (h *Handler) GetSessionSummary(c fiber.Ctx) error {
 // @Summary        List audit logs by repository
 // @Description    Retrieve all audit logs for a specific repository (owner/repo format). Supports pagination.
 // @Tags           audit
-// @Accept         json
 // @Produce        json
 // @Param          repository  path      string  true  "Repository name (owner/repo)"  example("owner/repo")
 // @Param          page        query     int     false "Page number (default: 1)"     example(1)

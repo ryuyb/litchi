@@ -46,6 +46,10 @@ func NewLoggerFromConfig(p Params) (*zap.Logger, error) {
 		zapConfig.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
 	}
 
+	// Enable stacktrace for Error level and above
+	zapConfig.EncoderConfig.StacktraceKey = "stacktrace"
+	zapConfig.Development = false // Use production stacktrace behavior (Error+ only)
+
 	// Set log level
 	var level zapcore.Level
 	if err := level.UnmarshalText([]byte(logCfg.Level)); err != nil {

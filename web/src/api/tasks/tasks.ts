@@ -24,9 +24,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 
 import type {
 	ApiError,
-	GetApiV1SessionsSessionIdTasksBody,
 	GetApiV1SessionsSessionIdTasksParams,
-	GetApiV1SessionsSessionIdTasksTaskIdBody,
 	PostApiV1SessionsSessionIdTasksTaskIdRetryBody,
 	PostApiV1SessionsSessionIdTasksTaskIdSkipBody,
 	Success,
@@ -95,7 +93,6 @@ export const getGetApiV1SessionsSessionIdTasksUrl = (
 
 export const getApiV1SessionsSessionIdTasks = async (
 	sessionId: string,
-	getApiV1SessionsSessionIdTasksBody: GetApiV1SessionsSessionIdTasksBody,
 	params?: GetApiV1SessionsSessionIdTasksParams,
 	options?: RequestInit,
 ): Promise<getApiV1SessionsSessionIdTasksResponse> => {
@@ -104,8 +101,6 @@ export const getApiV1SessionsSessionIdTasks = async (
 		{
 			...options,
 			method: "GET",
-			headers: { "Content-Type": "application/json", ...options?.headers },
-			body: JSON.stringify(getApiV1SessionsSessionIdTasksBody),
 		},
 	);
 
@@ -123,13 +118,11 @@ export const getApiV1SessionsSessionIdTasks = async (
 
 export const getGetApiV1SessionsSessionIdTasksQueryKey = (
 	sessionId: string,
-	getApiV1SessionsSessionIdTasksBody?: GetApiV1SessionsSessionIdTasksBody,
 	params?: GetApiV1SessionsSessionIdTasksParams,
 ) => {
 	return [
 		`/api/v1/sessions/${sessionId}/tasks`,
 		...(params ? [params] : []),
-		getApiV1SessionsSessionIdTasksBody,
 	] as const;
 };
 
@@ -138,7 +131,6 @@ export const getGetApiV1SessionsSessionIdTasksQueryOptions = <
 	TError = ApiError,
 >(
 	sessionId: string,
-	getApiV1SessionsSessionIdTasksBody: GetApiV1SessionsSessionIdTasksBody,
 	params?: GetApiV1SessionsSessionIdTasksParams,
 	options?: {
 		query?: Partial<
@@ -155,21 +147,15 @@ export const getGetApiV1SessionsSessionIdTasksQueryOptions = <
 
 	const queryKey =
 		queryOptions?.queryKey ??
-		getGetApiV1SessionsSessionIdTasksQueryKey(
-			sessionId,
-			getApiV1SessionsSessionIdTasksBody,
-			params,
-		);
+		getGetApiV1SessionsSessionIdTasksQueryKey(sessionId, params);
 
 	const queryFn: QueryFunction<
 		Awaited<ReturnType<typeof getApiV1SessionsSessionIdTasks>>
 	> = ({ signal }) =>
-		getApiV1SessionsSessionIdTasks(
-			sessionId,
-			getApiV1SessionsSessionIdTasksBody,
-			params,
-			{ signal, ...fetchOptions },
-		);
+		getApiV1SessionsSessionIdTasks(sessionId, params, {
+			signal,
+			...fetchOptions,
+		});
 
 	return {
 		queryKey,
@@ -193,7 +179,6 @@ export function useGetApiV1SessionsSessionIdTasks<
 	TError = ApiError,
 >(
 	sessionId: string,
-	getApiV1SessionsSessionIdTasksBody: GetApiV1SessionsSessionIdTasksBody,
 	params: undefined | GetApiV1SessionsSessionIdTasksParams,
 	options: {
 		query: Partial<
@@ -222,7 +207,6 @@ export function useGetApiV1SessionsSessionIdTasks<
 	TError = ApiError,
 >(
 	sessionId: string,
-	getApiV1SessionsSessionIdTasksBody: GetApiV1SessionsSessionIdTasksBody,
 	params?: GetApiV1SessionsSessionIdTasksParams,
 	options?: {
 		query?: Partial<
@@ -251,7 +235,6 @@ export function useGetApiV1SessionsSessionIdTasks<
 	TError = ApiError,
 >(
 	sessionId: string,
-	getApiV1SessionsSessionIdTasksBody: GetApiV1SessionsSessionIdTasksBody,
 	params?: GetApiV1SessionsSessionIdTasksParams,
 	options?: {
 		query?: Partial<
@@ -276,7 +259,6 @@ export function useGetApiV1SessionsSessionIdTasks<
 	TError = ApiError,
 >(
 	sessionId: string,
-	getApiV1SessionsSessionIdTasksBody: GetApiV1SessionsSessionIdTasksBody,
 	params?: GetApiV1SessionsSessionIdTasksParams,
 	options?: {
 		query?: Partial<
@@ -294,7 +276,6 @@ export function useGetApiV1SessionsSessionIdTasks<
 } {
 	const queryOptions = getGetApiV1SessionsSessionIdTasksQueryOptions(
 		sessionId,
-		getApiV1SessionsSessionIdTasksBody,
 		params,
 		options,
 	);
@@ -357,7 +338,6 @@ export const getGetApiV1SessionsSessionIdTasksTaskIdUrl = (
 export const getApiV1SessionsSessionIdTasksTaskId = async (
 	sessionId: string,
 	taskId: string,
-	getApiV1SessionsSessionIdTasksTaskIdBody: GetApiV1SessionsSessionIdTasksTaskIdBody,
 	options?: RequestInit,
 ): Promise<getApiV1SessionsSessionIdTasksTaskIdResponse> => {
 	const res = await fetch(
@@ -365,8 +345,6 @@ export const getApiV1SessionsSessionIdTasksTaskId = async (
 		{
 			...options,
 			method: "GET",
-			headers: { "Content-Type": "application/json", ...options?.headers },
-			body: JSON.stringify(getApiV1SessionsSessionIdTasksTaskIdBody),
 		},
 	);
 
@@ -385,12 +363,8 @@ export const getApiV1SessionsSessionIdTasksTaskId = async (
 export const getGetApiV1SessionsSessionIdTasksTaskIdQueryKey = (
 	sessionId: string,
 	taskId: string,
-	getApiV1SessionsSessionIdTasksTaskIdBody?: GetApiV1SessionsSessionIdTasksTaskIdBody,
 ) => {
-	return [
-		`/api/v1/sessions/${sessionId}/tasks/${taskId}`,
-		getApiV1SessionsSessionIdTasksTaskIdBody,
-	] as const;
+	return [`/api/v1/sessions/${sessionId}/tasks/${taskId}`] as const;
 };
 
 export const getGetApiV1SessionsSessionIdTasksTaskIdQueryOptions = <
@@ -399,7 +373,6 @@ export const getGetApiV1SessionsSessionIdTasksTaskIdQueryOptions = <
 >(
 	sessionId: string,
 	taskId: string,
-	getApiV1SessionsSessionIdTasksTaskIdBody: GetApiV1SessionsSessionIdTasksTaskIdBody,
 	options?: {
 		query?: Partial<
 			UseQueryOptions<
@@ -415,21 +388,15 @@ export const getGetApiV1SessionsSessionIdTasksTaskIdQueryOptions = <
 
 	const queryKey =
 		queryOptions?.queryKey ??
-		getGetApiV1SessionsSessionIdTasksTaskIdQueryKey(
-			sessionId,
-			taskId,
-			getApiV1SessionsSessionIdTasksTaskIdBody,
-		);
+		getGetApiV1SessionsSessionIdTasksTaskIdQueryKey(sessionId, taskId);
 
 	const queryFn: QueryFunction<
 		Awaited<ReturnType<typeof getApiV1SessionsSessionIdTasksTaskId>>
 	> = ({ signal }) =>
-		getApiV1SessionsSessionIdTasksTaskId(
-			sessionId,
-			taskId,
-			getApiV1SessionsSessionIdTasksTaskIdBody,
-			{ signal, ...fetchOptions },
-		);
+		getApiV1SessionsSessionIdTasksTaskId(sessionId, taskId, {
+			signal,
+			...fetchOptions,
+		});
 
 	return {
 		queryKey,
@@ -454,7 +421,6 @@ export function useGetApiV1SessionsSessionIdTasksTaskId<
 >(
 	sessionId: string,
 	taskId: string,
-	getApiV1SessionsSessionIdTasksTaskIdBody: GetApiV1SessionsSessionIdTasksTaskIdBody,
 	options: {
 		query: Partial<
 			UseQueryOptions<
@@ -483,7 +449,6 @@ export function useGetApiV1SessionsSessionIdTasksTaskId<
 >(
 	sessionId: string,
 	taskId: string,
-	getApiV1SessionsSessionIdTasksTaskIdBody: GetApiV1SessionsSessionIdTasksTaskIdBody,
 	options?: {
 		query?: Partial<
 			UseQueryOptions<
@@ -512,7 +477,6 @@ export function useGetApiV1SessionsSessionIdTasksTaskId<
 >(
 	sessionId: string,
 	taskId: string,
-	getApiV1SessionsSessionIdTasksTaskIdBody: GetApiV1SessionsSessionIdTasksTaskIdBody,
 	options?: {
 		query?: Partial<
 			UseQueryOptions<
@@ -537,7 +501,6 @@ export function useGetApiV1SessionsSessionIdTasksTaskId<
 >(
 	sessionId: string,
 	taskId: string,
-	getApiV1SessionsSessionIdTasksTaskIdBody: GetApiV1SessionsSessionIdTasksTaskIdBody,
 	options?: {
 		query?: Partial<
 			UseQueryOptions<
@@ -555,7 +518,6 @@ export function useGetApiV1SessionsSessionIdTasksTaskId<
 	const queryOptions = getGetApiV1SessionsSessionIdTasksTaskIdQueryOptions(
 		sessionId,
 		taskId,
-		getApiV1SessionsSessionIdTasksTaskIdBody,
 		options,
 	);
 

@@ -40,7 +40,6 @@ func NewHandler(p HandlerParams) *Handler {
 // @Summary        Basic health check
 // @Description    Returns the server health status and version (legacy endpoint)
 // @Tags           system
-// @Accept         json
 // @Produce        json
 // @Success        200  {object}  dto.HealthCheckResponse  "Server is healthy"
 // @Router         /health [get]
@@ -55,7 +54,6 @@ func (h *Handler) BasicHealth(c fiber.Ctx) error {
 // @Summary        API health check
 // @Description    Returns the basic API health status and version
 // @Tags           system
-// @Accept         json
 // @Produce        json
 // @Success        200  {object}  dto.HealthCheckResponse  "Server is healthy"
 // @Router         /api/v1/health [get]
@@ -70,7 +68,6 @@ func (h *Handler) HealthCheck(c fiber.Ctx) error {
 // @Summary        Detailed health check
 // @Description    Returns detailed health status including database, GitHub, and Git checks
 // @Tags           system
-// @Accept         json
 // @Produce        json
 // @Success        200  {object}  dto.HealthDetailResponse  "Detailed health status"
 // @Router         /api/v1/health/detail [get]

@@ -19,13 +19,7 @@ import type {
 } from "@tanstack/react-query";
 import { useQuery } from "@tanstack/react-query";
 
-import type {
-	GetApiV1HealthBody,
-	GetApiV1HealthDetailBody,
-	GetHealthBody,
-	HealthCheck,
-	HealthDetail,
-} from "../schemas";
+import type { HealthCheck, HealthDetail } from "../schemas";
 
 /**
  * Returns the basic API health status and version
@@ -47,14 +41,11 @@ export const getGetApiV1HealthUrl = () => {
 };
 
 export const getApiV1Health = async (
-	getApiV1HealthBody: GetApiV1HealthBody,
 	options?: RequestInit,
 ): Promise<getApiV1HealthResponse> => {
 	const res = await fetch(getGetApiV1HealthUrl(), {
 		...options,
 		method: "GET",
-		headers: { "Content-Type": "application/json", ...options?.headers },
-		body: JSON.stringify(getApiV1HealthBody),
 	});
 
 	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
@@ -67,32 +58,26 @@ export const getApiV1Health = async (
 	} as getApiV1HealthResponse;
 };
 
-export const getGetApiV1HealthQueryKey = (
-	getApiV1HealthBody?: GetApiV1HealthBody,
-) => {
-	return [`/api/v1/health`, getApiV1HealthBody] as const;
+export const getGetApiV1HealthQueryKey = () => {
+	return [`/api/v1/health`] as const;
 };
 
 export const getGetApiV1HealthQueryOptions = <
 	TData = Awaited<ReturnType<typeof getApiV1Health>>,
 	TError = unknown,
->(
-	getApiV1HealthBody: GetApiV1HealthBody,
-	options?: {
-		query?: Partial<
-			UseQueryOptions<Awaited<ReturnType<typeof getApiV1Health>>, TError, TData>
-		>;
-		fetch?: RequestInit;
-	},
-) => {
+>(options?: {
+	query?: Partial<
+		UseQueryOptions<Awaited<ReturnType<typeof getApiV1Health>>, TError, TData>
+	>;
+	fetch?: RequestInit;
+}) => {
 	const { query: queryOptions, fetch: fetchOptions } = options ?? {};
 
-	const queryKey =
-		queryOptions?.queryKey ?? getGetApiV1HealthQueryKey(getApiV1HealthBody);
+	const queryKey = queryOptions?.queryKey ?? getGetApiV1HealthQueryKey();
 
 	const queryFn: QueryFunction<Awaited<ReturnType<typeof getApiV1Health>>> = ({
 		signal,
-	}) => getApiV1Health(getApiV1HealthBody, { signal, ...fetchOptions });
+	}) => getApiV1Health({ signal, ...fetchOptions });
 
 	return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
 		Awaited<ReturnType<typeof getApiV1Health>>,
@@ -110,7 +95,6 @@ export function useGetApiV1Health<
 	TData = Awaited<ReturnType<typeof getApiV1Health>>,
 	TError = unknown,
 >(
-	getApiV1HealthBody: GetApiV1HealthBody,
 	options: {
 		query: Partial<
 			UseQueryOptions<Awaited<ReturnType<typeof getApiV1Health>>, TError, TData>
@@ -133,7 +117,6 @@ export function useGetApiV1Health<
 	TData = Awaited<ReturnType<typeof getApiV1Health>>,
 	TError = unknown,
 >(
-	getApiV1HealthBody: GetApiV1HealthBody,
 	options?: {
 		query?: Partial<
 			UseQueryOptions<Awaited<ReturnType<typeof getApiV1Health>>, TError, TData>
@@ -156,7 +139,6 @@ export function useGetApiV1Health<
 	TData = Awaited<ReturnType<typeof getApiV1Health>>,
 	TError = unknown,
 >(
-	getApiV1HealthBody: GetApiV1HealthBody,
 	options?: {
 		query?: Partial<
 			UseQueryOptions<Awaited<ReturnType<typeof getApiV1Health>>, TError, TData>
@@ -175,7 +157,6 @@ export function useGetApiV1Health<
 	TData = Awaited<ReturnType<typeof getApiV1Health>>,
 	TError = unknown,
 >(
-	getApiV1HealthBody: GetApiV1HealthBody,
 	options?: {
 		query?: Partial<
 			UseQueryOptions<Awaited<ReturnType<typeof getApiV1Health>>, TError, TData>
@@ -186,10 +167,7 @@ export function useGetApiV1Health<
 ): UseQueryResult<TData, TError> & {
 	queryKey: DataTag<QueryKey, TData, TError>;
 } {
-	const queryOptions = getGetApiV1HealthQueryOptions(
-		getApiV1HealthBody,
-		options,
-	);
+	const queryOptions = getGetApiV1HealthQueryOptions(options);
 
 	const query = useQuery(queryOptions, queryClient) as UseQueryResult<
 		TData,
@@ -220,14 +198,11 @@ export const getGetApiV1HealthDetailUrl = () => {
 };
 
 export const getApiV1HealthDetail = async (
-	getApiV1HealthDetailBody: GetApiV1HealthDetailBody,
 	options?: RequestInit,
 ): Promise<getApiV1HealthDetailResponse> => {
 	const res = await fetch(getGetApiV1HealthDetailUrl(), {
 		...options,
 		method: "GET",
-		headers: { "Content-Type": "application/json", ...options?.headers },
-		body: JSON.stringify(getApiV1HealthDetailBody),
 	});
 
 	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
@@ -242,38 +217,30 @@ export const getApiV1HealthDetail = async (
 	} as getApiV1HealthDetailResponse;
 };
 
-export const getGetApiV1HealthDetailQueryKey = (
-	getApiV1HealthDetailBody?: GetApiV1HealthDetailBody,
-) => {
-	return [`/api/v1/health/detail`, getApiV1HealthDetailBody] as const;
+export const getGetApiV1HealthDetailQueryKey = () => {
+	return [`/api/v1/health/detail`] as const;
 };
 
 export const getGetApiV1HealthDetailQueryOptions = <
 	TData = Awaited<ReturnType<typeof getApiV1HealthDetail>>,
 	TError = unknown,
->(
-	getApiV1HealthDetailBody: GetApiV1HealthDetailBody,
-	options?: {
-		query?: Partial<
-			UseQueryOptions<
-				Awaited<ReturnType<typeof getApiV1HealthDetail>>,
-				TError,
-				TData
-			>
-		>;
-		fetch?: RequestInit;
-	},
-) => {
+>(options?: {
+	query?: Partial<
+		UseQueryOptions<
+			Awaited<ReturnType<typeof getApiV1HealthDetail>>,
+			TError,
+			TData
+		>
+	>;
+	fetch?: RequestInit;
+}) => {
 	const { query: queryOptions, fetch: fetchOptions } = options ?? {};
 
-	const queryKey =
-		queryOptions?.queryKey ??
-		getGetApiV1HealthDetailQueryKey(getApiV1HealthDetailBody);
+	const queryKey = queryOptions?.queryKey ?? getGetApiV1HealthDetailQueryKey();
 
 	const queryFn: QueryFunction<
 		Awaited<ReturnType<typeof getApiV1HealthDetail>>
-	> = ({ signal }) =>
-		getApiV1HealthDetail(getApiV1HealthDetailBody, { signal, ...fetchOptions });
+	> = ({ signal }) => getApiV1HealthDetail({ signal, ...fetchOptions });
 
 	return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
 		Awaited<ReturnType<typeof getApiV1HealthDetail>>,
@@ -291,7 +258,6 @@ export function useGetApiV1HealthDetail<
 	TData = Awaited<ReturnType<typeof getApiV1HealthDetail>>,
 	TError = unknown,
 >(
-	getApiV1HealthDetailBody: GetApiV1HealthDetailBody,
 	options: {
 		query: Partial<
 			UseQueryOptions<
@@ -318,7 +284,6 @@ export function useGetApiV1HealthDetail<
 	TData = Awaited<ReturnType<typeof getApiV1HealthDetail>>,
 	TError = unknown,
 >(
-	getApiV1HealthDetailBody: GetApiV1HealthDetailBody,
 	options?: {
 		query?: Partial<
 			UseQueryOptions<
@@ -345,7 +310,6 @@ export function useGetApiV1HealthDetail<
 	TData = Awaited<ReturnType<typeof getApiV1HealthDetail>>,
 	TError = unknown,
 >(
-	getApiV1HealthDetailBody: GetApiV1HealthDetailBody,
 	options?: {
 		query?: Partial<
 			UseQueryOptions<
@@ -368,7 +332,6 @@ export function useGetApiV1HealthDetail<
 	TData = Awaited<ReturnType<typeof getApiV1HealthDetail>>,
 	TError = unknown,
 >(
-	getApiV1HealthDetailBody: GetApiV1HealthDetailBody,
 	options?: {
 		query?: Partial<
 			UseQueryOptions<
@@ -383,10 +346,7 @@ export function useGetApiV1HealthDetail<
 ): UseQueryResult<TData, TError> & {
 	queryKey: DataTag<QueryKey, TData, TError>;
 } {
-	const queryOptions = getGetApiV1HealthDetailQueryOptions(
-		getApiV1HealthDetailBody,
-		options,
-	);
+	const queryOptions = getGetApiV1HealthDetailQueryOptions(options);
 
 	const query = useQuery(queryOptions, queryClient) as UseQueryResult<
 		TData,
@@ -416,14 +376,11 @@ export const getGetHealthUrl = () => {
 };
 
 export const getHealth = async (
-	getHealthBody: GetHealthBody,
 	options?: RequestInit,
 ): Promise<getHealthResponse> => {
 	const res = await fetch(getGetHealthUrl(), {
 		...options,
 		method: "GET",
-		headers: { "Content-Type": "application/json", ...options?.headers },
-		body: JSON.stringify(getHealthBody),
 	});
 
 	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
@@ -436,30 +393,26 @@ export const getHealth = async (
 	} as getHealthResponse;
 };
 
-export const getGetHealthQueryKey = (getHealthBody?: GetHealthBody) => {
-	return [`/health`, getHealthBody] as const;
+export const getGetHealthQueryKey = () => {
+	return [`/health`] as const;
 };
 
 export const getGetHealthQueryOptions = <
 	TData = Awaited<ReturnType<typeof getHealth>>,
 	TError = unknown,
->(
-	getHealthBody: GetHealthBody,
-	options?: {
-		query?: Partial<
-			UseQueryOptions<Awaited<ReturnType<typeof getHealth>>, TError, TData>
-		>;
-		fetch?: RequestInit;
-	},
-) => {
+>(options?: {
+	query?: Partial<
+		UseQueryOptions<Awaited<ReturnType<typeof getHealth>>, TError, TData>
+	>;
+	fetch?: RequestInit;
+}) => {
 	const { query: queryOptions, fetch: fetchOptions } = options ?? {};
 
-	const queryKey =
-		queryOptions?.queryKey ?? getGetHealthQueryKey(getHealthBody);
+	const queryKey = queryOptions?.queryKey ?? getGetHealthQueryKey();
 
 	const queryFn: QueryFunction<Awaited<ReturnType<typeof getHealth>>> = ({
 		signal,
-	}) => getHealth(getHealthBody, { signal, ...fetchOptions });
+	}) => getHealth({ signal, ...fetchOptions });
 
 	return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
 		Awaited<ReturnType<typeof getHealth>>,
@@ -477,7 +430,6 @@ export function useGetHealth<
 	TData = Awaited<ReturnType<typeof getHealth>>,
 	TError = unknown,
 >(
-	getHealthBody: GetHealthBody,
 	options: {
 		query: Partial<
 			UseQueryOptions<Awaited<ReturnType<typeof getHealth>>, TError, TData>
@@ -500,7 +452,6 @@ export function useGetHealth<
 	TData = Awaited<ReturnType<typeof getHealth>>,
 	TError = unknown,
 >(
-	getHealthBody: GetHealthBody,
 	options?: {
 		query?: Partial<
 			UseQueryOptions<Awaited<ReturnType<typeof getHealth>>, TError, TData>
@@ -523,7 +474,6 @@ export function useGetHealth<
 	TData = Awaited<ReturnType<typeof getHealth>>,
 	TError = unknown,
 >(
-	getHealthBody: GetHealthBody,
 	options?: {
 		query?: Partial<
 			UseQueryOptions<Awaited<ReturnType<typeof getHealth>>, TError, TData>
@@ -542,7 +492,6 @@ export function useGetHealth<
 	TData = Awaited<ReturnType<typeof getHealth>>,
 	TError = unknown,
 >(
-	getHealthBody: GetHealthBody,
 	options?: {
 		query?: Partial<
 			UseQueryOptions<Awaited<ReturnType<typeof getHealth>>, TError, TData>
@@ -553,7 +502,7 @@ export function useGetHealth<
 ): UseQueryResult<TData, TError> & {
 	queryKey: DataTag<QueryKey, TData, TError>;
 } {
-	const queryOptions = getGetHealthQueryOptions(getHealthBody, options);
+	const queryOptions = getGetHealthQueryOptions(options);
 
 	const query = useQuery(queryOptions, queryClient) as UseQueryResult<
 		TData,

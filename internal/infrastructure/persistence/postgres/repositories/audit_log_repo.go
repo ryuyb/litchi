@@ -21,7 +21,7 @@ import (
 type AuditLogRepositoryParams struct {
 	fx.In
 
-	DB     *gorm.DB
+	DB     *gorm.DB `name:"gorm_db"`
 	Logger *zap.Logger
 }
 

@@ -2,6 +2,8 @@ package main
 
 import (
 	"github.com/ryuyb/litchi/internal/application/server"
+	"github.com/ryuyb/litchi/internal/application/service"
+	"github.com/ryuyb/litchi/internal/infrastructure"
 	"github.com/ryuyb/litchi/internal/infrastructure/config"
 	"github.com/ryuyb/litchi/internal/infrastructure/static"
 	"github.com/ryuyb/litchi/internal/pkg/logger"
@@ -22,6 +24,10 @@ func main() {
 		config.Module,
 		// Logger depends on config
 		logger.Module,
+		// Infrastructure modules (database, repositories)
+		infrastructure.Module,
+		// Application services
+		service.Module,
 		// Server depends on logger and config
 		// API routes are registered here
 		server.Module,

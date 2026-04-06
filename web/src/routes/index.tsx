@@ -131,7 +131,6 @@ function ActivityItem({ session }: { session: Session }) {
 function Dashboard() {
 	// Fetch all sessions with a larger page size for statistics
 	const { data, isLoading, isError, error } = useGetApiV1Sessions(
-		{}, // body
 		{ pageSize: 100 }, // params - get up to 100 sessions for stats
 	);
 

@@ -14,16 +14,17 @@ import (
 	"github.com/ryuyb/litchi/internal/infrastructure/config"
 	"github.com/ryuyb/litchi/internal/pkg/errors"
 	"github.com/ryuyb/litchi/internal/pkg/health"
+	"go.uber.org/fx"
 	"go.uber.org/zap"
 	"golang.org/x/oauth2"
 )
 
 // ClientParams contains dependencies for creating a GitHubClient.
 type ClientParams struct {
-	Config       *config.Config
-	Logger       *zap.Logger
-	RateLimitCfg *config.RateLimitConfig
-	RetryPolicy  valueobject.RetryPolicy
+	fx.In
+
+	Config *config.Config
+	Logger *zap.Logger
 }
 
 // Client wraps go-github client with rate limit handling and retry logic.
@@ -66,25 +67,15 @@ func NewClient(p ClientParams) (*Client, error) {
 			WithDetail("no authentication method configured")
 	}
 
-	// Create rate limiter
-	var rateLimitCfg *config.RateLimitConfig
-	if p.RateLimitCfg != nil {
-		rateLimitCfg = p.RateLimitCfg
-	} else {
-		// Use default from config
-		rateLimitCfg = &p.Config.Failure.RateLimit
-	}
-
+	// Create rate limiter using config
+	rateLimitCfg := &p.Config.Failure.RateLimit
 	rateLimiter := NewRateLimiter(RateLimiterParams{
 		Config: rateLimitCfg,
 		Logger: p.Logger,
 	})
 
-	// Use provided retry policy or default
-	retryPolicy := p.RetryPolicy
-	if retryPolicy.MaxRetries == 0 {
-		retryPolicy = valueobject.DefaultRetryPolicy
-	}
+	// Use default retry policy
+	retryPolicy := valueobject.DefaultRetryPolicy
 
 	return &Client{
 		client:      client,

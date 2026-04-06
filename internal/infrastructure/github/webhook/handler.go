@@ -218,7 +218,6 @@ func computePayloadHash(payload []byte) string {
 // @Summary        Webhook handler health check
 // @Description    Returns health status including registered event handlers
 // @Tags           webhooks
-// @Accept         json
 // @Produce        json
 // @Success        200  {object}  dto.WebhookHealthResponse  "Health check successful"
 // @Router         /api/v1/webhooks/health [get]

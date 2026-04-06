@@ -1223,15 +1223,6 @@ const docTemplate = `{
                         }
                     }
                 ],
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
                 "responses": {
                     "200": {
                         "content": {
@@ -1303,15 +1294,6 @@ const docTemplate = `{
                         }
                     }
                 ],
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
                 "responses": {
                     "200": {
                         "content": {
@@ -1383,15 +1365,6 @@ const docTemplate = `{
                         }
                     }
                 ],
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
                 "responses": {
                     "200": {
                         "content": {
@@ -1445,15 +1418,6 @@ const docTemplate = `{
                         }
                     }
                 ],
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
                 "responses": {
                     "200": {
                         "content": {
@@ -1507,15 +1471,6 @@ const docTemplate = `{
                         }
                     }
                 ],
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
                 "responses": {
                     "200": {
                         "content": {
@@ -1567,15 +1522,6 @@ const docTemplate = `{
         "/api/v1/config": {
             "get": {
                 "description": "Returns the current application configuration (sensitive fields excluded)",
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
                 "responses": {
                     "200": {
                         "content": {
@@ -1666,15 +1612,6 @@ const docTemplate = `{
         "/api/v1/health": {
             "get": {
                 "description": "Returns the basic API health status and version",
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
                 "responses": {
                     "200": {
                         "content": {
@@ -1696,15 +1633,6 @@ const docTemplate = `{
         "/api/v1/health/detail": {
             "get": {
                 "description": "Returns detailed health status including database, GitHub, and Git checks",
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
                 "responses": {
                     "200": {
                         "content": {
@@ -1755,15 +1683,6 @@ const docTemplate = `{
                         }
                     }
                 ],
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
                 "responses": {
                     "200": {
                         "content": {
@@ -1934,15 +1853,6 @@ const docTemplate = `{
                         }
                     }
                 ],
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
                 "responses": {
                     "200": {
                         "content": {
@@ -2136,15 +2046,6 @@ const docTemplate = `{
                         }
                     }
                 ],
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
                 "responses": {
                     "200": {
                         "content": {
@@ -2295,15 +2196,6 @@ const docTemplate = `{
                         }
                     }
                 ],
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
                 "responses": {
                     "200": {
                         "content": {
@@ -2356,15 +2248,6 @@ const docTemplate = `{
                         }
                     }
                 ],
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
                 "responses": {
                     "200": {
                         "content": {
@@ -2427,15 +2310,6 @@ const docTemplate = `{
                         }
                     }
                 ],
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
                 "responses": {
                     "200": {
                         "content": {
@@ -2974,15 +2848,6 @@ const docTemplate = `{
                         }
                     }
                 ],
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
                 "responses": {
                     "200": {
                         "content": {
@@ -3054,15 +2919,6 @@ const docTemplate = `{
                         }
                     }
                 ],
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
                 "responses": {
                     "200": {
                         "content": {
@@ -3413,15 +3269,6 @@ const docTemplate = `{
         "/api/v1/webhooks/health": {
             "get": {
                 "description": "Returns health status including registered event handlers",
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
                 "responses": {
                     "200": {
                         "content": {
@@ -3443,15 +3290,6 @@ const docTemplate = `{
         "/health": {
             "get": {
                 "description": "Returns the server health status and version (legacy endpoint)",
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
                 "responses": {
                     "200": {
                         "content": {

@@ -40,7 +40,6 @@ func NewHandler(p HandlerParams) *Handler {
 // @Summary        List repositories
 // @Description    Get all repository configurations with optional pagination and filtering
 // @Tags           repositories
-// @Accept         json
 // @Produce        json
 // @Param          page     query    int     false  "Page number (1-based)"    default(1)
 // @Param          pageSize query    int     false  "Items per page"           default(20)
@@ -95,7 +94,6 @@ func boolPtr(v bool) *bool {
 // @Summary        Get repository
 // @Description    Get repository configuration by name (owner/repo format)
 // @Tags           repositories
-// @Accept         json
 // @Produce        json
 // @Param          name  path    string  true  "Repository name (owner/repo)"
 // @Success        200  {object}  dto.RepositoryResponse  "Repository configuration"
@@ -376,7 +374,6 @@ func (h *Handler) DisableRepository(c fiber.Ctx) error {
 // @Summary        Get effective config
 // @Description    Get the merged effective configuration (global + repository overrides)
 // @Tags           repositories
-// @Accept         json
 // @Produce        json
 // @Param          name  path    string  true  "Repository name (owner/repo)"
 // @Success        200  {object}  dto.EffectiveConfigResponse  "Effective configuration"

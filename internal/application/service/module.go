@@ -3,6 +3,8 @@ package service
 import (
 	"context"
 
+	"github.com/ryuyb/litchi/internal/domain/event"
+	domainservice "github.com/ryuyb/litchi/internal/domain/service"
 	"github.com/ryuyb/litchi/internal/pkg/fxutil"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -11,8 +13,8 @@ import (
 func init() {
 	fxutil.RegisterModule(fxutil.ModuleInfo{
 		Name:     "application-service",
-		Provides: []string{"*IssueService", "*ConsistencyService", "*ClarificationService", "*DesignService", "*TaskService", "*PRService", "*RepositoryService", "*AuditService", "*RecoveryService"},
-		Depends:  []string{"*zap.Logger", "*config.Config", "*event.Dispatcher", "*repository.WorkSessionRepository", "*repository.RepositoryRepository", "*repository.AuditLogRepository", "*github.IssueService", "*github.PullRequestService", "AgentRunner", "ConflictDetector", "BranchService", "*service.DefaultComplexityEvaluator", "*service.DefaultSessionControlService"},
+		Provides: []string{"*IssueService", "*ConsistencyService", "*ClarificationService", "*DesignService", "*TaskService", "*PRService", "*RepositoryService", "*AuditService", "*RecoveryService", "*domainservice.DefaultSessionControlService"},
+		Depends:  []string{"*zap.Logger", "*config.Config", "*event.Dispatcher", "*repository.WorkSessionRepository", "*repository.RepositoryRepository", "*repository.AuditLogRepository", "*github.IssueService", "*github.PullRequestService", "AgentRunner", "ConflictDetector", "BranchService"},
 	})
 }
 
@@ -28,6 +30,20 @@ var Module = fx.Module("application-service",
 	fx.Provide(NewRepositoryService),
 	fx.Provide(NewAuditService),
 	fx.Provide(NewRecoveryService),
+	// Domain services
+	fx.Provide(
+		fx.Annotate(
+			domainservice.NewDefaultSessionControlService,
+			fx.As(new(domainservice.SessionControlService)),
+		),
+	),
+	// Provide *event.Dispatcher as service.EventDispatcher for RecoveryService
+	fx.Provide(
+		fx.Annotate(
+			func(d *event.Dispatcher) EventDispatcher { return d },
+			fx.ResultTags(`name:"event_dispatcher"`),
+		),
+	),
 
 	// Lifecycle hooks for session recovery on startup
 	fx.Invoke(RegisterRecoveryLifecycle),

@@ -14,6 +14,7 @@ import (
 	"github.com/ryuyb/litchi/internal/domain/valueobject"
 	"github.com/ryuyb/litchi/internal/infrastructure/config"
 	litchierrors "github.com/ryuyb/litchi/internal/pkg/errors"
+	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
@@ -41,26 +42,31 @@ type RecoveryService struct {
 	config                *config.Config
 }
 
+// RecoveryServiceParams holds dependencies for RecoveryService.
+type RecoveryServiceParams struct {
+	fx.In
+
+	SessionRepo           repository.WorkSessionRepository
+	CacheRepo             repository.CacheRepository
+	ConsistencyService    *ConsistencyService
+	SessionControlService service.SessionControlService
+	TaskService           *TaskService
+	EventDispatcher       EventDispatcher `name:"event_dispatcher"`
+	Config                *config.Config
+	Logger                *zap.Logger
+}
+
 // NewRecoveryService creates a new RecoveryService.
-func NewRecoveryService(
-	sessionRepo repository.WorkSessionRepository,
-	cacheRepo repository.CacheRepository,
-	consistencyService *ConsistencyService,
-	sessionControlService service.SessionControlService,
-	taskService *TaskService,
-	eventDispatcher EventDispatcher,
-	config *config.Config,
-	logger *zap.Logger,
-) *RecoveryService {
+func NewRecoveryService(p RecoveryServiceParams) *RecoveryService {
 	return &RecoveryService{
-		sessionRepo:           sessionRepo,
-		cacheRepo:             cacheRepo,
-		consistencyService:    consistencyService,
-		sessionControlService: sessionControlService,
-		taskService:           taskService,
-		eventDispatcher:       eventDispatcher,
-		config:                config,
-		logger:                logger.Named("recovery_service"),
+		sessionRepo:           p.SessionRepo,
+		cacheRepo:             p.CacheRepo,
+		consistencyService:    p.ConsistencyService,
+		sessionControlService: p.SessionControlService,
+		taskService:           p.TaskService,
+		eventDispatcher:       p.EventDispatcher,
+		config:                p.Config,
+		logger:                p.Logger.Named("recovery_service"),
 	}
 }
 

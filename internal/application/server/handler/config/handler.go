@@ -8,6 +8,7 @@ import (
 	"github.com/ryuyb/litchi/internal/application/dto"
 	"github.com/ryuyb/litchi/internal/infrastructure/config"
 	litchierrors "github.com/ryuyb/litchi/internal/pkg/errors"
+	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
@@ -19,6 +20,8 @@ type Handler struct {
 
 // HandlerParams contains dependencies for creating a config handler.
 type HandlerParams struct {
+	fx.In
+
 	Cfg    *config.Config
 	Logger *zap.Logger
 }
@@ -35,7 +38,6 @@ func NewHandler(p HandlerParams) *Handler {
 // @Summary        Get configuration
 // @Description   Returns the current application configuration (sensitive fields excluded)
 // @Tags          config
-// @Accept        json
 // @Produce       json
 // @Success       200  {object}  dto.ConfigResponse  "Configuration retrieved successfully"
 // @Failure       500  {object}  dto.ErrorResponse   "Internal server error"

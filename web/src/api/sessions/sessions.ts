@@ -24,9 +24,6 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 
 import type {
 	ApiError,
-	GetApiV1SessionsBody,
-	GetApiV1SessionsIdBody,
-	GetApiV1SessionsIdDetailBody,
 	GetApiV1SessionsParams,
 	PaginatedResponseSession,
 	PostApiV1SessionsIdPauseBody,
@@ -87,15 +84,12 @@ export const getGetApiV1SessionsUrl = (params?: GetApiV1SessionsParams) => {
 };
 
 export const getApiV1Sessions = async (
-	getApiV1SessionsBody: GetApiV1SessionsBody,
 	params?: GetApiV1SessionsParams,
 	options?: RequestInit,
 ): Promise<getApiV1SessionsResponse> => {
 	const res = await fetch(getGetApiV1SessionsUrl(params), {
 		...options,
 		method: "GET",
-		headers: { "Content-Type": "application/json", ...options?.headers },
-		body: JSON.stringify(getApiV1SessionsBody),
 	});
 
 	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
@@ -109,21 +103,15 @@ export const getApiV1Sessions = async (
 };
 
 export const getGetApiV1SessionsQueryKey = (
-	getApiV1SessionsBody?: GetApiV1SessionsBody,
 	params?: GetApiV1SessionsParams,
 ) => {
-	return [
-		`/api/v1/sessions`,
-		...(params ? [params] : []),
-		getApiV1SessionsBody,
-	] as const;
+	return [`/api/v1/sessions`, ...(params ? [params] : [])] as const;
 };
 
 export const getGetApiV1SessionsQueryOptions = <
 	TData = Awaited<ReturnType<typeof getApiV1Sessions>>,
 	TError = ApiError,
 >(
-	getApiV1SessionsBody: GetApiV1SessionsBody,
 	params?: GetApiV1SessionsParams,
 	options?: {
 		query?: Partial<
@@ -139,13 +127,11 @@ export const getGetApiV1SessionsQueryOptions = <
 	const { query: queryOptions, fetch: fetchOptions } = options ?? {};
 
 	const queryKey =
-		queryOptions?.queryKey ??
-		getGetApiV1SessionsQueryKey(getApiV1SessionsBody, params);
+		queryOptions?.queryKey ?? getGetApiV1SessionsQueryKey(params);
 
 	const queryFn: QueryFunction<
 		Awaited<ReturnType<typeof getApiV1Sessions>>
-	> = ({ signal }) =>
-		getApiV1Sessions(getApiV1SessionsBody, params, { signal, ...fetchOptions });
+	> = ({ signal }) => getApiV1Sessions(params, { signal, ...fetchOptions });
 
 	return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
 		Awaited<ReturnType<typeof getApiV1Sessions>>,
@@ -163,7 +149,6 @@ export function useGetApiV1Sessions<
 	TData = Awaited<ReturnType<typeof getApiV1Sessions>>,
 	TError = ApiError,
 >(
-	getApiV1SessionsBody: GetApiV1SessionsBody,
 	params: undefined | GetApiV1SessionsParams,
 	options: {
 		query: Partial<
@@ -191,7 +176,6 @@ export function useGetApiV1Sessions<
 	TData = Awaited<ReturnType<typeof getApiV1Sessions>>,
 	TError = ApiError,
 >(
-	getApiV1SessionsBody: GetApiV1SessionsBody,
 	params?: GetApiV1SessionsParams,
 	options?: {
 		query?: Partial<
@@ -219,7 +203,6 @@ export function useGetApiV1Sessions<
 	TData = Awaited<ReturnType<typeof getApiV1Sessions>>,
 	TError = ApiError,
 >(
-	getApiV1SessionsBody: GetApiV1SessionsBody,
 	params?: GetApiV1SessionsParams,
 	options?: {
 		query?: Partial<
@@ -243,7 +226,6 @@ export function useGetApiV1Sessions<
 	TData = Awaited<ReturnType<typeof getApiV1Sessions>>,
 	TError = ApiError,
 >(
-	getApiV1SessionsBody: GetApiV1SessionsBody,
 	params?: GetApiV1SessionsParams,
 	options?: {
 		query?: Partial<
@@ -259,11 +241,7 @@ export function useGetApiV1Sessions<
 ): UseQueryResult<TData, TError> & {
 	queryKey: DataTag<QueryKey, TData, TError>;
 } {
-	const queryOptions = getGetApiV1SessionsQueryOptions(
-		getApiV1SessionsBody,
-		params,
-		options,
-	);
+	const queryOptions = getGetApiV1SessionsQueryOptions(params, options);
 
 	const query = useQuery(queryOptions, queryClient) as UseQueryResult<
 		TData,
@@ -319,14 +297,11 @@ export const getGetApiV1SessionsIdUrl = (id: string) => {
 
 export const getApiV1SessionsId = async (
 	id: string,
-	getApiV1SessionsIdBody: GetApiV1SessionsIdBody,
 	options?: RequestInit,
 ): Promise<getApiV1SessionsIdResponse> => {
 	const res = await fetch(getGetApiV1SessionsIdUrl(id), {
 		...options,
 		method: "GET",
-		headers: { "Content-Type": "application/json", ...options?.headers },
-		body: JSON.stringify(getApiV1SessionsIdBody),
 	});
 
 	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
@@ -339,11 +314,8 @@ export const getApiV1SessionsId = async (
 	} as getApiV1SessionsIdResponse;
 };
 
-export const getGetApiV1SessionsIdQueryKey = (
-	id: string,
-	getApiV1SessionsIdBody?: GetApiV1SessionsIdBody,
-) => {
-	return [`/api/v1/sessions/${id}`, getApiV1SessionsIdBody] as const;
+export const getGetApiV1SessionsIdQueryKey = (id: string) => {
+	return [`/api/v1/sessions/${id}`] as const;
 };
 
 export const getGetApiV1SessionsIdQueryOptions = <
@@ -351,7 +323,6 @@ export const getGetApiV1SessionsIdQueryOptions = <
 	TError = ApiError,
 >(
 	id: string,
-	getApiV1SessionsIdBody: GetApiV1SessionsIdBody,
 	options?: {
 		query?: Partial<
 			UseQueryOptions<
@@ -365,14 +336,11 @@ export const getGetApiV1SessionsIdQueryOptions = <
 ) => {
 	const { query: queryOptions, fetch: fetchOptions } = options ?? {};
 
-	const queryKey =
-		queryOptions?.queryKey ??
-		getGetApiV1SessionsIdQueryKey(id, getApiV1SessionsIdBody);
+	const queryKey = queryOptions?.queryKey ?? getGetApiV1SessionsIdQueryKey(id);
 
 	const queryFn: QueryFunction<
 		Awaited<ReturnType<typeof getApiV1SessionsId>>
-	> = ({ signal }) =>
-		getApiV1SessionsId(id, getApiV1SessionsIdBody, { signal, ...fetchOptions });
+	> = ({ signal }) => getApiV1SessionsId(id, { signal, ...fetchOptions });
 
 	return {
 		queryKey,
@@ -396,7 +364,6 @@ export function useGetApiV1SessionsId<
 	TError = ApiError,
 >(
 	id: string,
-	getApiV1SessionsIdBody: GetApiV1SessionsIdBody,
 	options: {
 		query: Partial<
 			UseQueryOptions<
@@ -424,7 +391,6 @@ export function useGetApiV1SessionsId<
 	TError = ApiError,
 >(
 	id: string,
-	getApiV1SessionsIdBody: GetApiV1SessionsIdBody,
 	options?: {
 		query?: Partial<
 			UseQueryOptions<
@@ -452,7 +418,6 @@ export function useGetApiV1SessionsId<
 	TError = ApiError,
 >(
 	id: string,
-	getApiV1SessionsIdBody: GetApiV1SessionsIdBody,
 	options?: {
 		query?: Partial<
 			UseQueryOptions<
@@ -476,7 +441,6 @@ export function useGetApiV1SessionsId<
 	TError = ApiError,
 >(
 	id: string,
-	getApiV1SessionsIdBody: GetApiV1SessionsIdBody,
 	options?: {
 		query?: Partial<
 			UseQueryOptions<
@@ -491,11 +455,7 @@ export function useGetApiV1SessionsId<
 ): UseQueryResult<TData, TError> & {
 	queryKey: DataTag<QueryKey, TData, TError>;
 } {
-	const queryOptions = getGetApiV1SessionsIdQueryOptions(
-		id,
-		getApiV1SessionsIdBody,
-		options,
-	);
+	const queryOptions = getGetApiV1SessionsIdQueryOptions(id, options);
 
 	const query = useQuery(queryOptions, queryClient) as UseQueryResult<
 		TData,
@@ -551,14 +511,11 @@ export const getGetApiV1SessionsIdDetailUrl = (id: string) => {
 
 export const getApiV1SessionsIdDetail = async (
 	id: string,
-	getApiV1SessionsIdDetailBody: GetApiV1SessionsIdDetailBody,
 	options?: RequestInit,
 ): Promise<getApiV1SessionsIdDetailResponse> => {
 	const res = await fetch(getGetApiV1SessionsIdDetailUrl(id), {
 		...options,
 		method: "GET",
-		headers: { "Content-Type": "application/json", ...options?.headers },
-		body: JSON.stringify(getApiV1SessionsIdDetailBody),
 	});
 
 	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
@@ -573,14 +530,8 @@ export const getApiV1SessionsIdDetail = async (
 	} as getApiV1SessionsIdDetailResponse;
 };
 
-export const getGetApiV1SessionsIdDetailQueryKey = (
-	id: string,
-	getApiV1SessionsIdDetailBody?: GetApiV1SessionsIdDetailBody,
-) => {
-	return [
-		`/api/v1/sessions/${id}/detail`,
-		getApiV1SessionsIdDetailBody,
-	] as const;
+export const getGetApiV1SessionsIdDetailQueryKey = (id: string) => {
+	return [`/api/v1/sessions/${id}/detail`] as const;
 };
 
 export const getGetApiV1SessionsIdDetailQueryOptions = <
@@ -588,7 +539,6 @@ export const getGetApiV1SessionsIdDetailQueryOptions = <
 	TError = ApiError,
 >(
 	id: string,
-	getApiV1SessionsIdDetailBody: GetApiV1SessionsIdDetailBody,
 	options?: {
 		query?: Partial<
 			UseQueryOptions<
@@ -603,16 +553,11 @@ export const getGetApiV1SessionsIdDetailQueryOptions = <
 	const { query: queryOptions, fetch: fetchOptions } = options ?? {};
 
 	const queryKey =
-		queryOptions?.queryKey ??
-		getGetApiV1SessionsIdDetailQueryKey(id, getApiV1SessionsIdDetailBody);
+		queryOptions?.queryKey ?? getGetApiV1SessionsIdDetailQueryKey(id);
 
 	const queryFn: QueryFunction<
 		Awaited<ReturnType<typeof getApiV1SessionsIdDetail>>
-	> = ({ signal }) =>
-		getApiV1SessionsIdDetail(id, getApiV1SessionsIdDetailBody, {
-			signal,
-			...fetchOptions,
-		});
+	> = ({ signal }) => getApiV1SessionsIdDetail(id, { signal, ...fetchOptions });
 
 	return {
 		queryKey,
@@ -636,7 +581,6 @@ export function useGetApiV1SessionsIdDetail<
 	TError = ApiError,
 >(
 	id: string,
-	getApiV1SessionsIdDetailBody: GetApiV1SessionsIdDetailBody,
 	options: {
 		query: Partial<
 			UseQueryOptions<
@@ -664,7 +608,6 @@ export function useGetApiV1SessionsIdDetail<
 	TError = ApiError,
 >(
 	id: string,
-	getApiV1SessionsIdDetailBody: GetApiV1SessionsIdDetailBody,
 	options?: {
 		query?: Partial<
 			UseQueryOptions<
@@ -692,7 +635,6 @@ export function useGetApiV1SessionsIdDetail<
 	TError = ApiError,
 >(
 	id: string,
-	getApiV1SessionsIdDetailBody: GetApiV1SessionsIdDetailBody,
 	options?: {
 		query?: Partial<
 			UseQueryOptions<
@@ -716,7 +658,6 @@ export function useGetApiV1SessionsIdDetail<
 	TError = ApiError,
 >(
 	id: string,
-	getApiV1SessionsIdDetailBody: GetApiV1SessionsIdDetailBody,
 	options?: {
 		query?: Partial<
 			UseQueryOptions<
@@ -731,11 +672,7 @@ export function useGetApiV1SessionsIdDetail<
 ): UseQueryResult<TData, TError> & {
 	queryKey: DataTag<QueryKey, TData, TError>;
 } {
-	const queryOptions = getGetApiV1SessionsIdDetailQueryOptions(
-		id,
-		getApiV1SessionsIdDetailBody,
-		options,
-	);
+	const queryOptions = getGetApiV1SessionsIdDetailQueryOptions(id, options);
 
 	const query = useQuery(queryOptions, queryClient) as UseQueryResult<
 		TData,

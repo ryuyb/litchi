@@ -27,7 +27,7 @@ var WorkSessionRepositoryModule = fx.Module("work_session_repository",
 type WorkSessionRepoParams struct {
 	fx.In
 
-	DB     *gorm.DB
+	DB     *gorm.DB `name:"gorm_db"`
 	Logger *zap.Logger
 }
 

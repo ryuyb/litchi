@@ -51,14 +51,14 @@ function RepositoryConfigPage() {
 		data: repositoryResponse,
 		isLoading: isLoadingRepo,
 		error: repoError,
-	} = useGetApiV1RepositoriesName(name, {});
+	} = useGetApiV1RepositoriesName(name);
 
 	// Fetch effective config
 	const {
 		data: effectiveConfigResponse,
 		isLoading: isLoadingEffective,
 		error: effectiveError,
-	} = useGetApiV1RepositoriesNameEffectiveConfig(name, {});
+	} = useGetApiV1RepositoriesNameEffectiveConfig(name);
 
 	// Mutation for updating repository
 	const updateMutation = usePutApiV1RepositoriesName({
@@ -68,13 +68,10 @@ function RepositoryConfigPage() {
 				setTimeout(() => setSaveSuccess(false), 3000);
 				// Invalidate queries to refresh data
 				queryClient.invalidateQueries({
-					queryKey: getGetApiV1RepositoriesNameQueryKey(name, {}),
+					queryKey: getGetApiV1RepositoriesNameQueryKey(name),
 				});
 				queryClient.invalidateQueries({
-					queryKey: getGetApiV1RepositoriesNameEffectiveConfigQueryKey(
-						name,
-						{},
-					),
+					queryKey: getGetApiV1RepositoriesNameEffectiveConfigQueryKey(name),
 				});
 			},
 			onError: (error) => {

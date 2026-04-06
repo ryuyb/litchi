@@ -26,9 +26,6 @@ import type {
 	ApiError,
 	DeleteApiV1RepositoriesNameBody,
 	EffectiveConfig,
-	GetApiV1RepositoriesBody,
-	GetApiV1RepositoriesNameBody,
-	GetApiV1RepositoriesNameEffectiveConfigBody,
 	GetApiV1RepositoriesParams,
 	PaginatedResponseRepository,
 	PostApiV1RepositoriesBody,
@@ -85,15 +82,12 @@ export const getGetApiV1RepositoriesUrl = (
 };
 
 export const getApiV1Repositories = async (
-	getApiV1RepositoriesBody: GetApiV1RepositoriesBody,
 	params?: GetApiV1RepositoriesParams,
 	options?: RequestInit,
 ): Promise<getApiV1RepositoriesResponse> => {
 	const res = await fetch(getGetApiV1RepositoriesUrl(params), {
 		...options,
 		method: "GET",
-		headers: { "Content-Type": "application/json", ...options?.headers },
-		body: JSON.stringify(getApiV1RepositoriesBody),
 	});
 
 	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
@@ -109,21 +103,15 @@ export const getApiV1Repositories = async (
 };
 
 export const getGetApiV1RepositoriesQueryKey = (
-	getApiV1RepositoriesBody?: GetApiV1RepositoriesBody,
 	params?: GetApiV1RepositoriesParams,
 ) => {
-	return [
-		`/api/v1/repositories`,
-		...(params ? [params] : []),
-		getApiV1RepositoriesBody,
-	] as const;
+	return [`/api/v1/repositories`, ...(params ? [params] : [])] as const;
 };
 
 export const getGetApiV1RepositoriesQueryOptions = <
 	TData = Awaited<ReturnType<typeof getApiV1Repositories>>,
 	TError = ApiError,
 >(
-	getApiV1RepositoriesBody: GetApiV1RepositoriesBody,
 	params?: GetApiV1RepositoriesParams,
 	options?: {
 		query?: Partial<
@@ -139,16 +127,11 @@ export const getGetApiV1RepositoriesQueryOptions = <
 	const { query: queryOptions, fetch: fetchOptions } = options ?? {};
 
 	const queryKey =
-		queryOptions?.queryKey ??
-		getGetApiV1RepositoriesQueryKey(getApiV1RepositoriesBody, params);
+		queryOptions?.queryKey ?? getGetApiV1RepositoriesQueryKey(params);
 
 	const queryFn: QueryFunction<
 		Awaited<ReturnType<typeof getApiV1Repositories>>
-	> = ({ signal }) =>
-		getApiV1Repositories(getApiV1RepositoriesBody, params, {
-			signal,
-			...fetchOptions,
-		});
+	> = ({ signal }) => getApiV1Repositories(params, { signal, ...fetchOptions });
 
 	return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
 		Awaited<ReturnType<typeof getApiV1Repositories>>,
@@ -166,7 +149,6 @@ export function useGetApiV1Repositories<
 	TData = Awaited<ReturnType<typeof getApiV1Repositories>>,
 	TError = ApiError,
 >(
-	getApiV1RepositoriesBody: GetApiV1RepositoriesBody,
 	params: undefined | GetApiV1RepositoriesParams,
 	options: {
 		query: Partial<
@@ -194,7 +176,6 @@ export function useGetApiV1Repositories<
 	TData = Awaited<ReturnType<typeof getApiV1Repositories>>,
 	TError = ApiError,
 >(
-	getApiV1RepositoriesBody: GetApiV1RepositoriesBody,
 	params?: GetApiV1RepositoriesParams,
 	options?: {
 		query?: Partial<
@@ -222,7 +203,6 @@ export function useGetApiV1Repositories<
 	TData = Awaited<ReturnType<typeof getApiV1Repositories>>,
 	TError = ApiError,
 >(
-	getApiV1RepositoriesBody: GetApiV1RepositoriesBody,
 	params?: GetApiV1RepositoriesParams,
 	options?: {
 		query?: Partial<
@@ -246,7 +226,6 @@ export function useGetApiV1Repositories<
 	TData = Awaited<ReturnType<typeof getApiV1Repositories>>,
 	TError = ApiError,
 >(
-	getApiV1RepositoriesBody: GetApiV1RepositoriesBody,
 	params?: GetApiV1RepositoriesParams,
 	options?: {
 		query?: Partial<
@@ -262,11 +241,7 @@ export function useGetApiV1Repositories<
 ): UseQueryResult<TData, TError> & {
 	queryKey: DataTag<QueryKey, TData, TError>;
 } {
-	const queryOptions = getGetApiV1RepositoriesQueryOptions(
-		getApiV1RepositoriesBody,
-		params,
-		options,
-	);
+	const queryOptions = getGetApiV1RepositoriesQueryOptions(params, options);
 
 	const query = useQuery(queryOptions, queryClient) as UseQueryResult<
 		TData,
@@ -587,14 +562,11 @@ export const getGetApiV1RepositoriesNameUrl = (name: string) => {
 
 export const getApiV1RepositoriesName = async (
 	name: string,
-	getApiV1RepositoriesNameBody: GetApiV1RepositoriesNameBody,
 	options?: RequestInit,
 ): Promise<getApiV1RepositoriesNameResponse> => {
 	const res = await fetch(getGetApiV1RepositoriesNameUrl(name), {
 		...options,
 		method: "GET",
-		headers: { "Content-Type": "application/json", ...options?.headers },
-		body: JSON.stringify(getApiV1RepositoriesNameBody),
 	});
 
 	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
@@ -609,14 +581,8 @@ export const getApiV1RepositoriesName = async (
 	} as getApiV1RepositoriesNameResponse;
 };
 
-export const getGetApiV1RepositoriesNameQueryKey = (
-	name: string,
-	getApiV1RepositoriesNameBody?: GetApiV1RepositoriesNameBody,
-) => {
-	return [
-		`/api/v1/repositories/${name}`,
-		getApiV1RepositoriesNameBody,
-	] as const;
+export const getGetApiV1RepositoriesNameQueryKey = (name: string) => {
+	return [`/api/v1/repositories/${name}`] as const;
 };
 
 export const getGetApiV1RepositoriesNameQueryOptions = <
@@ -624,7 +590,6 @@ export const getGetApiV1RepositoriesNameQueryOptions = <
 	TError = ApiError,
 >(
 	name: string,
-	getApiV1RepositoriesNameBody: GetApiV1RepositoriesNameBody,
 	options?: {
 		query?: Partial<
 			UseQueryOptions<
@@ -639,16 +604,12 @@ export const getGetApiV1RepositoriesNameQueryOptions = <
 	const { query: queryOptions, fetch: fetchOptions } = options ?? {};
 
 	const queryKey =
-		queryOptions?.queryKey ??
-		getGetApiV1RepositoriesNameQueryKey(name, getApiV1RepositoriesNameBody);
+		queryOptions?.queryKey ?? getGetApiV1RepositoriesNameQueryKey(name);
 
 	const queryFn: QueryFunction<
 		Awaited<ReturnType<typeof getApiV1RepositoriesName>>
 	> = ({ signal }) =>
-		getApiV1RepositoriesName(name, getApiV1RepositoriesNameBody, {
-			signal,
-			...fetchOptions,
-		});
+		getApiV1RepositoriesName(name, { signal, ...fetchOptions });
 
 	return {
 		queryKey,
@@ -672,7 +633,6 @@ export function useGetApiV1RepositoriesName<
 	TError = ApiError,
 >(
 	name: string,
-	getApiV1RepositoriesNameBody: GetApiV1RepositoriesNameBody,
 	options: {
 		query: Partial<
 			UseQueryOptions<
@@ -700,7 +660,6 @@ export function useGetApiV1RepositoriesName<
 	TError = ApiError,
 >(
 	name: string,
-	getApiV1RepositoriesNameBody: GetApiV1RepositoriesNameBody,
 	options?: {
 		query?: Partial<
 			UseQueryOptions<
@@ -728,7 +687,6 @@ export function useGetApiV1RepositoriesName<
 	TError = ApiError,
 >(
 	name: string,
-	getApiV1RepositoriesNameBody: GetApiV1RepositoriesNameBody,
 	options?: {
 		query?: Partial<
 			UseQueryOptions<
@@ -752,7 +710,6 @@ export function useGetApiV1RepositoriesName<
 	TError = ApiError,
 >(
 	name: string,
-	getApiV1RepositoriesNameBody: GetApiV1RepositoriesNameBody,
 	options?: {
 		query?: Partial<
 			UseQueryOptions<
@@ -767,11 +724,7 @@ export function useGetApiV1RepositoriesName<
 ): UseQueryResult<TData, TError> & {
 	queryKey: DataTag<QueryKey, TData, TError>;
 } {
-	const queryOptions = getGetApiV1RepositoriesNameQueryOptions(
-		name,
-		getApiV1RepositoriesNameBody,
-		options,
-	);
+	const queryOptions = getGetApiV1RepositoriesNameQueryOptions(name, options);
 
 	const query = useQuery(queryOptions, queryClient) as UseQueryResult<
 		TData,
@@ -1089,14 +1042,11 @@ export const getGetApiV1RepositoriesNameEffectiveConfigUrl = (name: string) => {
 
 export const getApiV1RepositoriesNameEffectiveConfig = async (
 	name: string,
-	getApiV1RepositoriesNameEffectiveConfigBody: GetApiV1RepositoriesNameEffectiveConfigBody,
 	options?: RequestInit,
 ): Promise<getApiV1RepositoriesNameEffectiveConfigResponse> => {
 	const res = await fetch(getGetApiV1RepositoriesNameEffectiveConfigUrl(name), {
 		...options,
 		method: "GET",
-		headers: { "Content-Type": "application/json", ...options?.headers },
-		body: JSON.stringify(getApiV1RepositoriesNameEffectiveConfigBody),
 	});
 
 	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
@@ -1113,12 +1063,8 @@ export const getApiV1RepositoriesNameEffectiveConfig = async (
 
 export const getGetApiV1RepositoriesNameEffectiveConfigQueryKey = (
 	name: string,
-	getApiV1RepositoriesNameEffectiveConfigBody?: GetApiV1RepositoriesNameEffectiveConfigBody,
 ) => {
-	return [
-		`/api/v1/repositories/${name}/effective-config`,
-		getApiV1RepositoriesNameEffectiveConfigBody,
-	] as const;
+	return [`/api/v1/repositories/${name}/effective-config`] as const;
 };
 
 export const getGetApiV1RepositoriesNameEffectiveConfigQueryOptions = <
@@ -1126,7 +1072,6 @@ export const getGetApiV1RepositoriesNameEffectiveConfigQueryOptions = <
 	TError = ApiError,
 >(
 	name: string,
-	getApiV1RepositoriesNameEffectiveConfigBody: GetApiV1RepositoriesNameEffectiveConfigBody,
 	options?: {
 		query?: Partial<
 			UseQueryOptions<
@@ -1142,19 +1087,12 @@ export const getGetApiV1RepositoriesNameEffectiveConfigQueryOptions = <
 
 	const queryKey =
 		queryOptions?.queryKey ??
-		getGetApiV1RepositoriesNameEffectiveConfigQueryKey(
-			name,
-			getApiV1RepositoriesNameEffectiveConfigBody,
-		);
+		getGetApiV1RepositoriesNameEffectiveConfigQueryKey(name);
 
 	const queryFn: QueryFunction<
 		Awaited<ReturnType<typeof getApiV1RepositoriesNameEffectiveConfig>>
 	> = ({ signal }) =>
-		getApiV1RepositoriesNameEffectiveConfig(
-			name,
-			getApiV1RepositoriesNameEffectiveConfigBody,
-			{ signal, ...fetchOptions },
-		);
+		getApiV1RepositoriesNameEffectiveConfig(name, { signal, ...fetchOptions });
 
 	return {
 		queryKey,
@@ -1178,7 +1116,6 @@ export function useGetApiV1RepositoriesNameEffectiveConfig<
 	TError = ApiError,
 >(
 	name: string,
-	getApiV1RepositoriesNameEffectiveConfigBody: GetApiV1RepositoriesNameEffectiveConfigBody,
 	options: {
 		query: Partial<
 			UseQueryOptions<
@@ -1206,7 +1143,6 @@ export function useGetApiV1RepositoriesNameEffectiveConfig<
 	TError = ApiError,
 >(
 	name: string,
-	getApiV1RepositoriesNameEffectiveConfigBody: GetApiV1RepositoriesNameEffectiveConfigBody,
 	options?: {
 		query?: Partial<
 			UseQueryOptions<
@@ -1234,7 +1170,6 @@ export function useGetApiV1RepositoriesNameEffectiveConfig<
 	TError = ApiError,
 >(
 	name: string,
-	getApiV1RepositoriesNameEffectiveConfigBody: GetApiV1RepositoriesNameEffectiveConfigBody,
 	options?: {
 		query?: Partial<
 			UseQueryOptions<
@@ -1258,7 +1193,6 @@ export function useGetApiV1RepositoriesNameEffectiveConfig<
 	TError = ApiError,
 >(
 	name: string,
-	getApiV1RepositoriesNameEffectiveConfigBody: GetApiV1RepositoriesNameEffectiveConfigBody,
 	options?: {
 		query?: Partial<
 			UseQueryOptions<
@@ -1275,7 +1209,6 @@ export function useGetApiV1RepositoriesNameEffectiveConfig<
 } {
 	const queryOptions = getGetApiV1RepositoriesNameEffectiveConfigQueryOptions(
 		name,
-		getApiV1RepositoriesNameEffectiveConfigBody,
 		options,
 	);
 

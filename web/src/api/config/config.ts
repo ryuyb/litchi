@@ -22,12 +22,7 @@ import type {
 } from "@tanstack/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
 
-import type {
-	ApiError,
-	Config,
-	GetApiV1ConfigBody,
-	PutApiV1ConfigBody,
-} from "../schemas";
+import type { ApiError, Config, PutApiV1ConfigBody } from "../schemas";
 
 /**
  * Returns the current application configuration (sensitive fields excluded)
@@ -59,14 +54,11 @@ export const getGetApiV1ConfigUrl = () => {
 };
 
 export const getApiV1Config = async (
-	getApiV1ConfigBody: GetApiV1ConfigBody,
 	options?: RequestInit,
 ): Promise<getApiV1ConfigResponse> => {
 	const res = await fetch(getGetApiV1ConfigUrl(), {
 		...options,
 		method: "GET",
-		headers: { "Content-Type": "application/json", ...options?.headers },
-		body: JSON.stringify(getApiV1ConfigBody),
 	});
 
 	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
@@ -79,32 +71,26 @@ export const getApiV1Config = async (
 	} as getApiV1ConfigResponse;
 };
 
-export const getGetApiV1ConfigQueryKey = (
-	getApiV1ConfigBody?: GetApiV1ConfigBody,
-) => {
-	return [`/api/v1/config`, getApiV1ConfigBody] as const;
+export const getGetApiV1ConfigQueryKey = () => {
+	return [`/api/v1/config`] as const;
 };
 
 export const getGetApiV1ConfigQueryOptions = <
 	TData = Awaited<ReturnType<typeof getApiV1Config>>,
 	TError = ApiError,
->(
-	getApiV1ConfigBody: GetApiV1ConfigBody,
-	options?: {
-		query?: Partial<
-			UseQueryOptions<Awaited<ReturnType<typeof getApiV1Config>>, TError, TData>
-		>;
-		fetch?: RequestInit;
-	},
-) => {
+>(options?: {
+	query?: Partial<
+		UseQueryOptions<Awaited<ReturnType<typeof getApiV1Config>>, TError, TData>
+	>;
+	fetch?: RequestInit;
+}) => {
 	const { query: queryOptions, fetch: fetchOptions } = options ?? {};
 
-	const queryKey =
-		queryOptions?.queryKey ?? getGetApiV1ConfigQueryKey(getApiV1ConfigBody);
+	const queryKey = queryOptions?.queryKey ?? getGetApiV1ConfigQueryKey();
 
 	const queryFn: QueryFunction<Awaited<ReturnType<typeof getApiV1Config>>> = ({
 		signal,
-	}) => getApiV1Config(getApiV1ConfigBody, { signal, ...fetchOptions });
+	}) => getApiV1Config({ signal, ...fetchOptions });
 
 	return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
 		Awaited<ReturnType<typeof getApiV1Config>>,
@@ -122,7 +108,6 @@ export function useGetApiV1Config<
 	TData = Awaited<ReturnType<typeof getApiV1Config>>,
 	TError = ApiError,
 >(
-	getApiV1ConfigBody: GetApiV1ConfigBody,
 	options: {
 		query: Partial<
 			UseQueryOptions<Awaited<ReturnType<typeof getApiV1Config>>, TError, TData>
@@ -145,7 +130,6 @@ export function useGetApiV1Config<
 	TData = Awaited<ReturnType<typeof getApiV1Config>>,
 	TError = ApiError,
 >(
-	getApiV1ConfigBody: GetApiV1ConfigBody,
 	options?: {
 		query?: Partial<
 			UseQueryOptions<Awaited<ReturnType<typeof getApiV1Config>>, TError, TData>
@@ -168,7 +152,6 @@ export function useGetApiV1Config<
 	TData = Awaited<ReturnType<typeof getApiV1Config>>,
 	TError = ApiError,
 >(
-	getApiV1ConfigBody: GetApiV1ConfigBody,
 	options?: {
 		query?: Partial<
 			UseQueryOptions<Awaited<ReturnType<typeof getApiV1Config>>, TError, TData>
@@ -187,7 +170,6 @@ export function useGetApiV1Config<
 	TData = Awaited<ReturnType<typeof getApiV1Config>>,
 	TError = ApiError,
 >(
-	getApiV1ConfigBody: GetApiV1ConfigBody,
 	options?: {
 		query?: Partial<
 			UseQueryOptions<Awaited<ReturnType<typeof getApiV1Config>>, TError, TData>
@@ -198,10 +180,7 @@ export function useGetApiV1Config<
 ): UseQueryResult<TData, TError> & {
 	queryKey: DataTag<QueryKey, TData, TError>;
 } {
-	const queryOptions = getGetApiV1ConfigQueryOptions(
-		getApiV1ConfigBody,
-		options,
-	);
+	const queryOptions = getGetApiV1ConfigQueryOptions(options);
 
 	const query = useQuery(queryOptions, queryClient) as UseQueryResult<
 		TData,

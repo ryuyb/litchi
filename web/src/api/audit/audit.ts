@@ -23,14 +23,9 @@ import type {
 	ApiError,
 	AuditLog,
 	AuditSummary,
-	GetApiV1AuditBody,
-	GetApiV1AuditIdBody,
 	GetApiV1AuditParams,
-	GetApiV1AuditRepositoriesRepositoryBody,
 	GetApiV1AuditRepositoriesRepositoryParams,
-	GetApiV1AuditSessionsSessionIdBody,
 	GetApiV1AuditSessionsSessionIdParams,
-	GetApiV1AuditSessionsSessionIdSummaryBody,
 	PaginatedResponseAuditLog,
 } from "../schemas";
 
@@ -84,15 +79,12 @@ export const getGetApiV1AuditUrl = (params?: GetApiV1AuditParams) => {
 };
 
 export const getApiV1Audit = async (
-	getApiV1AuditBody: GetApiV1AuditBody,
 	params?: GetApiV1AuditParams,
 	options?: RequestInit,
 ): Promise<getApiV1AuditResponse> => {
 	const res = await fetch(getGetApiV1AuditUrl(params), {
 		...options,
 		method: "GET",
-		headers: { "Content-Type": "application/json", ...options?.headers },
-		body: JSON.stringify(getApiV1AuditBody),
 	});
 
 	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
@@ -105,22 +97,14 @@ export const getApiV1Audit = async (
 	} as getApiV1AuditResponse;
 };
 
-export const getGetApiV1AuditQueryKey = (
-	getApiV1AuditBody?: GetApiV1AuditBody,
-	params?: GetApiV1AuditParams,
-) => {
-	return [
-		`/api/v1/audit`,
-		...(params ? [params] : []),
-		getApiV1AuditBody,
-	] as const;
+export const getGetApiV1AuditQueryKey = (params?: GetApiV1AuditParams) => {
+	return [`/api/v1/audit`, ...(params ? [params] : [])] as const;
 };
 
 export const getGetApiV1AuditQueryOptions = <
 	TData = Awaited<ReturnType<typeof getApiV1Audit>>,
 	TError = ApiError,
 >(
-	getApiV1AuditBody: GetApiV1AuditBody,
 	params?: GetApiV1AuditParams,
 	options?: {
 		query?: Partial<
@@ -131,13 +115,11 @@ export const getGetApiV1AuditQueryOptions = <
 ) => {
 	const { query: queryOptions, fetch: fetchOptions } = options ?? {};
 
-	const queryKey =
-		queryOptions?.queryKey ??
-		getGetApiV1AuditQueryKey(getApiV1AuditBody, params);
+	const queryKey = queryOptions?.queryKey ?? getGetApiV1AuditQueryKey(params);
 
 	const queryFn: QueryFunction<Awaited<ReturnType<typeof getApiV1Audit>>> = ({
 		signal,
-	}) => getApiV1Audit(getApiV1AuditBody, params, { signal, ...fetchOptions });
+	}) => getApiV1Audit(params, { signal, ...fetchOptions });
 
 	return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
 		Awaited<ReturnType<typeof getApiV1Audit>>,
@@ -155,7 +137,6 @@ export function useGetApiV1Audit<
 	TData = Awaited<ReturnType<typeof getApiV1Audit>>,
 	TError = ApiError,
 >(
-	getApiV1AuditBody: GetApiV1AuditBody,
 	params: undefined | GetApiV1AuditParams,
 	options: {
 		query: Partial<
@@ -179,7 +160,6 @@ export function useGetApiV1Audit<
 	TData = Awaited<ReturnType<typeof getApiV1Audit>>,
 	TError = ApiError,
 >(
-	getApiV1AuditBody: GetApiV1AuditBody,
 	params?: GetApiV1AuditParams,
 	options?: {
 		query?: Partial<
@@ -203,7 +183,6 @@ export function useGetApiV1Audit<
 	TData = Awaited<ReturnType<typeof getApiV1Audit>>,
 	TError = ApiError,
 >(
-	getApiV1AuditBody: GetApiV1AuditBody,
 	params?: GetApiV1AuditParams,
 	options?: {
 		query?: Partial<
@@ -223,7 +202,6 @@ export function useGetApiV1Audit<
 	TData = Awaited<ReturnType<typeof getApiV1Audit>>,
 	TError = ApiError,
 >(
-	getApiV1AuditBody: GetApiV1AuditBody,
 	params?: GetApiV1AuditParams,
 	options?: {
 		query?: Partial<
@@ -235,11 +213,7 @@ export function useGetApiV1Audit<
 ): UseQueryResult<TData, TError> & {
 	queryKey: DataTag<QueryKey, TData, TError>;
 } {
-	const queryOptions = getGetApiV1AuditQueryOptions(
-		getApiV1AuditBody,
-		params,
-		options,
-	);
+	const queryOptions = getGetApiV1AuditQueryOptions(params, options);
 
 	const query = useQuery(queryOptions, queryClient) as UseQueryResult<
 		TData,
@@ -304,7 +278,6 @@ export const getGetApiV1AuditRepositoriesRepositoryUrl = (
 
 export const getApiV1AuditRepositoriesRepository = async (
 	repository: string,
-	getApiV1AuditRepositoriesRepositoryBody: GetApiV1AuditRepositoriesRepositoryBody,
 	params?: GetApiV1AuditRepositoriesRepositoryParams,
 	options?: RequestInit,
 ): Promise<getApiV1AuditRepositoriesRepositoryResponse> => {
@@ -313,8 +286,6 @@ export const getApiV1AuditRepositoriesRepository = async (
 		{
 			...options,
 			method: "GET",
-			headers: { "Content-Type": "application/json", ...options?.headers },
-			body: JSON.stringify(getApiV1AuditRepositoriesRepositoryBody),
 		},
 	);
 
@@ -332,13 +303,11 @@ export const getApiV1AuditRepositoriesRepository = async (
 
 export const getGetApiV1AuditRepositoriesRepositoryQueryKey = (
 	repository: string,
-	getApiV1AuditRepositoriesRepositoryBody?: GetApiV1AuditRepositoriesRepositoryBody,
 	params?: GetApiV1AuditRepositoriesRepositoryParams,
 ) => {
 	return [
 		`/api/v1/audit/repositories/${repository}`,
 		...(params ? [params] : []),
-		getApiV1AuditRepositoriesRepositoryBody,
 	] as const;
 };
 
@@ -347,7 +316,6 @@ export const getGetApiV1AuditRepositoriesRepositoryQueryOptions = <
 	TError = ApiError,
 >(
 	repository: string,
-	getApiV1AuditRepositoriesRepositoryBody: GetApiV1AuditRepositoriesRepositoryBody,
 	params?: GetApiV1AuditRepositoriesRepositoryParams,
 	options?: {
 		query?: Partial<
@@ -364,21 +332,15 @@ export const getGetApiV1AuditRepositoriesRepositoryQueryOptions = <
 
 	const queryKey =
 		queryOptions?.queryKey ??
-		getGetApiV1AuditRepositoriesRepositoryQueryKey(
-			repository,
-			getApiV1AuditRepositoriesRepositoryBody,
-			params,
-		);
+		getGetApiV1AuditRepositoriesRepositoryQueryKey(repository, params);
 
 	const queryFn: QueryFunction<
 		Awaited<ReturnType<typeof getApiV1AuditRepositoriesRepository>>
 	> = ({ signal }) =>
-		getApiV1AuditRepositoriesRepository(
-			repository,
-			getApiV1AuditRepositoriesRepositoryBody,
-			params,
-			{ signal, ...fetchOptions },
-		);
+		getApiV1AuditRepositoriesRepository(repository, params, {
+			signal,
+			...fetchOptions,
+		});
 
 	return {
 		queryKey,
@@ -402,7 +364,6 @@ export function useGetApiV1AuditRepositoriesRepository<
 	TError = ApiError,
 >(
 	repository: string,
-	getApiV1AuditRepositoriesRepositoryBody: GetApiV1AuditRepositoriesRepositoryBody,
 	params: undefined | GetApiV1AuditRepositoriesRepositoryParams,
 	options: {
 		query: Partial<
@@ -431,7 +392,6 @@ export function useGetApiV1AuditRepositoriesRepository<
 	TError = ApiError,
 >(
 	repository: string,
-	getApiV1AuditRepositoriesRepositoryBody: GetApiV1AuditRepositoriesRepositoryBody,
 	params?: GetApiV1AuditRepositoriesRepositoryParams,
 	options?: {
 		query?: Partial<
@@ -460,7 +420,6 @@ export function useGetApiV1AuditRepositoriesRepository<
 	TError = ApiError,
 >(
 	repository: string,
-	getApiV1AuditRepositoriesRepositoryBody: GetApiV1AuditRepositoriesRepositoryBody,
 	params?: GetApiV1AuditRepositoriesRepositoryParams,
 	options?: {
 		query?: Partial<
@@ -485,7 +444,6 @@ export function useGetApiV1AuditRepositoriesRepository<
 	TError = ApiError,
 >(
 	repository: string,
-	getApiV1AuditRepositoriesRepositoryBody: GetApiV1AuditRepositoriesRepositoryBody,
 	params?: GetApiV1AuditRepositoriesRepositoryParams,
 	options?: {
 		query?: Partial<
@@ -503,7 +461,6 @@ export function useGetApiV1AuditRepositoriesRepository<
 } {
 	const queryOptions = getGetApiV1AuditRepositoriesRepositoryQueryOptions(
 		repository,
-		getApiV1AuditRepositoriesRepositoryBody,
 		params,
 		options,
 	);
@@ -571,7 +528,6 @@ export const getGetApiV1AuditSessionsSessionIdUrl = (
 
 export const getApiV1AuditSessionsSessionId = async (
 	sessionId: string,
-	getApiV1AuditSessionsSessionIdBody: GetApiV1AuditSessionsSessionIdBody,
 	params?: GetApiV1AuditSessionsSessionIdParams,
 	options?: RequestInit,
 ): Promise<getApiV1AuditSessionsSessionIdResponse> => {
@@ -580,8 +536,6 @@ export const getApiV1AuditSessionsSessionId = async (
 		{
 			...options,
 			method: "GET",
-			headers: { "Content-Type": "application/json", ...options?.headers },
-			body: JSON.stringify(getApiV1AuditSessionsSessionIdBody),
 		},
 	);
 
@@ -599,13 +553,11 @@ export const getApiV1AuditSessionsSessionId = async (
 
 export const getGetApiV1AuditSessionsSessionIdQueryKey = (
 	sessionId: string,
-	getApiV1AuditSessionsSessionIdBody?: GetApiV1AuditSessionsSessionIdBody,
 	params?: GetApiV1AuditSessionsSessionIdParams,
 ) => {
 	return [
 		`/api/v1/audit/sessions/${sessionId}`,
 		...(params ? [params] : []),
-		getApiV1AuditSessionsSessionIdBody,
 	] as const;
 };
 
@@ -614,7 +566,6 @@ export const getGetApiV1AuditSessionsSessionIdQueryOptions = <
 	TError = ApiError,
 >(
 	sessionId: string,
-	getApiV1AuditSessionsSessionIdBody: GetApiV1AuditSessionsSessionIdBody,
 	params?: GetApiV1AuditSessionsSessionIdParams,
 	options?: {
 		query?: Partial<
@@ -631,21 +582,15 @@ export const getGetApiV1AuditSessionsSessionIdQueryOptions = <
 
 	const queryKey =
 		queryOptions?.queryKey ??
-		getGetApiV1AuditSessionsSessionIdQueryKey(
-			sessionId,
-			getApiV1AuditSessionsSessionIdBody,
-			params,
-		);
+		getGetApiV1AuditSessionsSessionIdQueryKey(sessionId, params);
 
 	const queryFn: QueryFunction<
 		Awaited<ReturnType<typeof getApiV1AuditSessionsSessionId>>
 	> = ({ signal }) =>
-		getApiV1AuditSessionsSessionId(
-			sessionId,
-			getApiV1AuditSessionsSessionIdBody,
-			params,
-			{ signal, ...fetchOptions },
-		);
+		getApiV1AuditSessionsSessionId(sessionId, params, {
+			signal,
+			...fetchOptions,
+		});
 
 	return {
 		queryKey,
@@ -669,7 +614,6 @@ export function useGetApiV1AuditSessionsSessionId<
 	TError = ApiError,
 >(
 	sessionId: string,
-	getApiV1AuditSessionsSessionIdBody: GetApiV1AuditSessionsSessionIdBody,
 	params: undefined | GetApiV1AuditSessionsSessionIdParams,
 	options: {
 		query: Partial<
@@ -698,7 +642,6 @@ export function useGetApiV1AuditSessionsSessionId<
 	TError = ApiError,
 >(
 	sessionId: string,
-	getApiV1AuditSessionsSessionIdBody: GetApiV1AuditSessionsSessionIdBody,
 	params?: GetApiV1AuditSessionsSessionIdParams,
 	options?: {
 		query?: Partial<
@@ -727,7 +670,6 @@ export function useGetApiV1AuditSessionsSessionId<
 	TError = ApiError,
 >(
 	sessionId: string,
-	getApiV1AuditSessionsSessionIdBody: GetApiV1AuditSessionsSessionIdBody,
 	params?: GetApiV1AuditSessionsSessionIdParams,
 	options?: {
 		query?: Partial<
@@ -752,7 +694,6 @@ export function useGetApiV1AuditSessionsSessionId<
 	TError = ApiError,
 >(
 	sessionId: string,
-	getApiV1AuditSessionsSessionIdBody: GetApiV1AuditSessionsSessionIdBody,
 	params?: GetApiV1AuditSessionsSessionIdParams,
 	options?: {
 		query?: Partial<
@@ -770,7 +711,6 @@ export function useGetApiV1AuditSessionsSessionId<
 } {
 	const queryOptions = getGetApiV1AuditSessionsSessionIdQueryOptions(
 		sessionId,
-		getApiV1AuditSessionsSessionIdBody,
 		params,
 		options,
 	);
@@ -825,7 +765,6 @@ export const getGetApiV1AuditSessionsSessionIdSummaryUrl = (
 
 export const getApiV1AuditSessionsSessionIdSummary = async (
 	sessionId: string,
-	getApiV1AuditSessionsSessionIdSummaryBody: GetApiV1AuditSessionsSessionIdSummaryBody,
 	options?: RequestInit,
 ): Promise<getApiV1AuditSessionsSessionIdSummaryResponse> => {
 	const res = await fetch(
@@ -833,8 +772,6 @@ export const getApiV1AuditSessionsSessionIdSummary = async (
 		{
 			...options,
 			method: "GET",
-			headers: { "Content-Type": "application/json", ...options?.headers },
-			body: JSON.stringify(getApiV1AuditSessionsSessionIdSummaryBody),
 		},
 	);
 
@@ -852,12 +789,8 @@ export const getApiV1AuditSessionsSessionIdSummary = async (
 
 export const getGetApiV1AuditSessionsSessionIdSummaryQueryKey = (
 	sessionId: string,
-	getApiV1AuditSessionsSessionIdSummaryBody?: GetApiV1AuditSessionsSessionIdSummaryBody,
 ) => {
-	return [
-		`/api/v1/audit/sessions/${sessionId}/summary`,
-		getApiV1AuditSessionsSessionIdSummaryBody,
-	] as const;
+	return [`/api/v1/audit/sessions/${sessionId}/summary`] as const;
 };
 
 export const getGetApiV1AuditSessionsSessionIdSummaryQueryOptions = <
@@ -865,7 +798,6 @@ export const getGetApiV1AuditSessionsSessionIdSummaryQueryOptions = <
 	TError = ApiError,
 >(
 	sessionId: string,
-	getApiV1AuditSessionsSessionIdSummaryBody: GetApiV1AuditSessionsSessionIdSummaryBody,
 	options?: {
 		query?: Partial<
 			UseQueryOptions<
@@ -881,19 +813,15 @@ export const getGetApiV1AuditSessionsSessionIdSummaryQueryOptions = <
 
 	const queryKey =
 		queryOptions?.queryKey ??
-		getGetApiV1AuditSessionsSessionIdSummaryQueryKey(
-			sessionId,
-			getApiV1AuditSessionsSessionIdSummaryBody,
-		);
+		getGetApiV1AuditSessionsSessionIdSummaryQueryKey(sessionId);
 
 	const queryFn: QueryFunction<
 		Awaited<ReturnType<typeof getApiV1AuditSessionsSessionIdSummary>>
 	> = ({ signal }) =>
-		getApiV1AuditSessionsSessionIdSummary(
-			sessionId,
-			getApiV1AuditSessionsSessionIdSummaryBody,
-			{ signal, ...fetchOptions },
-		);
+		getApiV1AuditSessionsSessionIdSummary(sessionId, {
+			signal,
+			...fetchOptions,
+		});
 
 	return {
 		queryKey,
@@ -917,7 +845,6 @@ export function useGetApiV1AuditSessionsSessionIdSummary<
 	TError = ApiError,
 >(
 	sessionId: string,
-	getApiV1AuditSessionsSessionIdSummaryBody: GetApiV1AuditSessionsSessionIdSummaryBody,
 	options: {
 		query: Partial<
 			UseQueryOptions<
@@ -945,7 +872,6 @@ export function useGetApiV1AuditSessionsSessionIdSummary<
 	TError = ApiError,
 >(
 	sessionId: string,
-	getApiV1AuditSessionsSessionIdSummaryBody: GetApiV1AuditSessionsSessionIdSummaryBody,
 	options?: {
 		query?: Partial<
 			UseQueryOptions<
@@ -973,7 +899,6 @@ export function useGetApiV1AuditSessionsSessionIdSummary<
 	TError = ApiError,
 >(
 	sessionId: string,
-	getApiV1AuditSessionsSessionIdSummaryBody: GetApiV1AuditSessionsSessionIdSummaryBody,
 	options?: {
 		query?: Partial<
 			UseQueryOptions<
@@ -997,7 +922,6 @@ export function useGetApiV1AuditSessionsSessionIdSummary<
 	TError = ApiError,
 >(
 	sessionId: string,
-	getApiV1AuditSessionsSessionIdSummaryBody: GetApiV1AuditSessionsSessionIdSummaryBody,
 	options?: {
 		query?: Partial<
 			UseQueryOptions<
@@ -1014,7 +938,6 @@ export function useGetApiV1AuditSessionsSessionIdSummary<
 } {
 	const queryOptions = getGetApiV1AuditSessionsSessionIdSummaryQueryOptions(
 		sessionId,
-		getApiV1AuditSessionsSessionIdSummaryBody,
 		options,
 	);
 
@@ -1071,14 +994,11 @@ export const getGetApiV1AuditIdUrl = (id: string) => {
 
 export const getApiV1AuditId = async (
 	id: string,
-	getApiV1AuditIdBody: GetApiV1AuditIdBody,
 	options?: RequestInit,
 ): Promise<getApiV1AuditIdResponse> => {
 	const res = await fetch(getGetApiV1AuditIdUrl(id), {
 		...options,
 		method: "GET",
-		headers: { "Content-Type": "application/json", ...options?.headers },
-		body: JSON.stringify(getApiV1AuditIdBody),
 	});
 
 	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
@@ -1091,11 +1011,8 @@ export const getApiV1AuditId = async (
 	} as getApiV1AuditIdResponse;
 };
 
-export const getGetApiV1AuditIdQueryKey = (
-	id: string,
-	getApiV1AuditIdBody?: GetApiV1AuditIdBody,
-) => {
-	return [`/api/v1/audit/${id}`, getApiV1AuditIdBody] as const;
+export const getGetApiV1AuditIdQueryKey = (id: string) => {
+	return [`/api/v1/audit/${id}`] as const;
 };
 
 export const getGetApiV1AuditIdQueryOptions = <
@@ -1103,7 +1020,6 @@ export const getGetApiV1AuditIdQueryOptions = <
 	TError = ApiError,
 >(
 	id: string,
-	getApiV1AuditIdBody: GetApiV1AuditIdBody,
 	options?: {
 		query?: Partial<
 			UseQueryOptions<
@@ -1117,13 +1033,11 @@ export const getGetApiV1AuditIdQueryOptions = <
 ) => {
 	const { query: queryOptions, fetch: fetchOptions } = options ?? {};
 
-	const queryKey =
-		queryOptions?.queryKey ??
-		getGetApiV1AuditIdQueryKey(id, getApiV1AuditIdBody);
+	const queryKey = queryOptions?.queryKey ?? getGetApiV1AuditIdQueryKey(id);
 
 	const queryFn: QueryFunction<Awaited<ReturnType<typeof getApiV1AuditId>>> = ({
 		signal,
-	}) => getApiV1AuditId(id, getApiV1AuditIdBody, { signal, ...fetchOptions });
+	}) => getApiV1AuditId(id, { signal, ...fetchOptions });
 
 	return {
 		queryKey,
@@ -1147,7 +1061,6 @@ export function useGetApiV1AuditId<
 	TError = ApiError,
 >(
 	id: string,
-	getApiV1AuditIdBody: GetApiV1AuditIdBody,
 	options: {
 		query: Partial<
 			UseQueryOptions<
@@ -1175,7 +1088,6 @@ export function useGetApiV1AuditId<
 	TError = ApiError,
 >(
 	id: string,
-	getApiV1AuditIdBody: GetApiV1AuditIdBody,
 	options?: {
 		query?: Partial<
 			UseQueryOptions<
@@ -1203,7 +1115,6 @@ export function useGetApiV1AuditId<
 	TError = ApiError,
 >(
 	id: string,
-	getApiV1AuditIdBody: GetApiV1AuditIdBody,
 	options?: {
 		query?: Partial<
 			UseQueryOptions<
@@ -1227,7 +1138,6 @@ export function useGetApiV1AuditId<
 	TError = ApiError,
 >(
 	id: string,
-	getApiV1AuditIdBody: GetApiV1AuditIdBody,
 	options?: {
 		query?: Partial<
 			UseQueryOptions<
@@ -1242,11 +1152,7 @@ export function useGetApiV1AuditId<
 ): UseQueryResult<TData, TError> & {
 	queryKey: DataTag<QueryKey, TData, TError>;
 } {
-	const queryOptions = getGetApiV1AuditIdQueryOptions(
-		id,
-		getApiV1AuditIdBody,
-		options,
-	);
+	const queryOptions = getGetApiV1AuditIdQueryOptions(id, options);
 
 	const query = useQuery(queryOptions, queryClient) as UseQueryResult<
 		TData,

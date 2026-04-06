@@ -122,13 +122,10 @@ function RepositoriesPage() {
 	const [pageSize, setPageSize] = useState(10);
 	const [search, setSearch] = useState("");
 
-	const { data, isLoading, isError, error } = useGetApiV1Repositories(
-		{},
-		{
-			page: pageIndex + 1,
-			pageSize,
-		},
-	);
+	const { data, isLoading, isError, error } = useGetApiV1Repositories({
+		page: pageIndex + 1,
+		pageSize,
+	});
 
 	// Handle API response type - data contains status and response data
 	const isSuccess = data?.status === 200;

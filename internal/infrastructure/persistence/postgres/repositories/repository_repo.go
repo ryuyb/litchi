@@ -8,8 +8,16 @@ import (
 	"github.com/ryuyb/litchi/internal/domain/repository"
 	"github.com/ryuyb/litchi/internal/infrastructure/persistence/converter"
 	"github.com/ryuyb/litchi/internal/infrastructure/persistence/models"
+	"go.uber.org/fx"
 	"gorm.io/gorm"
 )
+
+// RepositoryRepoParams holds dependencies for RepositoryRepo.
+type RepositoryRepoParams struct {
+	fx.In
+
+	DB *gorm.DB `name:"gorm_db"`
+}
 
 // RepositoryRepo implements repository.RepositoryRepository using GORM.
 type RepositoryRepo struct {
@@ -17,8 +25,8 @@ type RepositoryRepo struct {
 }
 
 // NewRepositoryRepo creates a new RepositoryRepo.
-func NewRepositoryRepo(db *gorm.DB) *RepositoryRepo {
-	return &RepositoryRepo{db: db}
+func NewRepositoryRepo(p RepositoryRepoParams) *RepositoryRepo {
+	return &RepositoryRepo{db: p.DB}
 }
 
 // FindByName finds a repository by its name.

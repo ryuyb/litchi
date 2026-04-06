@@ -20,18 +20,12 @@ import (
 //go:embed migrations/*.sql
 var migrationsFS embed.FS
 
-// MigrateModule returns an Fx module for database migration.
-// It accepts dbConfig directly (not via fx.In) to allow conditional module creation.
-// If AutoMigrate is disabled, returns empty options to avoid creating unused connections.
-func MigrateModule(dbConfig *config.DatabaseConfig) fx.Option {
-	if !dbConfig.AutoMigrate {
-		return fx.Options() // No-op when auto-migrate is disabled
-	}
-	return fx.Module("migrate",
-		fx.Provide(NewMigrator),
-		fx.Invoke(registerMigrateLifecycle),
-	)
-}
+// MigrateModule provides database migration via Fx.
+// It only runs migrations when auto_migrate is enabled in config.
+var MigrateModule = fx.Module("migrate",
+	fx.Provide(NewMigrator),
+	fx.Invoke(registerMigrateLifecycle),
+)
 
 // Migrator wraps the golang-migrate instance with additional functionality.
 type Migrator struct {
@@ -43,13 +37,19 @@ type Migrator struct {
 type MigratorParams struct {
 	fx.In
 
-	DatabaseConfig *config.DatabaseConfig
-	Logger         *zap.Logger
+	Config *config.Config
+	Logger *zap.Logger
 }
 
 // NewMigrator creates a new Migrator instance with embedded migrations.
 func NewMigrator(p MigratorParams) (*Migrator, error) {
-	dbConfig := p.DatabaseConfig
+	dbConfig := &p.Config.Database
+
+	// Skip if auto-migrate is disabled
+	if !dbConfig.AutoMigrate {
+		p.Logger.Info("auto-migrate is disabled, skipping migrator initialization")
+		return nil, nil
+	}
 
 	// Build connection string for migrate with proper URL encoding
 	// x-migrations-table specifies the migration history table name
@@ -84,6 +84,11 @@ func NewMigrator(p MigratorParams) (*Migrator, error) {
 
 // registerMigrateLifecycle registers migration lifecycle hooks with Fx.
 func registerMigrateLifecycle(lc fx.Lifecycle, m *Migrator) {
+	// Skip if migrator is nil (auto_migrate disabled)
+	if m == nil {
+		return
+	}
+
 	lc.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
 			m.logger.Info("running database migrations on startup")

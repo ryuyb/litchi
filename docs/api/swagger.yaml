@@ -848,11 +848,6 @@ paths:
         name: orderBy
         schema:
           type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
       responses:
         "200":
           content:
@@ -886,11 +881,6 @@ paths:
         required: true
         schema:
           type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
       responses:
         "200":
           content:
@@ -943,11 +933,6 @@ paths:
         name: pageSize
         schema:
           type: integer
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
       responses:
         "200":
           content:
@@ -994,11 +979,6 @@ paths:
         name: pageSize
         schema:
           type: integer
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
       responses:
         "200":
           content:
@@ -1033,11 +1013,6 @@ paths:
         required: true
         schema:
           type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
       responses:
         "200":
           content:
@@ -1064,11 +1039,6 @@ paths:
     get:
       description: Returns the current application configuration (sensitive fields
         excluded)
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
       responses:
         "200":
           content:
@@ -1124,11 +1094,6 @@ paths:
   /api/v1/health:
     get:
       description: Returns the basic API health status and version
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
       responses:
         "200":
           content:
@@ -1143,11 +1108,6 @@ paths:
     get:
       description: Returns detailed health status including database, GitHub, and
         Git checks
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
       responses:
         "200":
           content:
@@ -1181,11 +1141,6 @@ paths:
         schema:
           default: all
           type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
       responses:
         "200":
           content:
@@ -1289,11 +1244,6 @@ paths:
         required: true
         schema:
           type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
       responses:
         "200":
           content:
@@ -1411,11 +1361,6 @@ paths:
         required: true
         schema:
           type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
       responses:
         "200":
           content:
@@ -1513,11 +1458,6 @@ paths:
         name: repo
         schema:
           type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
       responses:
         "200":
           content:
@@ -1550,11 +1490,6 @@ paths:
         required: true
         schema:
           type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
       responses:
         "200":
           content:
@@ -1594,11 +1529,6 @@ paths:
         required: true
         schema:
           type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
       responses:
         "200":
           content:
@@ -1929,11 +1859,6 @@ paths:
         name: status
         schema:
           type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
       responses:
         "200":
           content:
@@ -1979,11 +1904,6 @@ paths:
         required: true
         schema:
           type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
       responses:
         "200":
           content:
@@ -2200,11 +2120,6 @@ paths:
   /api/v1/webhooks/health:
     get:
       description: Returns health status including registered event handlers
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
       responses:
         "200":
           content:
@@ -2218,11 +2133,6 @@ paths:
   /health:
     get:
       description: Returns the server health status and version (legacy endpoint)
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
       responses:
         "200":
           content:

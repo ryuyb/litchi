@@ -19,7 +19,7 @@ import (
 func init() {
 	fxutil.RegisterModule(fxutil.ModuleInfo{
 		Name:     "agent",
-		Provides: []string{"AgentRunner", "OutputParser", "PermissionController", "RetryHandler"},
+		Provides: []string{"service.AgentRunner", "parser.OutputParser", "permission.PermissionController", "retry.RetryHandler"},
 		Invokes:  []string{"RegisterAgentLifecycle"},
 		Depends:  []string{"*config.Config", "*zap.Logger", "CacheRepository"},
 	})
@@ -29,9 +29,19 @@ func init() {
 var Module = fx.Module("agent",
 	fx.Provide(
 		NewClaudeCodeAgentFromConfig,
-		parser.NewDefaultOutputParser,
-		permission.NewDefaultPermissionController,
-		retry.NewDefaultRetryHandler,
+		// Provide concrete types as interfaces
+		fx.Annotate(
+			parser.NewDefaultOutputParser,
+			fx.As(new(parser.OutputParser)),
+		),
+		fx.Annotate(
+			permission.NewDefaultPermissionController,
+			fx.As(new(permission.PermissionController)),
+		),
+		fx.Annotate(
+			retry.NewDefaultRetryHandler,
+			fx.As(new(retry.RetryHandler)),
+		),
 	),
 	fx.Invoke(RegisterAgentLifecycle),
 )
