@@ -9,8 +9,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/ryuyb/litchi/internal/domain/aggregate"
 	"github.com/ryuyb/litchi/internal/domain/entity"
-	"github.com/ryuyb/litchi/internal/domain/event"
 	"github.com/ryuyb/litchi/internal/domain/repository"
+	domainService "github.com/ryuyb/litchi/internal/domain/service"
 	"github.com/ryuyb/litchi/internal/domain/valueobject"
 	"github.com/ryuyb/litchi/internal/infrastructure/config"
 	"github.com/stretchr/testify/assert"
@@ -18,155 +18,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 )
-
-// --- Mock Implementations ---
-
-// MockWorkSessionRepository is a mock implementation of WorkSessionRepository.
-type MockWorkSessionRepository struct {
-	mock.Mock
-}
-
-func (m *MockWorkSessionRepository) Create(ctx context.Context, session *aggregate.WorkSession) error {
-	args := m.Called(ctx, session)
-	return args.Error(0)
-}
-
-func (m *MockWorkSessionRepository) Update(ctx context.Context, session *aggregate.WorkSession) error {
-	args := m.Called(ctx, session)
-	return args.Error(0)
-}
-
-func (m *MockWorkSessionRepository) FindByID(ctx context.Context, id uuid.UUID) (*aggregate.WorkSession, error) {
-	args := m.Called(ctx, id)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*aggregate.WorkSession), args.Error(1)
-}
-
-func (m *MockWorkSessionRepository) FindByIssueID(ctx context.Context, issueID uuid.UUID) (*aggregate.WorkSession, error) {
-	args := m.Called(ctx, issueID)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*aggregate.WorkSession), args.Error(1)
-}
-
-func (m *MockWorkSessionRepository) FindByGitHubIssue(ctx context.Context, repository string, issueNumber int) (*aggregate.WorkSession, error) {
-	args := m.Called(ctx, repository, issueNumber)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*aggregate.WorkSession), args.Error(1)
-}
-
-func (m *MockWorkSessionRepository) FindByStatus(ctx context.Context, status aggregate.SessionStatus) ([]*aggregate.WorkSession, error) {
-	args := m.Called(ctx, status)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).([]*aggregate.WorkSession), args.Error(1)
-}
-
-func (m *MockWorkSessionRepository) FindByStage(ctx context.Context, stage valueobject.Stage) ([]*aggregate.WorkSession, error) {
-	args := m.Called(ctx, stage)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).([]*aggregate.WorkSession), args.Error(1)
-}
-
-func (m *MockWorkSessionRepository) ListWithPagination(ctx context.Context, params repository.PaginationParams, filter *repository.WorkSessionFilter) ([]*aggregate.WorkSession, *repository.PaginationResult, error) {
-	args := m.Called(ctx, params, filter)
-	return args.Get(0).([]*aggregate.WorkSession), args.Get(1).(*repository.PaginationResult), args.Error(2)
-}
-
-func (m *MockWorkSessionRepository) FindActiveByRepository(ctx context.Context, repo string) ([]*aggregate.WorkSession, error) {
-	args := m.Called(ctx, repo)
-	return args.Get(0).([]*aggregate.WorkSession), args.Error(1)
-}
-
-func (m *MockWorkSessionRepository) Delete(ctx context.Context, id uuid.UUID) error {
-	args := m.Called(ctx, id)
-	return args.Error(0)
-}
-
-func (m *MockWorkSessionRepository) ExistsByGitHubIssue(ctx context.Context, repository string, issueNumber int) (bool, error) {
-	args := m.Called(ctx, repository, issueNumber)
-	return args.Bool(0), args.Error(1)
-}
-
-// MockCacheRepository is a mock implementation of CacheRepository.
-type MockCacheRepository struct {
-	mock.Mock
-}
-
-func (m *MockCacheRepository) Save(ctx context.Context, worktreePath string, cache *repository.ExecutionContextCache) error {
-	args := m.Called(ctx, worktreePath, cache)
-	return args.Error(0)
-}
-
-func (m *MockCacheRepository) Load(ctx context.Context, worktreePath string) (*repository.ExecutionContextCache, error) {
-	args := m.Called(ctx, worktreePath)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*repository.ExecutionContextCache), args.Error(1)
-}
-
-func (m *MockCacheRepository) Delete(ctx context.Context, worktreePath string) error {
-	args := m.Called(ctx, worktreePath)
-	return args.Error(0)
-}
-
-// MockSessionControlService is a mock implementation of SessionControlService.
-type MockSessionControlService struct {
-	mock.Mock
-}
-
-func (m *MockSessionControlService) PauseSession(session *aggregate.WorkSession, ctx valueobject.PauseContext) error {
-	args := m.Called(session, ctx)
-	return args.Error(0)
-}
-
-func (m *MockSessionControlService) ResumeSession(session *aggregate.WorkSession, action string) error {
-	args := m.Called(session, action)
-	return args.Error(0)
-}
-
-func (m *MockSessionControlService) AutoResumeSession(session *aggregate.WorkSession) (bool, error) {
-	args := m.Called(session)
-	return args.Bool(0), args.Error(1)
-}
-
-func (m *MockSessionControlService) TerminateSession(session *aggregate.WorkSession, reason string) error {
-	args := m.Called(session, reason)
-	return args.Error(0)
-}
-
-func (m *MockSessionControlService) CanResumeWithAction(session *aggregate.WorkSession, action string) bool {
-	args := m.Called(session, action)
-	return args.Bool(0)
-}
-
-func (m *MockSessionControlService) GetValidResumeActions(session *aggregate.WorkSession) []string {
-	args := m.Called(session)
-	return args.Get(0).([]string)
-}
-
-// MockEventDispatcher is a mock implementation of EventDispatcher.
-type MockEventDispatcher struct {
-	mock.Mock
-}
-
-func (m *MockEventDispatcher) DispatchAsync(ctx context.Context, event event.DomainEvent) {
-	m.Called(ctx, event)
-}
-
-func (m *MockEventDispatcher) DispatchSync(ctx context.Context, event event.DomainEvent) error {
-	args := m.Called(ctx, event)
-	return args.Error(0)
-}
 
 // --- Test Fixtures ---
 
@@ -194,10 +45,10 @@ func createTestSessionForRecovery(t *testing.T, pauseReason valueobject.PauseRea
 }
 
 func createTestRecoveryService(
-	sessionRepo *MockWorkSessionRepository,
-	cacheRepo *MockCacheRepository,
+	sessionRepo *repository.MockWorkSessionRepository,
+	cacheRepo *repository.MockCacheRepository,
 	consistencyService *ConsistencyService,
-	sessionControlService *MockSessionControlService,
+	sessionControlService *domainService.MockSessionControlService,
 	taskService *TaskService,
 ) *RecoveryService {
 	return &RecoveryService{
@@ -215,9 +66,9 @@ func createTestRecoveryService(
 
 func TestRecoveryService_RecoverOnStartup(t *testing.T) {
 	t.Run("no recoverable sessions", func(t *testing.T) {
-		sessionRepo := new(MockWorkSessionRepository)
-		cacheRepo := new(MockCacheRepository)
-		sessionControlService := new(MockSessionControlService)
+		sessionRepo := repository.NewMockWorkSessionRepository(t)
+		cacheRepo := repository.NewMockCacheRepository(t)
+		sessionControlService := domainService.NewMockSessionControlService(t)
 
 		// No paused sessions
 		sessionRepo.On("FindByStatus", mock.Anything, aggregate.SessionStatusPaused).
@@ -228,14 +79,12 @@ func TestRecoveryService_RecoverOnStartup(t *testing.T) {
 
 		err := recoveryService.RecoverOnStartup(context.Background())
 		assert.NoError(t, err)
-
-		sessionRepo.AssertExpectations(t)
 	})
 
 	t.Run("recover service_restart session", func(t *testing.T) {
-		sessionRepo := new(MockWorkSessionRepository)
-		cacheRepo := new(MockCacheRepository)
-		sessionControlService := new(MockSessionControlService)
+		sessionRepo := repository.NewMockWorkSessionRepository(t)
+		cacheRepo := repository.NewMockCacheRepository(t)
+		sessionControlService := domainService.NewMockSessionControlService(t)
 
 		session := createTestSessionForRecovery(t, valueobject.PauseReasonServiceRestart)
 
@@ -261,15 +110,12 @@ func TestRecoveryService_RecoverOnStartup(t *testing.T) {
 
 		err := recoveryService.RecoverOnStartup(context.Background())
 		assert.NoError(t, err)
-
-		sessionRepo.AssertExpectations(t)
-		sessionControlService.AssertExpectations(t)
 	})
 
 	t.Run("skip non-auto-recoverable sessions", func(t *testing.T) {
-		sessionRepo := new(MockWorkSessionRepository)
-		cacheRepo := new(MockCacheRepository)
-		sessionControlService := new(MockSessionControlService)
+		sessionRepo := repository.NewMockWorkSessionRepository(t)
+		cacheRepo := repository.NewMockCacheRepository(t)
+		sessionControlService := domainService.NewMockSessionControlService(t)
 
 		// Create session with manual recovery reason
 		session := createTestSessionForRecovery(t, valueobject.PauseReasonUserRequest)
@@ -278,25 +124,19 @@ func TestRecoveryService_RecoverOnStartup(t *testing.T) {
 		sessionRepo.On("FindByStatus", mock.Anything, aggregate.SessionStatusPaused).
 			Return([]*aggregate.WorkSession{session}, nil)
 
-		// AutoResumeSession should not be called for non-auto-recoverable sessions
-
 		consistencyService := NewConsistencyService(nil, nil, zap.NewNop())
 		recoveryService := createTestRecoveryService(sessionRepo, cacheRepo, consistencyService, sessionControlService, nil)
 
 		err := recoveryService.RecoverOnStartup(context.Background())
 		assert.NoError(t, err)
-
-		sessionRepo.AssertExpectations(t)
-		// AutoResumeSession should not have been called
-		sessionControlService.AssertNotCalled(t, "AutoResumeSession", mock.Anything)
 	})
 }
 
 func TestRecoveryService_HandleUserResumeCommand(t *testing.T) {
 	t.Run("successful resume by issue author", func(t *testing.T) {
-		sessionRepo := new(MockWorkSessionRepository)
-		cacheRepo := new(MockCacheRepository)
-		sessionControlService := new(MockSessionControlService)
+		sessionRepo := repository.NewMockWorkSessionRepository(t)
+		cacheRepo := repository.NewMockCacheRepository(t)
+		sessionControlService := domainService.NewMockSessionControlService(t)
 
 		session := createTestSessionForRecovery(t, valueobject.PauseReasonTaskFailed)
 
@@ -335,15 +175,12 @@ func TestRecoveryService_HandleUserResumeCommand(t *testing.T) {
 		assert.NotNil(t, status)
 		assert.Equal(t, session.ID, status.SessionID)
 		assert.Equal(t, "active", status.Status)
-
-		sessionRepo.AssertExpectations(t)
-		sessionControlService.AssertExpectations(t)
 	})
 
 	t.Run("session not found", func(t *testing.T) {
-		sessionRepo := new(MockWorkSessionRepository)
-		cacheRepo := new(MockCacheRepository)
-		sessionControlService := new(MockSessionControlService)
+		sessionRepo := repository.NewMockWorkSessionRepository(t)
+		cacheRepo := repository.NewMockCacheRepository(t)
+		sessionControlService := domainService.NewMockSessionControlService(t)
 
 		sessionRepo.On("FindByGitHubIssue", mock.Anything, "owner/repo", 999).
 			Return(nil, nil)
@@ -362,14 +199,12 @@ func TestRecoveryService_HandleUserResumeCommand(t *testing.T) {
 		assert.Nil(t, status)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "L4DOM0001")
-
-		sessionRepo.AssertExpectations(t)
 	})
 
 	t.Run("session not paused", func(t *testing.T) {
-		sessionRepo := new(MockWorkSessionRepository)
-		cacheRepo := new(MockCacheRepository)
-		sessionControlService := new(MockSessionControlService)
+		sessionRepo := repository.NewMockWorkSessionRepository(t)
+		cacheRepo := repository.NewMockCacheRepository(t)
+		sessionControlService := domainService.NewMockSessionControlService(t)
 
 		// Create active (not paused) session
 		issue := entity.NewIssueFromGitHub(123, "Test", "Body", "owner/repo", "testuser", nil, "", time.Now())
@@ -393,14 +228,12 @@ func TestRecoveryService_HandleUserResumeCommand(t *testing.T) {
 		assert.Nil(t, status)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "L4API0002")
-
-		sessionRepo.AssertExpectations(t)
 	})
 
 	t.Run("invalid action", func(t *testing.T) {
-		sessionRepo := new(MockWorkSessionRepository)
-		cacheRepo := new(MockCacheRepository)
-		sessionControlService := new(MockSessionControlService)
+		sessionRepo := repository.NewMockWorkSessionRepository(t)
+		cacheRepo := repository.NewMockCacheRepository(t)
+		sessionControlService := domainService.NewMockSessionControlService(t)
 
 		session := createTestSessionForRecovery(t, valueobject.PauseReasonTaskFailed)
 
@@ -425,17 +258,14 @@ func TestRecoveryService_HandleUserResumeCommand(t *testing.T) {
 		assert.Nil(t, status)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "L4API0001")
-
-		sessionRepo.AssertExpectations(t)
-		sessionControlService.AssertExpectations(t)
 	})
 }
 
 func TestRecoveryService_GetRecoveryStatus(t *testing.T) {
 	t.Run("get status for paused session", func(t *testing.T) {
-		sessionRepo := new(MockWorkSessionRepository)
-		cacheRepo := new(MockCacheRepository)
-		sessionControlService := new(MockSessionControlService)
+		sessionRepo := repository.NewMockWorkSessionRepository(t)
+		cacheRepo := repository.NewMockCacheRepository(t)
+		sessionControlService := domainService.NewMockSessionControlService(t)
 
 		session := createTestSessionForRecovery(t, valueobject.PauseReasonTaskFailed)
 
@@ -457,15 +287,12 @@ func TestRecoveryService_GetRecoveryStatus(t *testing.T) {
 		assert.Equal(t, "task_failed", status.PauseReason)
 		assert.False(t, status.CanAutoRecover)
 		assert.Contains(t, status.ValidActions, "admin_continue")
-
-		sessionRepo.AssertExpectations(t)
-		sessionControlService.AssertExpectations(t)
 	})
 
 	t.Run("session not found", func(t *testing.T) {
-		sessionRepo := new(MockWorkSessionRepository)
-		cacheRepo := new(MockCacheRepository)
-		sessionControlService := new(MockSessionControlService)
+		sessionRepo := repository.NewMockWorkSessionRepository(t)
+		cacheRepo := repository.NewMockCacheRepository(t)
+		sessionControlService := domainService.NewMockSessionControlService(t)
 
 		sessionID := uuid.New()
 		sessionRepo.On("FindByID", mock.Anything, sessionID).
@@ -479,16 +306,14 @@ func TestRecoveryService_GetRecoveryStatus(t *testing.T) {
 		assert.Nil(t, status)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "L4DOM0001")
-
-		sessionRepo.AssertExpectations(t)
 	})
 }
 
 func TestRecoveryService_ListRecoverableSessions(t *testing.T) {
 	t.Run("list paused sessions", func(t *testing.T) {
-		sessionRepo := new(MockWorkSessionRepository)
-		cacheRepo := new(MockCacheRepository)
-		sessionControlService := new(MockSessionControlService)
+		sessionRepo := repository.NewMockWorkSessionRepository(t)
+		cacheRepo := repository.NewMockCacheRepository(t)
+		sessionControlService := domainService.NewMockSessionControlService(t)
 
 		session1 := createTestSessionForRecovery(t, valueobject.PauseReasonTaskFailed)
 		session2 := createTestSessionForRecovery(t, valueobject.PauseReasonUserRequest)
@@ -505,14 +330,12 @@ func TestRecoveryService_ListRecoverableSessions(t *testing.T) {
 		assert.Len(t, infos, 2)
 		assert.Equal(t, session1.ID, infos[0].SessionID)
 		assert.Equal(t, session2.ID, infos[1].SessionID)
-
-		sessionRepo.AssertExpectations(t)
 	})
 
 	t.Run("empty list when no paused sessions", func(t *testing.T) {
-		sessionRepo := new(MockWorkSessionRepository)
-		cacheRepo := new(MockCacheRepository)
-		sessionControlService := new(MockSessionControlService)
+		sessionRepo := repository.NewMockWorkSessionRepository(t)
+		cacheRepo := repository.NewMockCacheRepository(t)
+		sessionControlService := domainService.NewMockSessionControlService(t)
 
 		sessionRepo.On("FindByStatus", mock.Anything, aggregate.SessionStatusPaused).
 			Return([]*aggregate.WorkSession{}, nil)
@@ -524,8 +347,6 @@ func TestRecoveryService_ListRecoverableSessions(t *testing.T) {
 
 		assert.NoError(t, err)
 		assert.Empty(t, infos)
-
-		sessionRepo.AssertExpectations(t)
 	})
 }
 
@@ -566,9 +387,9 @@ func TestRecoveryService_CanAutoRecoverSession(t *testing.T) {
 
 func TestRecoveryService_BuildRecoveryStatus(t *testing.T) {
 	t.Run("build status with task progress", func(t *testing.T) {
-		sessionRepo := new(MockWorkSessionRepository)
-		cacheRepo := new(MockCacheRepository)
-		sessionControlService := new(MockSessionControlService)
+		sessionRepo := repository.NewMockWorkSessionRepository(t)
+		cacheRepo := repository.NewMockCacheRepository(t)
+		sessionControlService := domainService.NewMockSessionControlService(t)
 
 		// Create session in Execution stage
 		issue := entity.NewIssueFromGitHub(123, "Test", "Body", "owner/repo", "testuser", nil, "", time.Now())
@@ -623,7 +444,5 @@ func TestRecoveryService_BuildRecoveryStatus(t *testing.T) {
 		assert.Equal(t, 1, status.TaskProgress.Completed)
 		assert.Equal(t, 1, status.TaskProgress.Failed)
 		assert.Equal(t, 1, status.TaskProgress.Pending)
-
-		sessionControlService.AssertExpectations(t)
 	})
 }

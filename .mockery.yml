@@ -1,6 +1,6 @@
 all: false
 dir: '{{.InterfaceDir}}'
-filename: mocks_test.go
+filename: mocks.go
 force-file-write: true
 formatter: goimports
 formatter-options:
@@ -30,6 +30,7 @@ packages:
       DesignRepository: {}
       AuditLogRepository: {}
       RepositoryRepository: {}
+      CacheRepository: {}
   github.com/ryuyb/litchi/internal/domain/service:
     config:
       all: false
@@ -38,3 +39,4 @@ packages:
       StageTransitionService: {}
       ComplexityEvaluator: {}
       EventDispatcher: {}
+      SessionControlService: {}

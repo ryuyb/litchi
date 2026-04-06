@@ -29,6 +29,10 @@ type SessionControlService interface {
 	// Cleanup is handled at application layer (closing PRs, archiving branches).
 	TerminateSession(session *aggregate.WorkSession, reason string) error
 
+	// RollbackSession rolls back a session to a target stage.
+	// The caller should check CanRollbackTo before calling this method.
+	RollbackSession(session *aggregate.WorkSession, target valueobject.Stage, reason string) error
+
 	// CanResumeWithAction checks if a specific action can resume the session.
 	CanResumeWithAction(session *aggregate.WorkSession, action string) bool
 
@@ -89,6 +93,15 @@ func (s *DefaultSessionControlService) TerminateSession(
 	reason string,
 ) error {
 	return session.Terminate(reason)
+}
+
+// RollbackSession rolls back a session to a target stage.
+func (s *DefaultSessionControlService) RollbackSession(
+	session *aggregate.WorkSession,
+	target valueobject.Stage,
+	reason string,
+) error {
+	return session.RollbackTo(target, reason, true)
 }
 
 // CanResumeWithAction checks if a specific action can resume the session.
