@@ -253,8 +253,16 @@ func setDefaults(v *viper.Viper) {
 
 	// Logging defaults
 	v.SetDefault("logging.level", "info")
-	v.SetDefault("logging.format", "json")
-	v.SetDefault("logging.output", "stdout")
+	v.SetDefault("logging.outputs", []map[string]any{
+		{"type": "console", "format": "json"},
+	})
+	v.SetDefault("logging.encoder.time_format", "iso8601")
+	v.SetDefault("logging.encoder.duration_format", "string")
+	v.SetDefault("logging.encoder.level_format", "lowercase")
+	v.SetDefault("logging.caller.enabled", false)
+	v.SetDefault("logging.caller.skip", 0)
+	v.SetDefault("logging.stacktrace.enabled", true)
+	v.SetDefault("logging.stacktrace.level", "error")
 
 	// Redis defaults
 	v.SetDefault("redis.enabled", false)

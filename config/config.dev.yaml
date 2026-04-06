@@ -15,7 +15,15 @@ database:
 
 logging:
   level: "debug"
-  format: "console"  # Human-readable format for development
+  outputs:
+    - type: "console"
+      format: "console"
+      console:
+        stream: "stdout"
+        color: true
+  caller:
+    enabled: true   # Show caller (file:line) for debugging
+    skip: 1         # Skip wrapper frames to show actual caller
 
 audit:
   enabled: false  # Disable audit in development

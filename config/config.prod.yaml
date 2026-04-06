@@ -14,7 +14,16 @@ database:
 
 logging:
   level: "warn"
-  format: "json"
+  outputs:
+    - type: "file"
+      format: "json"
+      path: "/var/log/litchi/app.log"
+      rotation:
+        enabled: true
+        max_size: 100
+        max_backups: 10
+        max_age: 90
+        compress: true
 
 audit:
   enabled: true

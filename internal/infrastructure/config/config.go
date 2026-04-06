@@ -3,6 +3,8 @@ package config
 import (
 	"errors"
 	"fmt"
+	"slices"
+	"strings"
 	"time"
 )
 
@@ -47,6 +49,9 @@ func (c *Config) Validate() error {
 	}
 	if err := c.Middleware.Validate(); err != nil {
 		return fmt.Errorf("middleware config: %w", err)
+	}
+	if err := c.Logging.Validate(); err != nil {
+		return fmt.Errorf("logging config: %w", err)
 	}
 	return nil
 }
@@ -294,10 +299,129 @@ type TestEnvironmentConfig struct {
 	CheckInterval     string `mapstructure:"check_interval"`
 }
 
+// LoggingConfig holds logging configuration.
 type LoggingConfig struct {
-	Level  string `mapstructure:"level"`
-	Format string `mapstructure:"format"` // json, console
-	Output string `mapstructure:"output"` // stdout, stderr, file path
+	Level      string             `mapstructure:"level"`
+	Outputs    []OutputConfig     `mapstructure:"outputs"`
+	Encoder    EncoderConfig      `mapstructure:"encoder"`
+	Caller     CallerConfig       `mapstructure:"caller"`
+	Stacktrace StacktraceConfig   `mapstructure:"stacktrace"`
+}
+
+// OutputConfig defines a single output target configuration.
+type OutputConfig struct {
+	Type     string              `mapstructure:"type"`     // console | file
+	Format   string              `mapstructure:"format"`   // json | console (per output)
+	Path     string              `mapstructure:"path"`     // file path (required for file type)
+	Rotation RotationConfig      `mapstructure:"rotation"` // file rotation config
+	Console  ConsoleOutputConfig `mapstructure:"console"`  // console-specific config
+}
+
+// RotationConfig holds file rotation configuration using lumberjack.
+type RotationConfig struct {
+	Enabled    bool `mapstructure:"enabled"`
+	MaxSize    int  `mapstructure:"max_size"`    // MB, default 100
+	MaxBackups int  `mapstructure:"max_backups"` // number of old files to retain
+	MaxAge     int  `mapstructure:"max_age"`     // days to retain old files
+	Compress   bool `mapstructure:"compress"`    // compress rotated files
+	LocalTime  bool `mapstructure:"local_time"`  // use local time for timestamps
+}
+
+// ConsoleOutputConfig holds console output configuration.
+type ConsoleOutputConfig struct {
+	Stream string `mapstructure:"stream"` // stdout | stderr
+	Color  bool   `mapstructure:"color"`  // enable colored output
+}
+
+// EncoderConfig holds encoder configuration.
+type EncoderConfig struct {
+	TimeFormat     string `mapstructure:"time_format"`     // iso8601 | epoch | epochMillis | custom
+	DurationFormat string `mapstructure:"duration_format"` // string | seconds | nanos
+	LevelFormat    string `mapstructure:"level_format"`    // lowercase | uppercase | capitalColor
+}
+
+// CallerConfig controls caller information display.
+type CallerConfig struct {
+	Enabled bool `mapstructure:"enabled"` // add caller (file:line) to logs
+	Skip    int  `mapstructure:"skip"`    // stack frames to skip
+}
+
+// StacktraceConfig controls stacktrace capture.
+type StacktraceConfig struct {
+	Enabled bool   `mapstructure:"enabled"` // enable stacktrace
+	Level   string `mapstructure:"level"`   // minimum level for stacktrace (default: error)
+}
+
+// Validate validates logging configuration.
+func (c *LoggingConfig) Validate() error {
+	// Validate level
+	validLevels := []string{"debug", "info", "warn", "error", "dpanic", "panic", "fatal"}
+	if c.Level != "" && !slices.Contains(validLevels, strings.ToLower(c.Level)) {
+		return fmt.Errorf("invalid log level: %s, valid: %v", c.Level, validLevels)
+	}
+
+	// Validate outputs
+	for i, output := range c.Outputs {
+		if err := output.Validate(); err != nil {
+			return fmt.Errorf("outputs[%d]: %w", i, err)
+		}
+	}
+
+	// Validate stacktrace level
+	if c.Stacktrace.Enabled && c.Stacktrace.Level != "" {
+		if !slices.Contains(validLevels, strings.ToLower(c.Stacktrace.Level)) {
+			return fmt.Errorf("invalid stacktrace level: %s", c.Stacktrace.Level)
+		}
+	}
+
+	return nil
+}
+
+// Validate validates output configuration.
+func (c *OutputConfig) Validate() error {
+	validTypes := []string{"console", "file"}
+	if !slices.Contains(validTypes, c.Type) {
+		return fmt.Errorf("invalid output type: %s, valid: %v", c.Type, validTypes)
+	}
+
+	validFormats := []string{"json", "console"}
+	if c.Format != "" && !slices.Contains(validFormats, strings.ToLower(c.Format)) {
+		return fmt.Errorf("invalid format: %s, valid: %v", c.Format, validFormats)
+	}
+
+	if c.Type == "file" {
+		if c.Path == "" {
+			return errors.New("file output requires path")
+		}
+		if err := c.Rotation.Validate(); err != nil {
+			return fmt.Errorf("rotation: %w", err)
+		}
+	}
+
+	if c.Type == "console" {
+		validStreams := []string{"stdout", "stderr"}
+		if c.Console.Stream != "" && !slices.Contains(validStreams, c.Console.Stream) {
+			return fmt.Errorf("invalid console stream: %s, valid: %v", c.Console.Stream, validStreams)
+		}
+	}
+
+	return nil
+}
+
+// Validate validates rotation configuration.
+func (c *RotationConfig) Validate() error {
+	if c.Enabled {
+		if c.MaxSize < 0 {
+			return errors.New("max_size must be positive")
+		}
+		if c.MaxBackups < 0 {
+			return errors.New("max_backups must be non-negative")
+		}
+		if c.MaxAge < 0 {
+			return errors.New("max_age must be non-negative")
+		}
+	}
+	return nil
 }
 
 type RedisConfig struct {

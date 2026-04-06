@@ -134,8 +134,22 @@ failure:
 
 logging:
   level: "info"
-  format: "json"
-  output: "stdout"
+  outputs:
+    - type: "console"
+      format: "json"
+      console:
+        stream: "stdout"
+        color: false
+  encoder:
+    time_format: "iso8601"     # iso8601 | epoch | epochMillis | epochNanos | custom layout
+    duration_format: "string"  # string | seconds | nanos
+    level_format: "lowercase"  # lowercase | uppercase/capital | capitalColor
+  caller:
+    enabled: false   # Add caller (file:line) to log entries
+    skip: 0          # Number of stack frames to skip (adjust if using wrapper functions)
+  stacktrace:
+    enabled: true    # Capture stacktrace for errors
+    level: "error"   # Minimum level to capture stacktrace (debug|info|warn|error|dpanic|panic|fatal)
 
 # Middleware configuration
 middleware:

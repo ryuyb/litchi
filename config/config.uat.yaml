@@ -13,7 +13,21 @@ database:
 
 logging:
   level: "info"
-  format: "json"
+  outputs:
+    - type: "console"
+      format: "json"
+      console:
+        stream: "stdout"
+        color: false
+    - type: "file"
+      format: "json"
+      path: "/var/log/litchi/app.log"
+      rotation:
+        enabled: true
+        max_size: 100
+        max_backups: 5
+        max_age: 30
+        compress: true
 
 audit:
   enabled: true

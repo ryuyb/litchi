@@ -2,18 +2,18 @@ package logger
 
 import (
 	"context"
+	"io"
 
 	"github.com/ryuyb/litchi/internal/infrastructure/config"
 	"github.com/ryuyb/litchi/internal/pkg/fxutil"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 )
 
 func init() {
 	fxutil.RegisterModule(fxutil.ModuleInfo{
 		Name:     "logger",
-		Provides: []string{"*zap.Logger", "*zap.SugaredLogger"},
+		Provides: []string{"*zap.Logger", "*zap.SugaredLogger", "[]io.Writer"},
 		Invokes:  []string{"RegisterLifecycle"},
 		Depends:  []string{"*config.Config"},
 	})
@@ -21,7 +21,7 @@ func init() {
 
 // Module provides the logger module for Fx.
 var Module = fx.Module("logger",
-	fx.Provide(NewLoggerFromConfig, NewSugaredLogger),
+	fx.Provide(NewLoggerFromConfig, NewSugaredLogger, NewWriters),
 	fx.Invoke(RegisterLifecycle),
 )
 
@@ -32,45 +32,30 @@ type Params struct {
 	Cfg *config.Config
 }
 
+// LoggerResult holds the logger and writers created.
+type LoggerResult struct {
+	fx.Out
+
+	Logger *zap.Logger
+	Writers []io.Writer
+}
+
 // NewLoggerFromConfig creates a Zap logger based on configuration.
-func NewLoggerFromConfig(p Params) (*zap.Logger, error) {
-	logCfg := p.Cfg.Logging
-
-	var zapConfig zap.Config
-	if logCfg.Format == "json" {
-		zapConfig = zap.NewProductionConfig()
-		zapConfig.EncoderConfig.TimeKey = "timestamp"
-		zapConfig.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
-	} else {
-		zapConfig = zap.NewDevelopmentConfig()
-		zapConfig.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
+func NewLoggerFromConfig(p Params) (LoggerResult, error) {
+	builder := NewLoggerBuilder(&p.Cfg.Logging)
+	logger, err := builder.Build()
+	if err != nil {
+		return LoggerResult{}, err
 	}
+	return LoggerResult{
+		Logger:  logger,
+		Writers: builder.Writers(),
+	}, nil
+}
 
-	// Enable stacktrace for Error level and above
-	zapConfig.EncoderConfig.StacktraceKey = "stacktrace"
-	zapConfig.Development = false // Use production stacktrace behavior (Error+ only)
-
-	// Set log level
-	var level zapcore.Level
-	if err := level.UnmarshalText([]byte(logCfg.Level)); err != nil {
-		level = zapcore.InfoLevel
-	}
-	zapConfig.Level = zap.NewAtomicLevelAt(level)
-
-	// Set output paths
-	switch logCfg.Output {
-	case "stdout":
-		zapConfig.OutputPaths = []string{"stdout"}
-		zapConfig.ErrorOutputPaths = []string{"stderr"}
-	case "stderr":
-		zapConfig.OutputPaths = []string{"stderr"}
-		zapConfig.ErrorOutputPaths = []string{"stderr"}
-	default:
-		zapConfig.OutputPaths = []string{logCfg.Output}
-		zapConfig.ErrorOutputPaths = []string{logCfg.Output}
-	}
-
-	return zapConfig.Build()
+// NewWriters extracts writers from logger result.
+func NewWriters(result LoggerResult) []io.Writer {
+	return result.Writers
 }
 
 // NewSugaredLogger creates a sugared logger.
@@ -79,19 +64,22 @@ func NewSugaredLogger(logger *zap.Logger) *zap.SugaredLogger {
 }
 
 // RegisterLifecycle registers logger lifecycle hooks.
-func RegisterLifecycle(lifecycle fx.Lifecycle, logger *zap.Logger, cfg *config.Config) {
+func RegisterLifecycle(lifecycle fx.Lifecycle, logger *zap.Logger, writers []io.Writer) {
 	lifecycle.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
 			logger.Info("logger initialized")
 			return nil
 		},
 		OnStop: func(ctx context.Context) error {
-			// Sync is only meaningful for file outputs.
-			// For stdout/stderr, Sync typically returns EINVAL which is expected.
-			if cfg.Logging.Output != "stdout" && cfg.Logging.Output != "stderr" {
-				if err := logger.Sync(); err != nil {
-					// Log the error but don't fail shutdown
-					logger.Error("failed to sync logger on shutdown", zap.Error(err))
+			// Sync logger
+			_ = logger.Sync()
+
+			// Close writers that need cleanup (lumberjack, file handles)
+			for _, w := range writers {
+				if closer, ok := w.(interface{ Close() error }); ok {
+					if err := closer.Close(); err != nil {
+						logger.Error("failed to close writer on shutdown", zap.Error(err))
+					}
 				}
 			}
 			return nil
