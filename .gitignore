@@ -70,6 +70,7 @@ ehthumbs.db
 
 # Worktree directories (created per session)
 .worktrees/
+.claude/worktrees/
 
 # ==================== Config & Secrets ====================
 
