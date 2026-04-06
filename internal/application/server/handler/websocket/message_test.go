@@ -208,5 +208,4 @@ func TestDefaultWebSocketConfig(t *testing.T) {
 	assert.Equal(t, 30*time.Second, cfg.PingInterval)
 	assert.Equal(t, 60*time.Second, cfg.ReadTimeout)
 	assert.Equal(t, 10*time.Second, cfg.WriteTimeout)
-	assert.Equal(t, 10*time.Second, cfg.WriteDeadline)
 }

@@ -6,8 +6,6 @@ import (
 
 	"go.uber.org/fx"
 	"go.uber.org/zap"
-
-	"github.com/ryuyb/litchi/internal/domain/event"
 )
 
 // Module provides the WebSocket handler as an Fx module.

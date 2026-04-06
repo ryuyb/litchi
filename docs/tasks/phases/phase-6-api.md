@@ -121,24 +121,24 @@
 
 ## 6.2 WebSocket（Fiber v3 WebSocket + Fx）
 
-- [ ] **T6.2.1** 实现 WebSocket 连接管理（Fx Provider）
+- [x] **T6.2.1** 实现 WebSocket 连接管理（Fx Provider）
   - 验收标准：
-    - [ ] Fiber v3 WebSocket 配置正确
-    - [ ] 连接建立正确
-    - [ ] 断开处理正确
-    - [ ] 心跳机制正确
-    - [ ] WebSocket Handler 作为 Fx Provider 注册
+    - [x] Fiber v3 WebSocket 配置正确
+    - [x] 连接建立正确
+    - [x] 断开处理正确
+    - [x] 心跳机制正确
+    - [x] WebSocket Handler 作为 Fx Provider 注册
   - 依赖：T6.1.*
   - 风险：中
   - 预估：1d
   - 可并行：否
 
-- [ ] **T6.2.2** 实现实时进度推送（Fx Invoke）
+- [x] **T6.2.2** 实现实时进度推送（Fx Invoke）
   - 验收标准：
-    - [ ] 阶段转换推送正确
-    - [ ] 任务状态推送正确
-    - [ ] 日志流推送正确
-    - [ ] 通过 Fx Invoke 注册事件订阅
+    - [x] 阶段转换推送正确
+    - [x] 任务状态推送正确
+    - [x] 日志流推送正确
+    - [x] 通过 Fx Invoke 注册事件订阅
   - 依赖：T6.2.1, T2.6.2
   - 风险：中
   - 预估：1d

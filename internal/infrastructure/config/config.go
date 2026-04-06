@@ -70,11 +70,12 @@ func (c *Config) Clone() *Config {
 }
 
 type ServerConfig struct {
-	Host            string `mapstructure:"host"`
-	Port            int    `mapstructure:"port"`
-	Mode            string `mapstructure:"mode"`            // debug, release, test
-	Version         string `mapstructure:"version"`
-	EnableSwaggerUI bool   `mapstructure:"enable_swagger"` // Enable Swagger UI endpoint
+	Host            string          `mapstructure:"host"`
+	Port            int             `mapstructure:"port"`
+	Mode            string          `mapstructure:"mode"`            // debug, release, test
+	Version         string          `mapstructure:"version"`
+	EnableSwaggerUI bool            `mapstructure:"enable_swagger"` // Enable Swagger UI endpoint
+	WebSocket       *WebSocketConfig `mapstructure:"websocket"`      // WebSocket configuration (optional)
 }
 
 func (c *ServerConfig) Validate() error {
@@ -83,6 +84,11 @@ func (c *ServerConfig) Validate() error {
 	}
 	if c.Mode != "debug" && c.Mode != "release" && c.Mode != "test" {
 		return errors.New("mode must be one of: debug, release, test")
+	}
+	if c.WebSocket != nil {
+		if err := c.WebSocket.Validate(); err != nil {
+			return fmt.Errorf("websocket config: %w", err)
+		}
 	}
 	return nil
 }
@@ -269,4 +275,25 @@ type RedisConfig struct {
 	Addr     string `mapstructure:"addr"`
 	Password string `mapstructure:"password"`
 	DB       int    `mapstructure:"db"`
+}
+
+// WebSocketConfig holds WebSocket connection configuration.
+type WebSocketConfig struct {
+	PingInterval time.Duration `mapstructure:"ping_interval"` // Ping interval for keep-alive (default: 30s)
+	ReadTimeout  time.Duration `mapstructure:"read_timeout"`  // Read timeout (default: 60s)
+	WriteTimeout time.Duration `mapstructure:"write_timeout"` // Write timeout (default: 10s)
+}
+
+// Validate validates WebSocket configuration.
+func (c *WebSocketConfig) Validate() error {
+	if c.PingInterval > 0 && c.PingInterval < time.Second {
+		return errors.New("ping_interval must be at least 1s")
+	}
+	if c.ReadTimeout > 0 && c.PingInterval > 0 && c.ReadTimeout < c.PingInterval {
+		return errors.New("read_timeout must be greater than ping_interval")
+	}
+	if c.WriteTimeout > 0 && c.WriteTimeout < time.Second {
+		return errors.New("write_timeout must be at least 1s")
+	}
+	return nil
 }
