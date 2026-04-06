@@ -14,6 +14,7 @@ type Repository struct {
 	ID               uuid.UUID      `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
 	Name             string         `gorm:"type:varchar(255);unique;not null"` // e.g. "org/repo"
 	Enabled          bool           `gorm:"default:true"`
+	InstallationID   int64          `gorm:"default:0"`                         // GitHub App Installation ID
 	Config           datatypes.JSON `gorm:"type:jsonb;default:'{}'"`           // repository-level config override
 	ValidationConfig datatypes.JSON `gorm:"type:jsonb"`                        // validation configuration (nullable)
 	DetectedProject  datatypes.JSON `gorm:"type:jsonb"`                        // detected project info (nullable)

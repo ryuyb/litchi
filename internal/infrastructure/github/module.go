@@ -19,13 +19,14 @@ import (
 var Module = fx.Module("github",
 	// Providers
 	fx.Provide(
-		// GitHub client and services
-		NewClient,
-		// Provide Client as health.Checker
+		// GitHub client manager (replaces NewClient)
+		NewClientManager,
+		// Provide ClientManager as health.Checker
 		fx.Annotate(
-			func(c *Client) health.Checker { return c },
+			func(cm *ClientManager) health.Checker { return cm },
 			fx.ResultTags(`group:"health_checkers"`),
 		),
+		// Services
 		NewIssueService,
 		NewPullRequestService,
 

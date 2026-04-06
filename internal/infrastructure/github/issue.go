@@ -12,22 +12,27 @@ import (
 
 // IssueService provides Issue API operations.
 type IssueService struct {
-	client *Client
-	logger *zap.Logger
+	clientManager *ClientManager
+	logger        *zap.Logger
 }
 
 // NewIssueService creates a new IssueService.
-func NewIssueService(client *Client, logger *zap.Logger) *IssueService {
+func NewIssueService(clientManager *ClientManager, logger *zap.Logger) *IssueService {
 	return &IssueService{
-		client: client,
-		logger: logger.Named("github.issue"),
+		clientManager: clientManager,
+		logger:        logger.Named("github.issue"),
 	}
 }
 
 // GetIssue fetches an issue by number.
 func (s *IssueService) GetIssue(ctx context.Context, owner, repo string, number int) (*entity.Issue, error) {
-	issue, err := executeWithRetry(s.client, ctx, func() (*github.Issue, *github.Response, error) {
-		return s.client.GitHub().Issues.Get(ctx, owner, repo, number)
+	client, err := s.clientManager.GetClient(ctx, owner+"/"+repo)
+	if err != nil {
+		return nil, err
+	}
+
+	issue, err := executeWithRetry(client, ctx, func() (*github.Issue, *github.Response, error) {
+		return client.GitHub().Issues.Get(ctx, owner, repo, number)
 	})
 
 	if err != nil {
@@ -39,8 +44,13 @@ func (s *IssueService) GetIssue(ctx context.Context, owner, repo string, number 
 
 // CreateComment adds a comment to an issue.
 func (s *IssueService) CreateComment(ctx context.Context, owner, repo string, number int, body string) (int64, error) {
-	comment, err := executeWithRetry(s.client, ctx, func() (*github.IssueComment, *github.Response, error) {
-		return s.client.GitHub().Issues.CreateComment(ctx, owner, repo, number, &github.IssueComment{
+	client, err := s.clientManager.GetClient(ctx, owner+"/"+repo)
+	if err != nil {
+		return 0, err
+	}
+
+	comment, err := executeWithRetry(client, ctx, func() (*github.IssueComment, *github.Response, error) {
+		return client.GitHub().Issues.CreateComment(ctx, owner, repo, number, &github.IssueComment{
 			Body: &body,
 		})
 	})
@@ -60,8 +70,13 @@ func (s *IssueService) CreateComment(ctx context.Context, owner, repo string, nu
 
 // UpdateComment updates an existing comment.
 func (s *IssueService) UpdateComment(ctx context.Context, owner, repo string, commentID int64, body string) error {
-	_, err := executeWithRetry(s.client, ctx, func() (*github.IssueComment, *github.Response, error) {
-		return s.client.GitHub().Issues.EditComment(ctx, owner, repo, commentID, &github.IssueComment{
+	client, err := s.clientManager.GetClient(ctx, owner+"/"+repo)
+	if err != nil {
+		return err
+	}
+
+	_, err = executeWithRetry(client, ctx, func() (*github.IssueComment, *github.Response, error) {
+		return client.GitHub().Issues.EditComment(ctx, owner, repo, commentID, &github.IssueComment{
 			Body: &body,
 		})
 	})
@@ -80,10 +95,15 @@ func (s *IssueService) UpdateComment(ctx context.Context, owner, repo string, co
 
 // CloseIssue closes an issue.
 func (s *IssueService) CloseIssue(ctx context.Context, owner, repo string, number int) error {
+	client, err := s.clientManager.GetClient(ctx, owner+"/"+repo)
+	if err != nil {
+		return err
+	}
+
 	state := "closed"
 
-	_, err := executeWithRetry(s.client, ctx, func() (*github.Issue, *github.Response, error) {
-		return s.client.GitHub().Issues.Edit(ctx, owner, repo, number, &github.IssueRequest{
+	_, err = executeWithRetry(client, ctx, func() (*github.Issue, *github.Response, error) {
+		return client.GitHub().Issues.Edit(ctx, owner, repo, number, &github.IssueRequest{
 			State: &state,
 		})
 	})
@@ -102,10 +122,15 @@ func (s *IssueService) CloseIssue(ctx context.Context, owner, repo string, numbe
 
 // ReopenIssue reopens a closed issue.
 func (s *IssueService) ReopenIssue(ctx context.Context, owner, repo string, number int) error {
+	client, err := s.clientManager.GetClient(ctx, owner+"/"+repo)
+	if err != nil {
+		return err
+	}
+
 	state := "open"
 
-	_, err := executeWithRetry(s.client, ctx, func() (*github.Issue, *github.Response, error) {
-		return s.client.GitHub().Issues.Edit(ctx, owner, repo, number, &github.IssueRequest{
+	_, err = executeWithRetry(client, ctx, func() (*github.Issue, *github.Response, error) {
+		return client.GitHub().Issues.Edit(ctx, owner, repo, number, &github.IssueRequest{
 			State: &state,
 		})
 	})
@@ -124,8 +149,13 @@ func (s *IssueService) ReopenIssue(ctx context.Context, owner, repo string, numb
 
 // AddLabels adds labels to an issue.
 func (s *IssueService) AddLabels(ctx context.Context, owner, repo string, number int, labels []string) error {
-	_, err := executeWithRetry(s.client, ctx, func() ([]*github.Label, *github.Response, error) {
-		return s.client.GitHub().Issues.AddLabelsToIssue(ctx, owner, repo, number, labels)
+	client, err := s.clientManager.GetClient(ctx, owner+"/"+repo)
+	if err != nil {
+		return err
+	}
+
+	_, err = executeWithRetry(client, ctx, func() ([]*github.Label, *github.Response, error) {
+		return client.GitHub().Issues.AddLabelsToIssue(ctx, owner, repo, number, labels)
 	})
 
 	if err != nil {
@@ -143,8 +173,13 @@ func (s *IssueService) AddLabels(ctx context.Context, owner, repo string, number
 
 // RemoveLabel removes a label from an issue.
 func (s *IssueService) RemoveLabel(ctx context.Context, owner, repo string, number int, label string) error {
-	err := executeWithRetryResponse(s.client, ctx, func() (*github.Response, error) {
-		return s.client.GitHub().Issues.RemoveLabelForIssue(ctx, owner, repo, number, label)
+	client, err := s.clientManager.GetClient(ctx, owner+"/"+repo)
+	if err != nil {
+		return err
+	}
+
+	err = executeWithRetryResponse(client, ctx, func() (*github.Response, error) {
+		return client.GitHub().Issues.RemoveLabelForIssue(ctx, owner, repo, number, label)
 	})
 
 	if err != nil {
@@ -162,8 +197,13 @@ func (s *IssueService) RemoveLabel(ctx context.Context, owner, repo string, numb
 
 // GetLabels gets all labels for an issue.
 func (s *IssueService) GetLabels(ctx context.Context, owner, repo string, number int) ([]string, error) {
-	labels, err := executeWithRetry(s.client, ctx, func() ([]*github.Label, *github.Response, error) {
-		return s.client.GitHub().Issues.ListLabelsByIssue(ctx, owner, repo, number, nil)
+	client, err := s.clientManager.GetClient(ctx, owner+"/"+repo)
+	if err != nil {
+		return nil, err
+	}
+
+	labels, err := executeWithRetry(client, ctx, func() ([]*github.Label, *github.Response, error) {
+		return client.GitHub().Issues.ListLabelsByIssue(ctx, owner, repo, number, nil)
 	})
 
 	if err != nil {
@@ -180,8 +220,13 @@ func (s *IssueService) GetLabels(ctx context.Context, owner, repo string, number
 
 // ListComments lists all comments on an issue.
 func (s *IssueService) ListComments(ctx context.Context, owner, repo string, number int) ([]*IssueComment, error) {
-	comments, err := executeWithRetry(s.client, ctx, func() ([]*github.IssueComment, *github.Response, error) {
-		return s.client.GitHub().Issues.ListComments(ctx, owner, repo, number, nil)
+	client, err := s.clientManager.GetClient(ctx, owner+"/"+repo)
+	if err != nil {
+		return nil, err
+	}
+
+	comments, err := executeWithRetry(client, ctx, func() ([]*github.IssueComment, *github.Response, error) {
+		return client.GitHub().Issues.ListComments(ctx, owner, repo, number, nil)
 	})
 
 	if err != nil {
@@ -241,8 +286,13 @@ func (s *IssueService) toEntity(ghIssue *github.Issue, repository string) *entit
 
 // GetPermissionLevel gets the permission level for a user on a repository.
 func (s *IssueService) GetPermissionLevel(ctx context.Context, owner, repo, username string) (string, error) {
-	perm, err := executeWithRetry(s.client, ctx, func() (*github.RepositoryPermissionLevel, *github.Response, error) {
-		return s.client.GitHub().Repositories.GetPermissionLevel(ctx, owner, repo, username)
+	client, err := s.clientManager.GetClient(ctx, owner+"/"+repo)
+	if err != nil {
+		return "", err
+	}
+
+	perm, err := executeWithRetry(client, ctx, func() (*github.RepositoryPermissionLevel, *github.Response, error) {
+		return client.GitHub().Repositories.GetPermissionLevel(ctx, owner, repo, username)
 	})
 
 	if err != nil {
@@ -264,6 +314,11 @@ func (s *IssueService) IsRepoAdmin(ctx context.Context, owner, repo, username st
 
 // CreateIssue creates a new issue.
 func (s *IssueService) CreateIssue(ctx context.Context, owner, repo, title, body string, labels []string) (*entity.Issue, error) {
+	client, err := s.clientManager.GetClient(ctx, owner+"/"+repo)
+	if err != nil {
+		return nil, err
+	}
+
 	req := &github.IssueRequest{
 		Title: &title,
 		Body:  &body,
@@ -272,8 +327,8 @@ func (s *IssueService) CreateIssue(ctx context.Context, owner, repo, title, body
 		req.Labels = &labels
 	}
 
-	issue, err := executeWithRetry(s.client, ctx, func() (*github.Issue, *github.Response, error) {
-		return s.client.GitHub().Issues.Create(ctx, owner, repo, req)
+	issue, err := executeWithRetry(client, ctx, func() (*github.Issue, *github.Response, error) {
+		return client.GitHub().Issues.Create(ctx, owner, repo, req)
 	})
 
 	if err != nil {
@@ -290,6 +345,11 @@ func (s *IssueService) CreateIssue(ctx context.Context, owner, repo, title, body
 
 // UpdateIssue updates an existing issue.
 func (s *IssueService) UpdateIssue(ctx context.Context, owner, repo string, number int, title, body *string) error {
+	client, err := s.clientManager.GetClient(ctx, owner+"/"+repo)
+	if err != nil {
+		return err
+	}
+
 	req := &github.IssueRequest{}
 	if title != nil {
 		req.Title = title
@@ -298,8 +358,8 @@ func (s *IssueService) UpdateIssue(ctx context.Context, owner, repo string, numb
 		req.Body = body
 	}
 
-	_, err := executeWithRetry(s.client, ctx, func() (*github.Issue, *github.Response, error) {
-		return s.client.GitHub().Issues.Edit(ctx, owner, repo, number, req)
+	_, err = executeWithRetry(client, ctx, func() (*github.Issue, *github.Response, error) {
+		return client.GitHub().Issues.Edit(ctx, owner, repo, number, req)
 	})
 
 	if err != nil {
@@ -316,8 +376,13 @@ func (s *IssueService) UpdateIssue(ctx context.Context, owner, repo string, numb
 
 // AssignIssue assigns users to an issue.
 func (s *IssueService) AssignIssue(ctx context.Context, owner, repo string, number int, assignees []string) error {
-	_, err := executeWithRetry(s.client, ctx, func() (*github.Issue, *github.Response, error) {
-		return s.client.GitHub().Issues.AddAssignees(ctx, owner, repo, number, assignees)
+	client, err := s.clientManager.GetClient(ctx, owner+"/"+repo)
+	if err != nil {
+		return err
+	}
+
+	_, err = executeWithRetry(client, ctx, func() (*github.Issue, *github.Response, error) {
+		return client.GitHub().Issues.AddAssignees(ctx, owner, repo, number, assignees)
 	})
 
 	if err != nil {

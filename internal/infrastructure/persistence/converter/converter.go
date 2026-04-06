@@ -634,9 +634,10 @@ func RepositoryToModel(repo *entity.Repository) (*models.Repository, error) {
 	}
 
 	m := &models.Repository{
-		ID:      repo.ID,
-		Name:    repo.Name,
-		Enabled: repo.Enabled,
+		ID:             repo.ID,
+		Name:           repo.Name,
+		Enabled:        repo.Enabled,
+		InstallationID: repo.InstallationID,
 	}
 
 	// Marshal config to JSON if needed
@@ -677,9 +678,10 @@ func RepositoryFromModel(m *models.Repository) *entity.Repository {
 	}
 
 	repo := &entity.Repository{
-		ID:      m.ID,
-		Name:    m.Name,
-		Enabled: m.Enabled,
+		ID:             m.ID,
+		Name:           m.Name,
+		Enabled:        m.Enabled,
+		InstallationID: m.InstallationID,
 	}
 
 	// Unmarshal config from JSON if present

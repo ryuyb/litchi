@@ -620,6 +620,7 @@ type Repository struct {
 	ID               uuid.UUID                                  `json:"id"`               // Unique identifier
 	Name             string                                     `json:"name"`             // Repository name (owner/repo format)
 	Enabled          bool                                       `json:"enabled"`          // Whether the repository is enabled
+	InstallationID   int64                                      `json:"installationId"`   // GitHub App Installation ID (0 if not installed)
 	Config           RepoConfig                                 `json:"config"`           // Repository-specific configuration overrides
 	ValidationConfig *valueobject.ExecutionValidationConfig     `json:"validationConfig"` // Validation configuration (optional)
 	DetectedProject  *valueobject.DetectedProject               `json:"detectedProject"`  // Detected project info (optional)
@@ -709,6 +710,16 @@ func (r *Repository) SetDefaultModel(value string) {
 // SetTaskRetryLimit sets the task retry limit override.
 func (r *Repository) SetTaskRetryLimit(value int) {
 	r.Config.TaskRetryLimit = &value
+}
+
+// SetInstallationID sets the GitHub App Installation ID.
+func (r *Repository) SetInstallationID(id int64) {
+	r.InstallationID = id
+}
+
+// HasInstallation returns true if the repository has a GitHub App installation.
+func (r *Repository) HasInstallation() bool {
+	return r.InstallationID > 0
 }
 
 // GetEffectiveConfig merges repository config with global config.

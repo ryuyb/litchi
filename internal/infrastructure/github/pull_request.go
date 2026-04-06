@@ -21,15 +21,15 @@ const (
 
 // PullRequestService provides PR API operations.
 type PullRequestService struct {
-	client *Client
-	logger *zap.Logger
+	clientManager *ClientManager
+	logger        *zap.Logger
 }
 
 // NewPullRequestService creates a new PullRequestService.
-func NewPullRequestService(client *Client, logger *zap.Logger) *PullRequestService {
+func NewPullRequestService(clientManager *ClientManager, logger *zap.Logger) *PullRequestService {
 	return &PullRequestService{
-		client: client,
-		logger: logger.Named("github.pr"),
+		clientManager: clientManager,
+		logger:        logger.Named("github.pr"),
 	}
 }
 
@@ -78,8 +78,18 @@ type PullRequest struct {
 	ReviewComments int
 }
 
+// getClient gets a GitHub client for the specified repository.
+func (s *PullRequestService) getClient(ctx context.Context, owner, repo string) (*Client, error) {
+	return s.clientManager.GetClient(ctx, owner+"/"+repo)
+}
+
 // CreatePullRequest creates a new PR.
 func (s *PullRequestService) CreatePullRequest(ctx context.Context, owner, repo string, req *PRCreateRequest) (*PRInfo, error) {
+	client, err := s.getClient(ctx, owner, repo)
+	if err != nil {
+		return nil, err
+	}
+
 	newPR := &github.NewPullRequest{
 		Title: &req.Title,
 		Body:  &req.Body,
@@ -88,8 +98,8 @@ func (s *PullRequestService) CreatePullRequest(ctx context.Context, owner, repo 
 		Draft: &req.Draft,
 	}
 
-	pr, err := executeWithRetry(s.client, ctx, func() (*github.PullRequest, *github.Response, error) {
-		return s.client.GitHub().PullRequests.Create(ctx, owner, repo, newPR)
+	pr, err := executeWithRetry(client, ctx, func() (*github.PullRequest, *github.Response, error) {
+		return client.GitHub().PullRequests.Create(ctx, owner, repo, newPR)
 	})
 
 	if err != nil {
@@ -108,8 +118,13 @@ func (s *PullRequestService) CreatePullRequest(ctx context.Context, owner, repo 
 
 // GetPullRequest fetches a PR by number.
 func (s *PullRequestService) GetPullRequest(ctx context.Context, owner, repo string, number int) (*PullRequest, error) {
-	pr, err := executeWithRetry(s.client, ctx, func() (*github.PullRequest, *github.Response, error) {
-		return s.client.GitHub().PullRequests.Get(ctx, owner, repo, number)
+	client, err := s.getClient(ctx, owner, repo)
+	if err != nil {
+		return nil, err
+	}
+
+	pr, err := executeWithRetry(client, ctx, func() (*github.PullRequest, *github.Response, error) {
+		return client.GitHub().PullRequests.Get(ctx, owner, repo, number)
 	})
 
 	if err != nil {
@@ -121,6 +136,11 @@ func (s *PullRequestService) GetPullRequest(ctx context.Context, owner, repo str
 
 // UpdatePullRequest updates an existing PR.
 func (s *PullRequestService) UpdatePullRequest(ctx context.Context, owner, repo string, number int, req *PRUpdateRequest) error {
+	client, err := s.getClient(ctx, owner, repo)
+	if err != nil {
+		return err
+	}
+
 	update := &github.PullRequest{}
 
 	if req.Title != nil {
@@ -136,8 +156,8 @@ func (s *PullRequestService) UpdatePullRequest(ctx context.Context, owner, repo 
 		update.Draft = req.Draft
 	}
 
-	_, err := executeWithRetry(s.client, ctx, func() (*github.PullRequest, *github.Response, error) {
-		return s.client.GitHub().PullRequests.Edit(ctx, owner, repo, number, update)
+	_, err = executeWithRetry(client, ctx, func() (*github.PullRequest, *github.Response, error) {
+		return client.GitHub().PullRequests.Edit(ctx, owner, repo, number, update)
 	})
 
 	if err != nil {
@@ -154,10 +174,15 @@ func (s *PullRequestService) UpdatePullRequest(ctx context.Context, owner, repo 
 
 // ClosePullRequest closes a PR without merging.
 func (s *PullRequestService) ClosePullRequest(ctx context.Context, owner, repo string, number int) error {
+	client, err := s.getClient(ctx, owner, repo)
+	if err != nil {
+		return err
+	}
+
 	state := "closed"
 
-	_, err := executeWithRetry(s.client, ctx, func() (*github.PullRequest, *github.Response, error) {
-		return s.client.GitHub().PullRequests.Edit(ctx, owner, repo, number, &github.PullRequest{
+	_, err = executeWithRetry(client, ctx, func() (*github.PullRequest, *github.Response, error) {
+		return client.GitHub().PullRequests.Edit(ctx, owner, repo, number, &github.PullRequest{
 			State: &state,
 		})
 	})
@@ -176,10 +201,15 @@ func (s *PullRequestService) ClosePullRequest(ctx context.Context, owner, repo s
 
 // ReopenPullRequest reopens a closed PR.
 func (s *PullRequestService) ReopenPullRequest(ctx context.Context, owner, repo string, number int) error {
+	client, err := s.getClient(ctx, owner, repo)
+	if err != nil {
+		return err
+	}
+
 	state := "open"
 
-	_, err := executeWithRetry(s.client, ctx, func() (*github.PullRequest, *github.Response, error) {
-		return s.client.GitHub().PullRequests.Edit(ctx, owner, repo, number, &github.PullRequest{
+	_, err = executeWithRetry(client, ctx, func() (*github.PullRequest, *github.Response, error) {
+		return client.GitHub().PullRequests.Edit(ctx, owner, repo, number, &github.PullRequest{
 			State: &state,
 		})
 	})
@@ -198,6 +228,11 @@ func (s *PullRequestService) ReopenPullRequest(ctx context.Context, owner, repo 
 
 // MergePullRequest merges a PR.
 func (s *PullRequestService) MergePullRequest(ctx context.Context, owner, repo string, number int, method MergeMethod, commitTitle, commitMessage string) error {
+	client, err := s.getClient(ctx, owner, repo)
+	if err != nil {
+		return err
+	}
+
 	mergeMethod := "squash" // default
 	switch method {
 	case MergeMethodMerge:
@@ -213,8 +248,8 @@ func (s *PullRequestService) MergePullRequest(ctx context.Context, owner, repo s
 		opts.CommitTitle = commitTitle
 	}
 
-	result, err := executeWithRetry(s.client, ctx, func() (*github.PullRequestMergeResult, *github.Response, error) {
-		return s.client.GitHub().PullRequests.Merge(ctx, owner, repo, number, commitMessage, opts)
+	result, err := executeWithRetry(client, ctx, func() (*github.PullRequestMergeResult, *github.Response, error) {
+		return client.GitHub().PullRequests.Merge(ctx, owner, repo, number, commitMessage, opts)
 	})
 
 	if err != nil {
@@ -238,12 +273,17 @@ func (s *PullRequestService) MergePullRequest(ctx context.Context, owner, repo s
 
 // RequestReview requests reviewers for a PR.
 func (s *PullRequestService) RequestReview(ctx context.Context, owner, repo string, number int, reviewers []string) error {
+	client, err := s.getClient(ctx, owner, repo)
+	if err != nil {
+		return err
+	}
+
 	reviewReq := github.ReviewersRequest{
 		Reviewers: reviewers,
 	}
 
-	_, err := executeWithRetry(s.client, ctx, func() (*github.PullRequest, *github.Response, error) {
-		return s.client.GitHub().PullRequests.RequestReviewers(ctx, owner, repo, number, reviewReq)
+	_, err = executeWithRetry(client, ctx, func() (*github.PullRequest, *github.Response, error) {
+		return client.GitHub().PullRequests.RequestReviewers(ctx, owner, repo, number, reviewReq)
 	})
 
 	if err != nil {
@@ -261,12 +301,17 @@ func (s *PullRequestService) RequestReview(ctx context.Context, owner, repo stri
 
 // RemoveReviewRequest removes requested reviewers from a PR.
 func (s *PullRequestService) RemoveReviewRequest(ctx context.Context, owner, repo string, number int, reviewers []string) error {
+	client, err := s.getClient(ctx, owner, repo)
+	if err != nil {
+		return err
+	}
+
 	reviewReq := github.ReviewersRequest{
 		Reviewers: reviewers,
 	}
 
-	err := executeWithRetryResponse(s.client, ctx, func() (*github.Response, error) {
-		return s.client.GitHub().PullRequests.RemoveReviewers(ctx, owner, repo, number, reviewReq)
+	err = executeWithRetryResponse(client, ctx, func() (*github.Response, error) {
+		return client.GitHub().PullRequests.RemoveReviewers(ctx, owner, repo, number, reviewReq)
 	})
 
 	if err != nil {
@@ -284,8 +329,13 @@ func (s *PullRequestService) RemoveReviewRequest(ctx context.Context, owner, rep
 
 // ListReviews lists all reviews for a PR.
 func (s *PullRequestService) ListReviews(ctx context.Context, owner, repo string, number int) ([]*PullRequestReview, error) {
-	reviews, err := executeWithRetry(s.client, ctx, func() ([]*github.PullRequestReview, *github.Response, error) {
-		return s.client.GitHub().PullRequests.ListReviews(ctx, owner, repo, number, nil)
+	client, err := s.getClient(ctx, owner, repo)
+	if err != nil {
+		return nil, err
+	}
+
+	reviews, err := executeWithRetry(client, ctx, func() ([]*github.PullRequestReview, *github.Response, error) {
+		return client.GitHub().PullRequests.ListReviews(ctx, owner, repo, number, nil)
 	})
 
 	if err != nil {
@@ -317,8 +367,13 @@ type PullRequestReview struct {
 
 // CreateReviewComment adds a comment to a specific line in PR.
 func (s *PullRequestService) CreateReviewComment(ctx context.Context, owner, repo string, number int, req *CreateReviewCommentRequest) (int64, error) {
-	comment, err := executeWithRetry(s.client, ctx, func() (*github.PullRequestComment, *github.Response, error) {
-		return s.client.GitHub().PullRequests.CreateComment(ctx, owner, repo, number, &github.PullRequestComment{
+	client, err := s.getClient(ctx, owner, repo)
+	if err != nil {
+		return 0, err
+	}
+
+	comment, err := executeWithRetry(client, ctx, func() (*github.PullRequestComment, *github.Response, error) {
+		return client.GitHub().PullRequests.CreateComment(ctx, owner, repo, number, &github.PullRequestComment{
 			Body:     &req.Body,
 			Path:     &req.Path,
 			Position: &req.Position,
@@ -348,8 +403,13 @@ type CreateReviewCommentRequest struct {
 
 // ListComments lists all review comments on a PR.
 func (s *PullRequestService) ListComments(ctx context.Context, owner, repo string, number int) ([]*PullRequestReviewComment, error) {
-	comments, err := executeWithRetry(s.client, ctx, func() ([]*github.PullRequestComment, *github.Response, error) {
-		return s.client.GitHub().PullRequests.ListComments(ctx, owner, repo, number, nil)
+	client, err := s.getClient(ctx, owner, repo)
+	if err != nil {
+		return nil, err
+	}
+
+	comments, err := executeWithRetry(client, ctx, func() ([]*github.PullRequestComment, *github.Response, error) {
+		return client.GitHub().PullRequests.ListComments(ctx, owner, repo, number, nil)
 	})
 
 	if err != nil {
@@ -381,8 +441,13 @@ type PullRequestReviewComment struct {
 
 // ListFiles lists the files changed in a PR.
 func (s *PullRequestService) ListFiles(ctx context.Context, owner, repo string, number int) ([]*PullRequestFile, error) {
-	files, err := executeWithRetry(s.client, ctx, func() ([]*github.CommitFile, *github.Response, error) {
-		return s.client.GitHub().PullRequests.ListFiles(ctx, owner, repo, number, nil)
+	client, err := s.getClient(ctx, owner, repo)
+	if err != nil {
+		return nil, err
+	}
+
+	files, err := executeWithRetry(client, ctx, func() ([]*github.CommitFile, *github.Response, error) {
+		return client.GitHub().PullRequests.ListFiles(ctx, owner, repo, number, nil)
 	})
 
 	if err != nil {

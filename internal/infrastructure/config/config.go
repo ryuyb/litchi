@@ -3,6 +3,7 @@ package config
 import (
 	"errors"
 	"fmt"
+	"os"
 	"slices"
 	"strings"
 	"time"
@@ -168,14 +169,41 @@ type GitHubConfig struct {
 	PrivateKeyPath string `mapstructure:"private_key_path"`
 }
 
+// Validate validates GitHub configuration.
+// Requires webhook_secret and either token (PAT) or app_id with private_key_path (GitHub App).
 func (c *GitHubConfig) Validate() error {
-	if c.Token == "" {
-		return errors.New("token is required (set GITHUB_TOKEN environment variable)")
+	// Webhook secret is always required (check if it's a real value, not an env placeholder)
+	webhookSecret := c.WebhookSecret
+	if isEnvPlaceholder(webhookSecret) {
+		webhookSecret = ""
 	}
-	if c.WebhookSecret == "" {
+	if webhookSecret == "" {
 		return errors.New("webhook_secret is required (set GITHUB_WEBHOOK_SECRET environment variable)")
 	}
+
+	// Check authentication method
+	// A value like "${GITHUB_TOKEN}" means the env var wasn't set, so we treat it as empty
+	hasPAT := c.Token != "" && !isEnvPlaceholder(c.Token)
+	hasApp := c.AppID != "" && !isEnvPlaceholder(c.AppID) &&
+		c.PrivateKeyPath != "" && !isEnvPlaceholder(c.PrivateKeyPath)
+
+	if !hasPAT && !hasApp {
+		return errors.New("either token or app_id with private_key_path is required")
+	}
+
+	// If GitHub App is configured, validate private key file exists
+	if hasApp {
+		if _, err := os.Stat(c.PrivateKeyPath); os.IsNotExist(err) {
+			return fmt.Errorf("private key file not found: %s", c.PrivateKeyPath)
+		}
+	}
+
 	return nil
+}
+
+// isEnvPlaceholder checks if the value is an unresolved environment variable placeholder.
+func isEnvPlaceholder(value string) bool {
+	return len(value) > 3 && value[0] == '$' && value[1] == '{' && value[len(value)-1] == '}'
 }
 
 // GitConfig holds Git-related configuration.
