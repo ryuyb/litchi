@@ -174,7 +174,7 @@ type GitHubConfig struct {
 func (c *GitHubConfig) Validate() error {
 	// Webhook secret is always required (check if it's a real value, not an env placeholder)
 	webhookSecret := c.WebhookSecret
-	if isEnvPlaceholder(webhookSecret) {
+	if IsEnvPlaceholder(webhookSecret) {
 		webhookSecret = ""
 	}
 	if webhookSecret == "" {
@@ -183,9 +183,9 @@ func (c *GitHubConfig) Validate() error {
 
 	// Check authentication method
 	// A value like "${GITHUB_TOKEN}" means the env var wasn't set, so we treat it as empty
-	hasPAT := c.Token != "" && !isEnvPlaceholder(c.Token)
-	hasApp := c.AppID != "" && !isEnvPlaceholder(c.AppID) &&
-		c.PrivateKeyPath != "" && !isEnvPlaceholder(c.PrivateKeyPath)
+	hasPAT := c.Token != "" && !IsEnvPlaceholder(c.Token)
+	hasApp := c.AppID != "" && !IsEnvPlaceholder(c.AppID) &&
+		c.PrivateKeyPath != "" && !IsEnvPlaceholder(c.PrivateKeyPath)
 
 	if !hasPAT && !hasApp {
 		return errors.New("either token or app_id with private_key_path is required")
@@ -201,8 +201,9 @@ func (c *GitHubConfig) Validate() error {
 	return nil
 }
 
-// isEnvPlaceholder checks if the value is an unresolved environment variable placeholder.
-func isEnvPlaceholder(value string) bool {
+// IsEnvPlaceholder checks if the value is an unresolved environment variable placeholder.
+// Returns true for values like "${GITHUB_TOKEN}" that weren't expanded by Viper.
+func IsEnvPlaceholder(value string) bool {
 	return len(value) > 3 && value[0] == '$' && value[1] == '{' && value[len(value)-1] == '}'
 }
 

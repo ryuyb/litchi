@@ -7,6 +7,7 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
+	"net/http"
 	"os"
 	"strconv"
 	"sync"
@@ -35,6 +36,12 @@ type AuthStrategy interface {
 	// SupportsRepositoryPerClient indicates if the strategy requires per-repository clients.
 	// PAT mode returns false (shared client), App mode returns true (per-installation client).
 	SupportsRepositoryPerClient() bool
+
+	// CreateClient creates a GitHub client for this authentication strategy.
+	// For PAT: creates an OAuth2 client with the token; always succeeds if token is non-empty.
+	// For GitHub App: creates a JWT client for App-level API calls (not installation tokens);
+	// may fail if private key is invalid or JWT generation fails.
+	CreateClient(ctx context.Context) (*github.Client, error)
 }
 
 // PATAuthStrategy implements authentication using a Personal Access Token.
@@ -91,6 +98,13 @@ func (s *GitHubAppAuthStrategy) SupportsRepositoryPerClient() bool         { ret
 func (s *GitHubAppAuthStrategy) GetAppID() int64                          { return s.appID }
 func (s *GitHubAppAuthStrategy) GetPrivateKey() *rsa.PrivateKey           { return s.privateKey }
 func (s *GitHubAppAuthStrategy) GetTokenCache() *InstallationTokenCache   { return s.tokenCache }
+
+// CreateClient creates a GitHub client with JWT authentication for App-level API calls.
+// This is used for operations like fetching installation tokens, not for repository operations.
+func (s *GitHubAppAuthStrategy) CreateClient(ctx context.Context) (*github.Client, error) {
+	jwtTransport := NewJWTTransport(s.appID, s.privateKey)
+	return github.NewClient(&http.Client{Transport: jwtTransport}), nil
+}
 
 // parsePrivateKey parses a PEM-encoded RSA private key.
 func parsePrivateKey(pemData []byte) (*rsa.PrivateKey, error) {
@@ -179,8 +193,10 @@ func (c *InstallationTokenCache) Delete(installationID int64) {
 
 // NewAuthStrategyFromConfig creates an authentication strategy based on configuration.
 func NewAuthStrategyFromConfig(cfg *config.GitHubConfig, logger *zap.Logger) (AuthStrategy, error) {
-	hasPAT := cfg.Token != ""
-	hasApp := cfg.AppID != "" && cfg.PrivateKeyPath != ""
+	// Check if values are real or unresolved env placeholders
+	hasPAT := cfg.Token != "" && !config.IsEnvPlaceholder(cfg.Token)
+	hasApp := cfg.AppID != "" && !config.IsEnvPlaceholder(cfg.AppID) &&
+		cfg.PrivateKeyPath != "" && !config.IsEnvPlaceholder(cfg.PrivateKeyPath)
 
 	if hasApp {
 		// GitHub App authentication takes precedence

@@ -26,6 +26,10 @@ var Module = fx.Module("github",
 			func(cm *ClientManager) health.Checker { return cm },
 			fx.ResultTags(`group:"health_checkers"`),
 		),
+		// Provide ClientManager as webhook.TokenCacheClearer for interface injection
+		fx.Annotate(
+			func(cm *ClientManager) webhook.TokenCacheClearer { return cm },
+		),
 		// Services
 		NewIssueService,
 		NewPullRequestService,
@@ -125,9 +129,10 @@ func StartWebhookCleanup(lc fx.Lifecycle, cleanupSvc *repositories.CleanupServic
 func RegisterInstallationHandler(
 	dispatcher *webhook.EventDispatcher,
 	repoRepo repository.RepositoryRepository,
+	tokenCacheClearer webhook.TokenCacheClearer,
 	logger *zap.Logger,
 ) {
-	handler := webhook.NewInstallationHandler(repoRepo, logger)
+	handler := webhook.NewInstallationHandler(repoRepo, tokenCacheClearer, logger)
 
 	// Register for both installation and installation_repositories events
 	dispatcher.Register(webhook.EventTypeInstallation, handler)

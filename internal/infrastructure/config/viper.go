@@ -277,3 +277,42 @@ func GetConfigPath() string {
 	}
 	return filepath.Join(getConfigDir(), "config.yaml")
 }
+
+// GetServerMode quickly reads server.mode from config file without full validation.
+// This is useful for early decisions like Fx logger configuration.
+// Returns "debug" if config file not found or mode not set.
+func GetServerMode() string {
+	v := viper.New()
+
+	configDir := getConfigDir()
+	v.SetConfigName("config")
+	v.SetConfigType("yaml")
+	v.AddConfigPath(configDir)
+	v.AddConfigPath(".")
+	v.AddConfigPath("/etc/litchi")
+
+	// Set default
+	v.SetDefault("server.mode", "debug")
+
+	// Read config file (ignore errors - use default if not found)
+	_ = v.ReadInConfig()
+
+	// Also check environment-specific config
+	env := detectEnvironment()
+	if env != EnvDev {
+		envConfigFile := fmt.Sprintf("config.%s", env)
+		v.SetConfigName(envConfigFile)
+		_ = v.MergeInConfig()
+	}
+
+	// Check local override
+	v.SetConfigName("config.local")
+	_ = v.MergeInConfig()
+
+	// Check environment variable override
+	if mode := os.Getenv("LITCHI_SERVER_MODE"); mode != "" {
+		return mode
+	}
+
+	return v.GetString("server.mode")
+}

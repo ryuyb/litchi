@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/google/go-github/v84/github"
@@ -33,8 +34,9 @@ type ClientManager struct {
 	// PAT mode: shared client
 	sharedClient *Client
 
-	// App mode: JWT transport for fetching installation tokens
+	// App mode: JWT transport and singleflight for token fetching
 	jwtTransport *JWTTransport
+	tokenFetchMu sync.Map // singleflight: stores chan struct{} per installationID to prevent duplicate fetches
 }
 
 // ClientManagerParams contains dependencies for creating a ClientManager.
@@ -67,17 +69,16 @@ func NewClientManager(p ClientManagerParams) (*ClientManager, error) {
 	})
 
 	cm := &ClientManager{
-		strategy:     strategy,
-		repoRepo:     p.RepoRepo,
-		rateLimiter:  rateLimiter,
-		retryPolicy:  valueobject.DefaultRetryPolicy,
-		logger:       p.Logger.Named("github_client_manager"),
+		strategy:    strategy,
+		repoRepo:    p.RepoRepo,
+		rateLimiter: rateLimiter,
+		retryPolicy: valueobject.DefaultRetryPolicy,
+		logger:      p.Logger.Named("github_client_manager"),
 	}
 
 	// For PAT mode, create a shared client upfront
 	if !strategy.SupportsRepositoryPerClient() {
-		patStrategy := strategy.(*PATAuthStrategy)
-		client, err := patStrategy.CreateClient(context.Background())
+		client, err := strategy.CreateClient(context.Background())
 		if err != nil {
 			return nil, errors.Wrap(errors.ErrGitHubAuthFailed, err).
 				WithDetail("failed to create PAT client")
@@ -91,8 +92,12 @@ func NewClientManager(p ClientManagerParams) (*ClientManager, error) {
 			config:      ghConfig,
 		}
 	} else {
-		// For App mode, set up JWT transport
-		appStrategy := strategy.(*GitHubAppAuthStrategy)
+		// For App mode, get JWT transport from strategy
+		appStrategy, ok := strategy.(*GitHubAppAuthStrategy)
+		if !ok {
+			return nil, errors.New(errors.ErrGitHubAuthFailed).
+				WithDetail("expected GitHubAppAuthStrategy for App mode")
+		}
 		cm.jwtTransport = NewJWTTransport(appStrategy.GetAppID(), appStrategy.GetPrivateKey())
 	}
 
@@ -176,7 +181,11 @@ func (cm *ClientManager) getAppClient(ctx context.Context, repoName string) (*Cl
 
 // createAppClient creates a GitHub client with an installation token.
 func (cm *ClientManager) createAppClient(ctx context.Context, installationID int64) (*Client, error) {
-	appStrategy := cm.strategy.(*GitHubAppAuthStrategy)
+	appStrategy, ok := cm.strategy.(*GitHubAppAuthStrategy)
+	if !ok {
+		return nil, errors.New(errors.ErrGitHubAuthFailed).
+			WithDetail("expected GitHubAppAuthStrategy for App mode")
+	}
 
 	// Check cache first
 	cachedToken := appStrategy.GetTokenCache().Get(installationID)
@@ -184,8 +193,8 @@ func (cm *ClientManager) createAppClient(ctx context.Context, installationID int
 		return cm.createClientWithToken(cachedToken.Token), nil
 	}
 
-	// Fetch new installation token
-	token, err := cm.fetchInstallationToken(ctx, installationID)
+	// Fetch new installation token with singleflight to prevent duplicate concurrent fetches
+	token, err := cm.fetchInstallationTokenSingleflight(ctx, installationID, appStrategy)
 	if err != nil {
 		return nil, err
 	}
@@ -193,8 +202,42 @@ func (cm *ClientManager) createAppClient(ctx context.Context, installationID int
 	return cm.createClientWithToken(token), nil
 }
 
+// fetchInstallationTokenSingleflight fetches an installation token with singleflight protection.
+// This prevents concurrent requests for the same installation ID from making duplicate API calls.
+func (cm *ClientManager) fetchInstallationTokenSingleflight(ctx context.Context, installationID int64, appStrategy *GitHubAppAuthStrategy) (string, error) {
+	// Check if there's already an ongoing fetch for this installation
+	chI, loaded := cm.tokenFetchMu.LoadOrStore(installationID, make(chan struct{}))
+	ch := chI.(chan struct{})
+
+	if loaded {
+		// Wait for the ongoing fetch to complete
+		select {
+		case <-ch:
+			// Fetch completed, check cache again
+			cachedToken := appStrategy.GetTokenCache().Get(installationID)
+			if cachedToken != nil {
+				return cachedToken.Token, nil
+			}
+			// Cache still empty after waiting - this shouldn't happen normally
+			// Return error to let caller retry or handle appropriately
+			return "", errors.New(errors.ErrGitHubAuthFailed).
+				WithDetail("token not available after concurrent fetch completed")
+		case <-ctx.Done():
+			return "", ctx.Err()
+		}
+	}
+
+	// We're the first to fetch, do the actual fetch
+	defer func() {
+		close(ch)
+		cm.tokenFetchMu.Delete(installationID)
+	}()
+
+	return cm.fetchInstallationToken(ctx, installationID, appStrategy)
+}
+
 // fetchInstallationToken fetches a new installation token from GitHub.
-func (cm *ClientManager) fetchInstallationToken(ctx context.Context, installationID int64) (string, error) {
+func (cm *ClientManager) fetchInstallationToken(ctx context.Context, installationID int64, appStrategy *GitHubAppAuthStrategy) (string, error) {
 	// Create JWT client for App API calls
 	jwtClient := github.NewClient(&http.Client{
 		Transport: cm.jwtTransport,
@@ -209,7 +252,6 @@ func (cm *ClientManager) fetchInstallationToken(ctx context.Context, installatio
 	cm.rateLimiter.UpdateFromResponse(resp)
 
 	// Cache the token
-	appStrategy := cm.strategy.(*GitHubAppAuthStrategy)
 	appStrategy.GetTokenCache().Set(installationID, &InstallationToken{
 		Token:     token.GetToken(),
 		ExpiresAt: token.GetExpiresAt().Time,
@@ -322,11 +364,33 @@ func (cm *ClientManager) RefreshInstallationToken(ctx context.Context, installat
 		return nil
 	}
 
-	appStrategy := cm.strategy.(*GitHubAppAuthStrategy)
+	appStrategy, ok := cm.strategy.(*GitHubAppAuthStrategy)
+	if !ok {
+		return errors.New(errors.ErrGitHubAuthFailed).
+			WithDetail("expected GitHubAppAuthStrategy for App mode")
+	}
 	appStrategy.GetTokenCache().Delete(installationID)
 
-	_, err := cm.fetchInstallationToken(ctx, installationID)
+	_, err := cm.fetchInstallationToken(ctx, installationID, appStrategy)
 	return err
+}
+
+// ClearInstallationTokens clears cached tokens for a given installation ID.
+// This should be called when an installation is deleted or suspended.
+func (cm *ClientManager) ClearInstallationTokens(installationID int64) {
+	if cm.sharedClient != nil {
+		// PAT mode: no tokens to clear
+		return
+	}
+
+	appStrategy, ok := cm.strategy.(*GitHubAppAuthStrategy)
+	if !ok {
+		return
+	}
+	appStrategy.GetTokenCache().Delete(installationID)
+	cm.logger.Debug("cleared installation token cache",
+		zap.Int64("installation_id", installationID),
+	)
 }
 
 // RateLimiter returns the rate limiter for external access.

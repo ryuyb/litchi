@@ -4,23 +4,32 @@ import (
 	"context"
 
 	"github.com/ryuyb/litchi/internal/domain/entity"
+	litchierrors "github.com/ryuyb/litchi/internal/pkg/errors"
 	"github.com/ryuyb/litchi/internal/domain/repository"
 	"go.uber.org/zap"
 )
+
+// TokenCacheClearer clears cached installation tokens.
+// This interface is implemented by ClientManager.
+type TokenCacheClearer interface {
+	ClearInstallationTokens(installationID int64)
+}
 
 // InstallationHandler handles GitHub App installation events.
 // It automatically updates repository records with installation IDs when
 // the app is installed, uninstalled, or when repositories are added/removed.
 type InstallationHandler struct {
-	repoRepo repository.RepositoryRepository
-	logger   *zap.Logger
+	repoRepo       repository.RepositoryRepository
+	tokenCacheClear TokenCacheClearer
+	logger          *zap.Logger
 }
 
 // NewInstallationHandler creates a new installation event handler.
-func NewInstallationHandler(repoRepo repository.RepositoryRepository, logger *zap.Logger) *InstallationHandler {
+func NewInstallationHandler(repoRepo repository.RepositoryRepository, tokenCacheClear TokenCacheClearer, logger *zap.Logger) *InstallationHandler {
 	return &InstallationHandler{
-		repoRepo: repoRepo,
-		logger:   logger.Named("webhook.installation"),
+		repoRepo:       repoRepo,
+		tokenCacheClear: tokenCacheClear,
+		logger:          logger.Named("webhook.installation"),
 	}
 }
 
@@ -106,6 +115,11 @@ func (h *InstallationHandler) handleInstallationDeleted(ctx context.Context, eve
 	installationID := event.InstallationID()
 	repoNames := event.GetRepositoryNames()
 
+	// Clear cached tokens for this installation
+	if h.tokenCacheClear != nil {
+		h.tokenCacheClear.ClearInstallationTokens(installationID)
+	}
+
 	// Clear installation ID from affected repositories
 	for _, repoName := range repoNames {
 		if err := h.updateRepositoryInstallation(ctx, repoName, 0, false); err != nil {
@@ -128,6 +142,11 @@ func (h *InstallationHandler) handleInstallationDeleted(ctx context.Context, eve
 func (h *InstallationHandler) handleInstallationSuspend(ctx context.Context, event *InstallationEvent) error {
 	installationID := event.InstallationID()
 	repoNames := event.GetRepositoryNames()
+
+	// Clear cached tokens for this installation since app is suspended
+	if h.tokenCacheClear != nil {
+		h.tokenCacheClear.ClearInstallationTokens(installationID)
+	}
 
 	// Disable repositories when app is suspended
 	for _, repoName := range repoNames {
@@ -214,6 +233,12 @@ func (h *InstallationHandler) updateRepositoryInstallation(ctx context.Context, 
 	if repo == nil {
 		// Create new repository record
 		repo = entity.NewRepository(repoName)
+	}
+
+	// Validate repository entity before saving
+	if err := repo.Validate(); err != nil {
+		return litchierrors.Wrap(litchierrors.ErrValidationFailed, err).
+			WithDetail("invalid repository name from webhook: " + repoName)
 	}
 
 	repo.SetInstallationID(installationID)
