@@ -44,6 +44,7 @@ var Module = fx.Module("github",
 	fx.Invoke(
 		RegisterWebhookRoutes,
 		StartWebhookCleanup,
+		RegisterInstallationHandler,
 	),
 )
 
@@ -118,4 +119,19 @@ func StartWebhookCleanup(lc fx.Lifecycle, cleanupSvc *repositories.CleanupServic
 			return cleanupSvc.Stop(ctx)
 		},
 	})
+}
+
+// RegisterInstallationHandler registers the installation event handler.
+func RegisterInstallationHandler(
+	dispatcher *webhook.EventDispatcher,
+	repoRepo repository.RepositoryRepository,
+	logger *zap.Logger,
+) {
+	handler := webhook.NewInstallationHandler(repoRepo, logger)
+
+	// Register for both installation and installation_repositories events
+	dispatcher.Register(webhook.EventTypeInstallation, handler)
+	dispatcher.Register(webhook.EventTypeInstallationRepositories, handler)
+
+	logger.Info("installation event handlers registered")
 }

@@ -10,11 +10,13 @@ import (
 
 // EventType constants for GitHub webhook events.
 const (
-	EventTypeIssues            = "issues"
-	EventTypeIssueComment      = "issue_comment"
-	EventTypePullRequest       = "pull_request"
-	EventTypePullRequestReview = "pull_request_review"
-	EventTypePush              = "push"
+	EventTypeIssues                 = "issues"
+	EventTypeIssueComment           = "issue_comment"
+	EventTypePullRequest            = "pull_request"
+	EventTypePullRequestReview      = "pull_request_review"
+	EventTypePush                   = "push"
+	EventTypeInstallation           = "installation"
+	EventTypeInstallationRepositories = "installation_repositories"
 )
 
 // WebhookEvent represents a parsed webhook event.
@@ -50,6 +52,10 @@ func (p *EventParser) Parse(eventType string, payload []byte) (WebhookEvent, err
 		return p.parsePullRequestReviewEvent(payload)
 	case EventTypePush:
 		return p.parsePushEvent(payload)
+	case EventTypeInstallation:
+		return p.parseInstallationEvent(payload)
+	case EventTypeInstallationRepositories:
+		return p.parseInstallationRepositoriesEvent(payload)
 	default:
 		p.logger.Debug("unsupported event type",
 			zap.String("event_type", eventType),
@@ -364,4 +370,132 @@ func (e *IgnoredEvent) Action() string     { return "ignored" }
 func IsIgnoredEvent(event WebhookEvent) bool {
 	_, ok := event.(*IgnoredEvent)
 	return ok
+}
+
+// InstallationEvent represents an installation webhook event.
+// This event occurs when a GitHub App is installed, uninstalled, or its permissions are updated.
+type InstallationEvent struct {
+	EventAction string `json:"action"`
+	Installation struct {
+		ID      int64 `json:"id"`
+		Account struct {
+			Login string `json:"login"`
+			ID    int64  `json:"id"`
+			Type  string `json:"type"` // "User" or "Organization"
+		} `json:"account"`
+		Permission     string `json:"permission"`
+		RepositorySelection string `json:"repository_selection"` // "all" or "selected"
+	} `json:"installation"`
+	// For "created" action with "selected" repositories
+	Repositories []struct {
+		ID       int64  `json:"id"`
+		FullName string `json:"full_name"`
+		Private  bool   `json:"private"`
+	} `json:"repositories"`
+	// For single repository events
+	Repo struct {
+		FullName string `json:"full_name"`
+		ID       int64  `json:"id"`
+	} `json:"repository"`
+	EventSender struct {
+		Login string `json:"login"`
+		ID    int64  `json:"id"`
+	} `json:"sender"`
+}
+
+func (e *InstallationEvent) EventType() string    { return EventTypeInstallation }
+func (e *InstallationEvent) Repository() string   { return e.Repo.FullName }
+func (e *InstallationEvent) Actor() string        { return e.EventSender.Login }
+func (e *InstallationEvent) Action() string       { return e.EventAction }
+func (e *InstallationEvent) InstallationID() int64 { return e.Installation.ID }
+func (e *InstallationEvent) AccountLogin() string { return e.Installation.Account.Login }
+func (e *InstallationEvent) AccountType() string  { return e.Installation.Account.Type }
+
+// GetRepositoryNames returns all repository names affected by this event.
+func (e *InstallationEvent) GetRepositoryNames() []string {
+	if len(e.Repositories) > 0 {
+		names := make([]string, len(e.Repositories))
+		for i, r := range e.Repositories {
+			names[i] = r.FullName
+		}
+		return names
+	}
+	if e.Repo.FullName != "" {
+		return []string{e.Repo.FullName}
+	}
+	return nil
+}
+
+func (p *EventParser) parseInstallationEvent(payload []byte) (*InstallationEvent, error) {
+	var event InstallationEvent
+	if err := json.Unmarshal(payload, &event); err != nil {
+		return nil, errors.Wrap(errors.ErrBadRequest, err).
+			WithDetail("failed to parse installation event payload")
+	}
+	return &event, nil
+}
+
+// InstallationRepositoriesEvent represents an installation_repositories webhook event.
+// This event occurs when repositories are added or removed from a GitHub App installation.
+type InstallationRepositoriesEvent struct {
+	EventAction string `json:"action"`
+	Installation struct {
+		ID      int64 `json:"id"`
+		Account struct {
+			Login string `json:"login"`
+			ID    int64  `json:"id"`
+			Type  string `json:"type"`
+		} `json:"account"`
+	} `json:"installation"`
+	RepositoriesAdded []struct {
+		ID       int64  `json:"id"`
+		FullName string `json:"full_name"`
+		Private  bool   `json:"private"`
+	} `json:"repositories_added"`
+	RepositoriesRemoved []struct {
+		ID       int64  `json:"id"`
+		FullName string `json:"full_name"`
+		Private  bool   `json:"private"`
+	} `json:"repositories_removed"`
+	Repo struct {
+		FullName string `json:"full_name"`
+		ID       int64  `json:"id"`
+	} `json:"repository"`
+	EventSender struct {
+		Login string `json:"login"`
+		ID    int64  `json:"id"`
+	} `json:"sender"`
+}
+
+func (e *InstallationRepositoriesEvent) EventType() string     { return EventTypeInstallationRepositories }
+func (e *InstallationRepositoriesEvent) Repository() string    { return e.Repo.FullName }
+func (e *InstallationRepositoriesEvent) Actor() string         { return e.EventSender.Login }
+func (e *InstallationRepositoriesEvent) Action() string        { return e.EventAction }
+func (e *InstallationRepositoriesEvent) InstallationID() int64 { return e.Installation.ID }
+
+// GetAddedRepositoryNames returns the names of added repositories.
+func (e *InstallationRepositoriesEvent) GetAddedRepositoryNames() []string {
+	names := make([]string, len(e.RepositoriesAdded))
+	for i, r := range e.RepositoriesAdded {
+		names[i] = r.FullName
+	}
+	return names
+}
+
+// GetRemovedRepositoryNames returns the names of removed repositories.
+func (e *InstallationRepositoriesEvent) GetRemovedRepositoryNames() []string {
+	names := make([]string, len(e.RepositoriesRemoved))
+	for i, r := range e.RepositoriesRemoved {
+		names[i] = r.FullName
+	}
+	return names
+}
+
+func (p *EventParser) parseInstallationRepositoriesEvent(payload []byte) (*InstallationRepositoriesEvent, error) {
+	var event InstallationRepositoriesEvent
+	if err := json.Unmarshal(payload, &event); err != nil {
+		return nil, errors.Wrap(errors.ErrBadRequest, err).
+			WithDetail("failed to parse installation_repositories event payload")
+	}
+	return &event, nil
 }
