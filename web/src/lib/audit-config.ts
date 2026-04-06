@@ -1,56 +1,60 @@
 // Audit log display configuration
 
 // Operation type configuration
-export const operationConfig: Record<string, { label: string; color: string }> = {
-	"session.start": {
-		label: "Session Start",
-		color: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300",
-	},
-	"session.pause": {
-		label: "Session Pause",
-		color:
-			"bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300",
-	},
-	"session.resume": {
-		label: "Session Resume",
-		color: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
-	},
-	"session.rollback": {
-		label: "Session Rollback",
-		color:
-			"bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300",
-	},
-	"session.terminate": {
-		label: "Session Terminate",
-		color: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300",
-	},
-	"task.skip": {
-		label: "Task Skip",
-		color:
-			"bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300",
-	},
-	"task.retry": {
-		label: "Task Retry",
-		color: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
-	},
-	"repo.enable": {
-		label: "Repo Enable",
-		color: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
-	},
-	"repo.disable": {
-		label: "Repo Disable",
-		color: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300",
-	},
-	"repo.update": {
-		label: "Repo Update",
-		color: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300",
-	},
-	"config.update": {
-		label: "Config Update",
-		color:
-			"bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300",
-	},
-};
+export const operationConfig: Record<string, { label: string; color: string }> =
+	{
+		"session.start": {
+			label: "Session Start",
+			color: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300",
+		},
+		"session.pause": {
+			label: "Session Pause",
+			color:
+				"bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300",
+		},
+		"session.resume": {
+			label: "Session Resume",
+			color:
+				"bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
+		},
+		"session.rollback": {
+			label: "Session Rollback",
+			color:
+				"bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300",
+		},
+		"session.terminate": {
+			label: "Session Terminate",
+			color: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300",
+		},
+		"task.skip": {
+			label: "Task Skip",
+			color:
+				"bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300",
+		},
+		"task.retry": {
+			label: "Task Retry",
+			color:
+				"bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
+		},
+		"repo.enable": {
+			label: "Repo Enable",
+			color:
+				"bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
+		},
+		"repo.disable": {
+			label: "Repo Disable",
+			color: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300",
+		},
+		"repo.update": {
+			label: "Repo Update",
+			color: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300",
+		},
+		"config.update": {
+			label: "Config Update",
+			color:
+				"bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300",
+		},
+	};
 
 // Result status configuration
 export const resultConfig: Record<string, { label: string; color: string }> = {

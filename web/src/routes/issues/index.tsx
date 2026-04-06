@@ -11,6 +11,13 @@ import { useGetApiV1Sessions } from "#/api/sessions/sessions";
 import { DataTable } from "#/components/data-table";
 import { Input } from "#/components/ui/input";
 import {
+	Pagination,
+	PaginationContent,
+	PaginationItem,
+	PaginationNext,
+	PaginationPrevious,
+} from "#/components/ui/pagination";
+import {
 	Select,
 	SelectContent,
 	SelectItem,
@@ -124,19 +131,13 @@ function IssuesPage() {
 	const pagination = responseData?.pagination;
 	const totalPages = pagination?.totalPages ?? 1;
 
-	// Handle pagination change
-	const handlePaginationChange = (
-		newPageIndex: number,
-		newPageSize: number,
-	) => {
-		setPage(newPageIndex + 1); // API uses 1-based pagination
-		setPageSize(newPageSize);
-	};
-
 	// Handle row click - navigate to detail page
 	const handleRowClick = (session: Session) => {
 		navigate({ to: `/issues/${session.id}` });
 	};
+
+	const canPreviousPage = page > 1;
+	const canNextPage = page < totalPages;
 
 	return (
 		<div className="space-y-6">
@@ -215,17 +216,69 @@ function IssuesPage() {
 				)}
 
 				{/* Data table */}
-				<div className="mt-4">
+				<div className="mt-4 space-y-4">
 					<DataTable
 						columns={columns}
 						data={sessions}
-						pageCount={totalPages}
-						pageIndex={page - 1} // DataTable uses 0-based, API uses 1-based
-						pageSize={pageSize}
-						onPaginationChange={handlePaginationChange}
 						loading={isLoading}
 						onRowClick={handleRowClick}
 					/>
+
+					{/* Pagination */}
+					<div className="flex items-center justify-between">
+						<div className="flex items-center space-x-2">
+							<span className="text-sm text-muted-foreground">
+								Rows per page
+							</span>
+							<Select
+								value={`${pageSize}`}
+								onValueChange={(value) => {
+									setPageSize(Number(value));
+									setPage(1);
+								}}
+							>
+								<SelectTrigger className="h-8 w-[70px]">
+									<SelectValue placeholder={pageSize} />
+								</SelectTrigger>
+								<SelectContent side="top">
+									{[10, 20, 30, 40, 50].map((size) => (
+										<SelectItem key={size} value={`${size}`}>
+											{size}
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
+						</div>
+						<Pagination>
+							<PaginationContent>
+								<PaginationItem>
+									<PaginationPrevious
+										onClick={() => setPage(page - 1)}
+										className={
+											!canPreviousPage
+												? "pointer-events-none opacity-50"
+												: "cursor-pointer"
+										}
+									/>
+								</PaginationItem>
+								<PaginationItem>
+									<span className="flex h-9 w-9 items-center justify-center text-sm">
+										{page}
+									</span>
+								</PaginationItem>
+								<PaginationItem>
+									<PaginationNext
+										onClick={() => setPage(page + 1)}
+										className={
+											!canNextPage
+												? "pointer-events-none opacity-50"
+												: "cursor-pointer"
+										}
+									/>
+								</PaginationItem>
+							</PaginationContent>
+						</Pagination>
+					</div>
 				</div>
 			</section>
 		</div>

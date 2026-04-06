@@ -15,3 +15,24 @@ export function formatRelativeTime(dateStr: string | undefined): string {
 	if (diffDays < 7) return `${diffDays} days ago`;
 	return date.toLocaleDateString();
 }
+
+// Format absolute datetime for display
+export function formatDateTime(dateStr: string | undefined): string {
+	if (!dateStr) return "-";
+
+	const date = new Date(dateStr);
+	return date.toLocaleString("en-US", {
+		year: "numeric",
+		month: "2-digit",
+		day: "2-digit",
+		hour: "2-digit",
+		minute: "2-digit",
+		second: "2-digit",
+		hour12: false,
+	});
+}
+
+// Format date for RFC3339 query parameter
+export function formatDateRFC3339(date: Date): string {
+	return date.toISOString();
+}
