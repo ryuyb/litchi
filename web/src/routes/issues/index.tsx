@@ -30,6 +30,7 @@ import {
 	stageConfig,
 	statusConfig,
 } from "#/lib/session-config";
+import { FilterIcon, DatabaseIcon, AlertCircleIcon, SearchIcon } from "lucide-react";
 
 export const Route = createFileRoute("/issues/")({
 	component: IssuesPage,
@@ -40,21 +41,22 @@ const columns: ColumnDef<Session>[] = [
 		accessorKey: "issueNumber",
 		header: "Issue #",
 		cell: ({ row }) => (
-			<span className="font-mono text-sm">#{row.original.issueNumber}</span>
+			<span className="font-mono text-sm bg-secondary/50 px-2 py-0.5 rounded-md text-foreground/80">#{row.original.issueNumber}</span>
 		),
 	},
 	{
 		accessorKey: "issueTitle",
 		header: "Title",
 		cell: ({ row }) => (
-			<span className="font-medium">{row.original.issueTitle}</span>
+			<span className="font-semibold text-foreground/90 group-hover:text-primary transition-colors">{row.original.issueTitle}</span>
 		),
 	},
 	{
 		accessorKey: "repository",
 		header: "Repository",
 		cell: ({ row }) => (
-			<span className="text-muted-foreground text-sm">
+			<span className="text-muted-foreground text-sm flex items-center gap-1.5">
+				<DatabaseIcon size={14} className="opacity-50" />
 				{row.original.repository}
 			</span>
 		),
@@ -67,7 +69,7 @@ const columns: ColumnDef<Session>[] = [
 			const colorClass = getStageColor(stage);
 			return (
 				<span
-					className={`rounded-full px-2 py-0.5 text-xs font-medium ${colorClass}`}
+					className={`rounded-full px-2.5 py-1 text-xs font-semibold tracking-wide ${colorClass} shadow-sm border border-transparent`}
 				>
 					{stage ? stageConfig[stage].label : "unknown"}
 				</span>
@@ -82,7 +84,7 @@ const columns: ColumnDef<Session>[] = [
 			const colorClass = getStatusColor(status);
 			return (
 				<span
-					className={`rounded-full px-2 py-0.5 text-xs font-medium ${colorClass}`}
+					className={`rounded-full px-2.5 py-1 text-xs font-semibold tracking-wide ${colorClass} shadow-sm border border-transparent`}
 				>
 					{status ? statusConfig[status].label : "unknown"}
 				</span>
@@ -99,7 +101,6 @@ function IssuesPage() {
 	const [stageFilter, setStageFilter] = useState<string>("all");
 	const [repoSearch, setRepoSearch] = useState("");
 
-	// Build API params
 	const params = {
 		page,
 		pageSize,
@@ -114,7 +115,6 @@ function IssuesPage() {
 		repo: repoSearch || undefined,
 	};
 
-	// Fetch sessions using the generated hook
 	const {
 		data: response,
 		isLoading,
@@ -122,7 +122,6 @@ function IssuesPage() {
 		error,
 	} = useGetApiV1Sessions(params);
 
-	// Extract data from response - check if success (status 200)
 	const isSuccess = response?.status === 200;
 	const responseData: PaginatedResponseSession | undefined = isSuccess
 		? response?.data
@@ -131,7 +130,6 @@ function IssuesPage() {
 	const pagination = responseData?.pagination;
 	const totalPages = pagination?.totalPages ?? 1;
 
-	// Handle row click - navigate to detail page
 	const handleRowClick = (session: Session) => {
 		navigate({ to: `/issues/${session.id}` });
 	};
@@ -140,145 +138,150 @@ function IssuesPage() {
 	const canNextPage = page < totalPages;
 
 	return (
-		<div className="space-y-6">
-			<section className="rounded-xl border border-border bg-card p-6 shadow-sm">
-				<h1 className="text-2xl font-bold tracking-tight text-card-foreground">
-					Issues
-				</h1>
-				<p className="mt-2 text-muted-foreground">
-					Manage and track GitHub Issues across your repositories.
-				</p>
+		<div className="space-y-8 animate-blur-in w-full pb-10">
+			{/* Header Section */}
+			<section className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-card to-secondary/30 p-8 shadow-sm border border-border">
+				<div className="absolute -right-20 -top-20 opacity-5 blur-3xl">
+					<DatabaseIcon size={300} />
+				</div>
+				<div className="relative z-10">
+					<h1 className="text-3xl font-bold tracking-tight text-foreground flex items-center gap-3">
+						<span className="w-1.5 h-8 bg-primary rounded-full"></span>
+						Issues
+					</h1>
+					<p className="mt-3 text-muted-foreground max-w-2xl text-lg">
+						Manage and track GitHub Issues across your configured repositories. 
+						Monitor auto-generated PRs and agent progress.
+					</p>
+				</div>
 			</section>
 
-			<section className="rounded-xl border border-border bg-card p-6 shadow-sm">
-				<h2 className="text-lg font-semibold text-card-foreground">
-					Active Sessions
-				</h2>
+			<section className="glass-card rounded-3xl p-6 shadow-md border border-border/50">
+				<div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8">
+					<h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+						<FilterIcon className="text-primary" size={22} />
+						Session Explorer
+					</h2>
 
-				{/* Filters */}
-				<div className="mt-4 flex flex-wrap items-center gap-4">
-					{/* Status filter */}
-					<div className="flex items-center gap-2">
-						<span className="text-sm text-muted-foreground">Status:</span>
-						<Select value={statusFilter} onValueChange={setStatusFilter}>
-							<SelectTrigger className="h-8 w-[120px]">
-								<SelectValue placeholder="All" />
-							</SelectTrigger>
-							<SelectContent>
-								<SelectItem value="all">All</SelectItem>
-								{Object.entries(statusConfig).map(([key, value]) => (
-									<SelectItem key={key} value={key}>
-										{value.label}
-									</SelectItem>
-								))}
-							</SelectContent>
-						</Select>
-					</div>
+					<div className="flex flex-wrap items-center gap-3 bg-secondary/40 p-2 rounded-2xl border border-border/40">
+						<div className="flex items-center gap-2 bg-background px-3 py-1 rounded-xl shadow-sm border border-border/50">
+							<span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Status</span>
+							<Select value={statusFilter} onValueChange={setStatusFilter}>
+								<SelectTrigger className="h-8 w-[120px] border-0 bg-transparent shadow-none focus:ring-0 px-1 py-0 font-medium">
+									<SelectValue placeholder="All" />
+								</SelectTrigger>
+								<SelectContent>
+									<SelectItem value="all">All Statuses</SelectItem>
+									{Object.entries(statusConfig).map(([key, value]) => (
+										<SelectItem key={key} value={key}>
+											{value.label}
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
+						</div>
 
-					{/* Stage filter */}
-					<div className="flex items-center gap-2">
-						<span className="text-sm text-muted-foreground">Stage:</span>
-						<Select value={stageFilter} onValueChange={setStageFilter}>
-							<SelectTrigger className="h-8 w-[140px]">
-								<SelectValue placeholder="All" />
-							</SelectTrigger>
-							<SelectContent>
-								<SelectItem value="all">All</SelectItem>
-								{Object.entries(stageConfig).map(([key, value]) => (
-									<SelectItem key={key} value={key}>
-										{value.label}
-									</SelectItem>
-								))}
-							</SelectContent>
-						</Select>
-					</div>
+						<div className="flex items-center gap-2 bg-background px-3 py-1 rounded-xl shadow-sm border border-border/50">
+							<span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Stage</span>
+							<Select value={stageFilter} onValueChange={setStageFilter}>
+								<SelectTrigger className="h-8 w-[140px] border-0 bg-transparent shadow-none focus:ring-0 px-1 py-0 font-medium">
+									<SelectValue placeholder="All" />
+								</SelectTrigger>
+								<SelectContent>
+									<SelectItem value="all">All Stages</SelectItem>
+									{Object.entries(stageConfig).map(([key, value]) => (
+										<SelectItem key={key} value={key}>
+											{value.label}
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
+						</div>
 
-					{/* Repository search */}
-					<div className="flex items-center gap-2">
-						<span className="text-sm text-muted-foreground">Repository:</span>
-						<Input
-							type="text"
-							placeholder="owner/repo"
-							value={repoSearch}
-							onChange={(e) => setRepoSearch(e.target.value)}
-							className="h-8 w-[180px]"
-						/>
+						<div className="flex items-center gap-2 bg-background px-3 py-1 rounded-xl shadow-sm border border-border/50 relative">
+							<SearchIcon size={14} className="text-muted-foreground absolute left-3" />
+							<Input
+								type="text"
+								placeholder="Search repo..."
+								value={repoSearch}
+								onChange={(e) => setRepoSearch(e.target.value)}
+								className="h-8 w-[180px] border-0 bg-transparent shadow-none focus-visible:ring-0 pl-7 text-sm font-medium"
+							/>
+						</div>
 					</div>
 				</div>
 
-				{/* Error state */}
 				{isError && (
-					<div className="mt-4 rounded-lg border border-destructive bg-destructive/10 p-4">
-						<p className="text-sm text-destructive">
+					<div className="mb-6 rounded-2xl border border-destructive/50 bg-destructive/10 p-4 flex items-center gap-3 animate-slide-up-fade">
+						<AlertCircleIcon className="text-destructive" size={20} />
+						<p className="text-sm font-medium text-destructive">
 							Failed to load sessions: {error?.message ?? "Unknown error"}
 						</p>
 					</div>
 				)}
 
-				{/* Data table */}
-				<div className="mt-4 space-y-4">
+				<div className="overflow-hidden rounded-2xl border border-border/60 bg-card">
 					<DataTable
 						columns={columns}
 						data={sessions}
 						loading={isLoading}
 						onRowClick={handleRowClick}
 					/>
+				</div>
 
-					{/* Pagination */}
-					<div className="flex items-center justify-between">
-						<div className="flex items-center space-x-2">
-							<span className="text-sm text-muted-foreground">
-								Rows per page
-							</span>
-							<Select
-								value={`${pageSize}`}
-								onValueChange={(value) => {
-									setPageSize(Number(value));
-									setPage(1);
-								}}
-							>
-								<SelectTrigger className="h-8 w-[70px]">
-									<SelectValue placeholder={pageSize} />
-								</SelectTrigger>
-								<SelectContent side="top">
-									{[10, 20, 30, 40, 50].map((size) => (
-										<SelectItem key={size} value={`${size}`}>
-											{size}
-										</SelectItem>
-									))}
-								</SelectContent>
-							</Select>
-						</div>
-						<Pagination>
-							<PaginationContent>
-								<PaginationItem>
-									<PaginationPrevious
-										onClick={() => setPage(page - 1)}
-										className={
-											!canPreviousPage
-												? "pointer-events-none opacity-50"
-												: "cursor-pointer"
-										}
-									/>
-								</PaginationItem>
-								<PaginationItem>
-									<span className="flex h-9 w-9 items-center justify-center text-sm">
-										{page}
-									</span>
-								</PaginationItem>
-								<PaginationItem>
-									<PaginationNext
-										onClick={() => setPage(page + 1)}
-										className={
-											!canNextPage
-												? "pointer-events-none opacity-50"
-												: "cursor-pointer"
-										}
-									/>
-								</PaginationItem>
-							</PaginationContent>
-						</Pagination>
+				<div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+					<div className="flex items-center space-x-3 bg-secondary/30 px-4 py-2 rounded-xl">
+						<span className="text-sm font-medium text-muted-foreground">
+							Rows per page
+						</span>
+						<Select
+							value={`${pageSize}`}
+							onValueChange={(value) => {
+								setPageSize(Number(value));
+								setPage(1);
+							}}
+						>
+							<SelectTrigger className="h-8 w-[70px] bg-background border-border/50">
+								<SelectValue placeholder={pageSize} />
+							</SelectTrigger>
+							<SelectContent side="top">
+								{[10, 20, 30, 40, 50].map((size) => (
+									<SelectItem key={size} value={`${size}`}>
+										{size}
+									</SelectItem>
+								))}
+							</SelectContent>
+						</Select>
 					</div>
+					<Pagination className="justify-end w-auto mx-0">
+						<PaginationContent className="bg-secondary/30 rounded-xl p-1">
+							<PaginationItem>
+								<PaginationPrevious
+									onClick={() => setPage(page - 1)}
+									className={
+										!canPreviousPage
+											? "pointer-events-none opacity-50 text-muted-foreground"
+											: "cursor-pointer hover:bg-background rounded-lg"
+									}
+								/>
+							</PaginationItem>
+							<PaginationItem>
+								<span className="flex h-9 min-w-9 items-center justify-center text-sm font-bold bg-background rounded-lg shadow-sm border border-border/50 px-3">
+									Page {page} of {totalPages}
+								</span>
+							</PaginationItem>
+							<PaginationItem>
+								<PaginationNext
+									onClick={() => setPage(page + 1)}
+									className={
+										!canNextPage
+											? "pointer-events-none opacity-50 text-muted-foreground"
+											: "cursor-pointer hover:bg-background rounded-lg"
+									}
+								/>
+							</PaginationItem>
+						</PaginationContent>
+					</Pagination>
 				</div>
 			</section>
 		</div>

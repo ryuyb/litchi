@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import type { ColumnDef } from "@tanstack/react-table";
-import { DownloadIcon } from "lucide-react";
+import { DownloadIcon, FileTextIcon, FilterIcon, SearchIcon, ClockIcon } from "lucide-react";
 import { useState } from "react";
 import { useGetApiV1Audit } from "#/api/audit/audit";
 import type { AuditLog } from "#/api/schemas/auditLog";
@@ -40,9 +40,10 @@ const columns: ColumnDef<AuditLog>[] = [
 		accessorKey: "timestamp",
 		header: "Time",
 		cell: ({ row }) => (
-			<span className="text-sm text-muted-foreground">
+			<div className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground bg-secondary/30 px-2 py-1 rounded-md w-fit">
+				<ClockIcon size={12} className="opacity-70" />
 				{formatRelativeTime(row.original.timestamp)}
-			</span>
+			</div>
 		),
 	},
 	{
@@ -52,7 +53,7 @@ const columns: ColumnDef<AuditLog>[] = [
 			const display = getOperationDisplay(row.original.operation);
 			return (
 				<span
-					className={`rounded-full px-2 py-0.5 text-xs font-medium ${display.color}`}
+					className={`rounded-full px-2.5 py-1 text-xs font-bold tracking-wide ${display.color} border border-transparent shadow-[inset_0_1px_rgba(255,255,255,0.2)]`}
 				>
 					{display.label}
 				</span>
@@ -63,10 +64,10 @@ const columns: ColumnDef<AuditLog>[] = [
 		accessorKey: "actor",
 		header: "Actor",
 		cell: ({ row }) => (
-			<div className="flex flex-col gap-0.5">
-				<span className="text-sm font-medium">{row.original.actor ?? "-"}</span>
+			<div className="flex flex-col">
+				<span className="text-sm font-bold text-foreground/90">{row.original.actor ?? "-"}</span>
 				{row.original.actorRole && (
-					<span className="text-xs text-muted-foreground">
+					<span className="text-[10px] uppercase tracking-wider font-bold text-primary max-w-fit">
 						{row.original.actorRole}
 					</span>
 				)}
@@ -78,11 +79,11 @@ const columns: ColumnDef<AuditLog>[] = [
 		header: "Resource",
 		cell: ({ row }) => (
 			<div className="flex flex-col gap-0.5">
-				<span className="text-sm font-medium">
+				<span className="text-sm font-semibold">
 					{row.original.resourceType ?? "-"}
 				</span>
 				{row.original.resourceId && (
-					<span className="text-xs text-muted-foreground font-mono">
+					<span className="text-xs text-muted-foreground font-mono bg-secondary/50 px-1.5 py-0.5 rounded max-w-fit">
 						{row.original.resourceId}
 					</span>
 				)}
@@ -93,7 +94,7 @@ const columns: ColumnDef<AuditLog>[] = [
 		accessorKey: "repository",
 		header: "Repository",
 		cell: ({ row }) => (
-			<span className="text-sm text-muted-foreground">
+			<span className="text-sm font-medium text-muted-foreground">
 				{row.original.repository ?? "-"}
 			</span>
 		),
@@ -105,7 +106,7 @@ const columns: ColumnDef<AuditLog>[] = [
 			const display = getResultDisplay(row.original.result);
 			return (
 				<span
-					className={`rounded-full px-2 py-0.5 text-xs font-medium ${display.color}`}
+					className={`rounded-full px-2.5 py-1 text-xs font-bold tracking-wide ${display.color} shadow-sm border border-transparent`}
 				>
 					{display.label}
 				</span>
@@ -116,7 +117,7 @@ const columns: ColumnDef<AuditLog>[] = [
 		accessorKey: "duration",
 		header: "Duration",
 		cell: ({ row }) => (
-			<span className="text-sm text-muted-foreground">
+			<span className="text-xs font-mono font-medium text-foreground tracking-tight">
 				{formatDuration(row.original.duration)}
 			</span>
 		),
@@ -132,7 +133,6 @@ function AuditLogsPage() {
 	const [repoSearch, setRepoSearch] = useState("");
 	const [actorSearch, setActorSearch] = useState("");
 
-	// Build API params
 	const params = {
 		page,
 		pageSize,
@@ -142,7 +142,6 @@ function AuditLogsPage() {
 		actor: actorSearch || undefined,
 	};
 
-	// Fetch audit logs using the generated hook
 	const {
 		data: response,
 		isLoading,
@@ -150,7 +149,6 @@ function AuditLogsPage() {
 		error,
 	} = useGetApiV1Audit(params);
 
-	// Extract data from response
 	const isSuccess = response?.status === 200;
 	const responseData: PaginatedResponseAuditLog | undefined = isSuccess
 		? response?.data
@@ -159,14 +157,12 @@ function AuditLogsPage() {
 	const pagination = responseData?.pagination;
 	const totalPages = pagination?.totalPages ?? 1;
 
-	// Handle row click - navigate to detail page
 	const handleRowClick = (log: AuditLog) => {
 		if (log.id) {
 			navigate({ to: `/audit-logs/${log.id}` });
 		}
 	};
 
-	// Export to CSV
 	const handleExport = () => {
 		if (auditLogs.length === 0) return;
 
@@ -220,170 +216,170 @@ function AuditLogsPage() {
 	const canNextPage = page < totalPages;
 
 	return (
-		<div className="space-y-6">
-			<section className="rounded-xl border border-border bg-card p-6 shadow-sm">
-				<div className="flex items-center justify-between">
+		<div className="space-y-8 animate-blur-in w-full pb-10">
+			{/* Header Section */}
+			<section className="relative overflow-hidden rounded-3xl bg-gradient-to-bl from-card via-muted/50 to-secondary/30 p-8 shadow-sm border border-border/80">
+				<div className="absolute left-10 -bottom-10 opacity-5 -rotate-12">
+					<FileTextIcon size={250} />
+				</div>
+				<div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
 					<div>
-						<h1 className="text-2xl font-bold tracking-tight text-card-foreground">
+						<h1 className="text-3xl font-bold tracking-tight text-foreground flex items-center gap-3">
+							<span className="w-1.5 h-8 bg-foreground rounded-full"></span>
 							Audit Logs
 						</h1>
-						<p className="mt-2 text-muted-foreground">
-							Track all system activities and changes.
+						<p className="mt-3 text-muted-foreground max-w-2xl text-lg">
+							A secure, verifiable record of all system activities, changes, and agent actions.
 						</p>
 					</div>
 					<Button
 						variant="outline"
-						size="sm"
 						onClick={handleExport}
 						disabled={auditLogs.length === 0}
+						className="h-12 px-6 rounded-xl font-bold shadow-sm self-start md:self-auto hover:bg-background/80"
 					>
-						<DownloadIcon className="size-4" />
-						<span>Export Current Page</span>
+						<DownloadIcon className="size-5 mr-2" />
+						Export CSV
 					</Button>
 				</div>
 			</section>
 
-			<section className="rounded-xl border border-border bg-card p-6 shadow-sm">
-				<h2 className="text-lg font-semibold text-card-foreground">
-					Recent Activities
-				</h2>
+			<section className="glass-card rounded-3xl p-6 shadow-md border border-border/50">
+				<div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8 border-b border-border/50 pb-6">
+					<h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+						<FilterIcon className="text-primary" size={22} />
+						Filter Logs
+					</h2>
 
-				{/* Filters */}
-				<div className="mt-4 flex flex-wrap items-center gap-4">
-					{/* Operation filter */}
-					<div className="flex items-center gap-2">
-						<span className="text-sm text-muted-foreground">Operation:</span>
-						<Select value={operationFilter} onValueChange={setOperationFilter}>
-							<SelectTrigger className="h-8 w-[160px]">
-								<SelectValue placeholder="All" />
-							</SelectTrigger>
-							<SelectContent>
-								<SelectItem value="all">All</SelectItem>
-								{operationOptions.map((op) => (
-									<SelectItem key={op} value={op}>
-										{getOperationDisplay(op).label}
-									</SelectItem>
-								))}
-							</SelectContent>
-						</Select>
-					</div>
+					<div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
+						<div className="flex items-center gap-2 bg-secondary/30 px-3 py-1 rounded-xl shadow-sm border border-border/40 w-full sm:w-auto">
+							<span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest shrink-0">Op</span>
+							<Select value={operationFilter} onValueChange={setOperationFilter}>
+								<SelectTrigger className="h-9 w-full sm:w-[150px] border-0 bg-transparent shadow-none focus:ring-0 px-1 py-0 font-medium">
+									<SelectValue placeholder="All" />
+								</SelectTrigger>
+								<SelectContent>
+									<SelectItem value="all">All</SelectItem>
+									{operationOptions.map((op) => (
+										<SelectItem key={op} value={op}>
+											{getOperationDisplay(op).label}
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
+						</div>
 
-					{/* Result filter */}
-					<div className="flex items-center gap-2">
-						<span className="text-sm text-muted-foreground">Result:</span>
-						<Select value={resultFilter} onValueChange={setResultFilter}>
-							<SelectTrigger className="h-8 w-[120px]">
-								<SelectValue placeholder="All" />
-							</SelectTrigger>
-							<SelectContent>
-								<SelectItem value="all">All</SelectItem>
-								{resultOptions.map((r) => (
-									<SelectItem key={r} value={r}>
-										{getResultDisplay(r).label}
-									</SelectItem>
-								))}
-							</SelectContent>
-						</Select>
-					</div>
+						<div className="flex items-center gap-2 bg-secondary/30 px-3 py-1 rounded-xl shadow-sm border border-border/40 w-full sm:w-auto">
+							<span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest shrink-0">Result</span>
+							<Select value={resultFilter} onValueChange={setResultFilter}>
+								<SelectTrigger className="h-9 w-full sm:w-[120px] border-0 bg-transparent shadow-none focus:ring-0 px-1 py-0 font-medium">
+									<SelectValue placeholder="All" />
+								</SelectTrigger>
+								<SelectContent>
+									<SelectItem value="all">All</SelectItem>
+									{resultOptions.map((r) => (
+										<SelectItem key={r} value={r}>
+											{getResultDisplay(r).label}
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
+						</div>
 
-					{/* Repository search */}
-					<div className="flex items-center gap-2">
-						<span className="text-sm text-muted-foreground">Repository:</span>
-						<Input
-							type="text"
-							placeholder="owner/repo"
-							value={repoSearch}
-							onChange={(e) => setRepoSearch(e.target.value)}
-							className="h-8 w-[180px]"
-						/>
-					</div>
-
-					{/* Actor search */}
-					<div className="flex items-center gap-2">
-						<span className="text-sm text-muted-foreground">Actor:</span>
-						<Input
-							type="text"
-							placeholder="username"
-							value={actorSearch}
-							onChange={(e) => setActorSearch(e.target.value)}
-							className="h-8 w-[140px]"
-						/>
+						<div className="flex items-center gap-2 bg-secondary/30 px-3 py-1 rounded-xl shadow-sm border border-border/40 relative w-full sm:w-auto">
+							<SearchIcon size={14} className="text-muted-foreground absolute left-3" />
+							<Input
+								type="text"
+								placeholder="Repo..."
+								value={repoSearch}
+								onChange={(e) => setRepoSearch(e.target.value)}
+								className="h-9 w-full sm:w-[140px] border-0 bg-transparent shadow-none focus-visible:ring-0 pl-7 text-sm font-medium"
+							/>
+						</div>
+						
+						<div className="flex items-center gap-2 bg-secondary/30 px-3 py-1 rounded-xl shadow-sm border border-border/40 relative w-full sm:w-auto">
+							<SearchIcon size={14} className="text-muted-foreground absolute left-3" />
+							<Input
+								type="text"
+								placeholder="Actor..."
+								value={actorSearch}
+								onChange={(e) => setActorSearch(e.target.value)}
+								className="h-9 w-full sm:w-[120px] border-0 bg-transparent shadow-none focus-visible:ring-0 pl-7 text-sm font-medium"
+							/>
+						</div>
 					</div>
 				</div>
 
-				{/* Error state */}
 				{isError && (
-					<div className="mt-4 rounded-lg border border-destructive bg-destructive/10 p-4">
-						<p className="text-sm text-destructive">
+					<div className="mb-6 rounded-2xl border border-destructive/50 bg-destructive/10 p-4 animate-slide-up-fade">
+						<p className="text-sm font-bold text-destructive">
 							Failed to load audit logs: {error?.message ?? "Unknown error"}
 						</p>
 					</div>
 				)}
 
-				{/* Data table */}
-				<div className="mt-4 space-y-4">
+				<div className="overflow-hidden rounded-2xl border border-border/60 bg-card">
 					<DataTable
 						columns={columns}
 						data={auditLogs}
 						loading={isLoading}
 						onRowClick={handleRowClick}
 					/>
+				</div>
 
-					{/* Pagination */}
-					<div className="flex items-center justify-between">
-						<div className="flex items-center space-x-2">
-							<span className="text-sm text-muted-foreground">
-								Rows per page
-							</span>
-							<Select
-								value={`${pageSize}`}
-								onValueChange={(value) => {
-									setPageSize(Number(value));
-									setPage(1);
-								}}
-							>
-								<SelectTrigger className="h-8 w-[70px]">
-									<SelectValue placeholder={pageSize} />
-								</SelectTrigger>
-								<SelectContent side="top">
-									{[10, 20, 30, 40, 50].map((size) => (
-										<SelectItem key={size} value={`${size}`}>
-											{size}
-										</SelectItem>
-									))}
-								</SelectContent>
-							</Select>
-						</div>
-						<Pagination>
-							<PaginationContent>
-								<PaginationItem>
-									<PaginationPrevious
-										onClick={() => setPage(page - 1)}
-										className={
-											!canPreviousPage
-												? "pointer-events-none opacity-50"
-												: "cursor-pointer"
-										}
-									/>
-								</PaginationItem>
-								<PaginationItem>
-									<span className="flex h-9 w-9 items-center justify-center text-sm">
-										{page}
-									</span>
-								</PaginationItem>
-								<PaginationItem>
-									<PaginationNext
-										onClick={() => setPage(page + 1)}
-										className={
-											!canNextPage
-												? "pointer-events-none opacity-50"
-												: "cursor-pointer"
-										}
-									/>
-								</PaginationItem>
-							</PaginationContent>
-						</Pagination>
+				<div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+					<div className="flex items-center space-x-3 bg-secondary/30 px-4 py-2 rounded-xl">
+						<span className="text-sm font-medium text-muted-foreground">
+							Rows per page
+						</span>
+						<Select
+							value={`${pageSize}`}
+							onValueChange={(value) => {
+								setPageSize(Number(value));
+								setPage(1);
+							}}
+						>
+							<SelectTrigger className="h-8 w-[70px] bg-background border-border/50">
+								<SelectValue placeholder={pageSize} />
+							</SelectTrigger>
+							<SelectContent side="top">
+								{[10, 20, 50, 100].map((size) => (
+									<SelectItem key={size} value={`${size}`}>
+										{size}
+									</SelectItem>
+								))}
+							</SelectContent>
+						</Select>
 					</div>
+					<Pagination className="justify-end w-auto mx-0">
+						<PaginationContent className="bg-secondary/30 rounded-xl p-1 shadow-inner">
+							<PaginationItem>
+								<PaginationPrevious
+									onClick={() => setPage(page - 1)}
+									className={
+										!canPreviousPage
+											? "pointer-events-none opacity-50 text-muted-foreground"
+											: "cursor-pointer hover:bg-background rounded-lg font-bold"
+									}
+								/>
+							</PaginationItem>
+							<PaginationItem>
+								<span className="flex h-9 min-w-9 items-center justify-center text-sm font-bold bg-background rounded-lg shadow-sm border border-border/50 px-3 text-foreground">
+									Page {page} of {totalPages}
+								</span>
+							</PaginationItem>
+							<PaginationItem>
+								<PaginationNext
+									onClick={() => setPage(page + 1)}
+									className={
+										!canNextPage
+											? "pointer-events-none opacity-50 text-muted-foreground"
+											: "cursor-pointer hover:bg-background rounded-lg font-bold"
+									}
+								/>
+							</PaginationItem>
+						</PaginationContent>
+					</Pagination>
 				</div>
 			</section>
 		</div>
