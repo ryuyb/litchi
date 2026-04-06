@@ -81,34 +81,34 @@
 
 ## 7.2 业务组件
 
-- [ ] **T7.2.1** 实现阶段进度组件
+- [x] **T7.2.1** 实现阶段进度组件
   - 验收标准：
-    - [ ] 5 阶段可视化显示
-    - [ ] 当前阶段高亮
-    - [ ] 支持点击查看详情
-    - [ ] TanStack Router 链接导航
+    - [x] 5 阶段可视化显示 (6 stages: Clarification -> Design -> TaskBreakdown -> Execution -> PullRequest -> Completed)
+    - [x] 当前阶段高亮
+    - [x] 支持点击查看详情
+    - [x] TanStack Router 链接导航 (via onStageClick callback)
   - 依赖：T7.1.3
   - 风险：低
   - 预估：1d
   - 可并行：是（与 T7.2.2~T7.2.5）
 
-- [ ] **T7.2.2** 实现任务列表组件
+- [x] **T7.2.2** 实现任务列表组件
   - 验收标准：
-    - [ ] TanStack Table 配置正确
-    - [ ] 任务状态显示正确
-    - [ ] 依赖关系显示正确
-    - [ ] TanStack Query mutation 支持任务操作
+    - [x] TanStack Table 配置正确
+    - [x] 任务状态显示正确
+    - [x] 依赖关系显示正确
+    - [x] TanStack Query mutation 支持任务操作
   - 依赖：T7.1.3, T7.0.1
   - 风险：低
   - 预估：1d
   - 可并行：是（与 T7.2.*）
 
-- [ ] **T7.2.3** 实现日志查看组件
+- [x] **T7.2.3** 实现日志查看组件
   - 验收标准：
-    - [ ] WebSocket 实时日志显示
-    - [ ] TanStack Query 缓存正确
-    - [ ] 日志过滤功能
-    - [ ] 日志搜索功能
+    - [x] WebSocket 实时日志显示
+    - [x] TanStack Query 缓存正确
+    - [x] 日志过滤功能
+    - [x] 日志搜索功能
   - 依赖：T6.2.2
   - 风险：中
   - 预估：1.5d

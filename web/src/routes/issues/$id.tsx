@@ -1,10 +1,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import type { ColumnDef } from "@tanstack/react-table";
 import {
 	ArrowLeftIcon,
-	CheckCircleIcon,
-	CircleIcon,
 	ExternalLinkIcon,
 	LoaderIcon,
 	PauseIcon,
@@ -12,14 +9,12 @@ import {
 	RefreshCcwIcon,
 	RotateCcwIcon,
 	StopCircleIcon,
-	XCircleIcon,
 } from "lucide-react";
 import { useState } from "react";
 import {
 	type RollbackSessionTargetStage,
 	SessionCurrentStage,
 	SessionStatus,
-	type Task,
 } from "#/api/schemas";
 import type { Session } from "#/api/schemas/session";
 import {
@@ -32,7 +27,7 @@ import {
 	usePostApiV1SessionsIdRollback,
 	usePostApiV1SessionsIdTerminate,
 } from "#/api/sessions/sessions";
-import { DataTable } from "#/components/data-table";
+import { StageProgress, TaskList } from "#/components/business";
 import { Button } from "#/components/ui/button";
 import {
 	Select,
@@ -41,17 +36,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "#/components/ui/select";
-import {
-	Tooltip,
-	TooltipContent,
-	TooltipProvider,
-	TooltipTrigger,
-} from "#/components/ui/tooltip";
-import {
-	rollbackStages,
-	statusConfig,
-	workflowStages,
-} from "#/lib/session-config";
+import { rollbackStages, statusConfig } from "#/lib/session-config";
 
 export const Route = createFileRoute("/issues/$id")({
 	component: IssueDetailPage,
@@ -65,172 +50,6 @@ function isSuccessResponse(
 	data: Session;
 } {
 	return response?.status === 200;
-}
-
-// Task table columns
-const taskColumns: ColumnDef<Task>[] = [
-	{
-		accessorKey: "order",
-		header: "#",
-		cell: ({ row }) => (
-			<span className="font-mono text-sm">{row.original.order ?? "-"}</span>
-		),
-	},
-	{
-		accessorKey: "description",
-		header: "Description",
-		cell: ({ row }) => (
-			<span className="text-sm">{row.original.description ?? "-"}</span>
-		),
-	},
-	{
-		accessorKey: "status",
-		header: "Status",
-		cell: ({ row }) => {
-			const status = row.original.status;
-			const statusDisplay = row.original.statusDisplay;
-
-			const statusIconConfig: Record<
-				string,
-				{ color: string; icon: React.ReactNode }
-			> = {
-				pending: {
-					color: "text-muted-foreground",
-					icon: <CircleIcon className="size-4" />,
-				},
-				ready: {
-					color: "text-blue-600 dark:text-blue-400",
-					icon: <CheckCircleIcon className="size-4" />,
-				},
-				in_progress: {
-					color: "text-orange-600 dark:text-orange-400",
-					icon: <LoaderIcon className="size-4 animate-spin" />,
-				},
-				completed: {
-					color: "text-green-600 dark:text-green-400",
-					icon: <CheckCircleIcon className="size-4" />,
-				},
-				failed: {
-					color: "text-red-600 dark:text-red-400",
-					icon: <XCircleIcon className="size-4" />,
-				},
-				skipped: {
-					color: "text-gray-500 dark:text-gray-400",
-					icon: <StopCircleIcon className="size-4" />,
-				},
-			};
-
-			const config = status ? statusIconConfig[status] : null;
-
-			return (
-				<div className="flex items-center gap-2">
-					{config ? (
-						<>
-							<span className={config.color}>{config.icon}</span>
-							<span className={`text-sm ${config.color}`}>
-								{statusDisplay ?? status}
-							</span>
-						</>
-					) : (
-						<span className="text-muted-foreground text-sm">
-							{statusDisplay ?? status ?? "-"}
-						</span>
-					)}
-				</div>
-			);
-		},
-	},
-	{
-		accessorKey: "retryCount",
-		header: "Retries",
-		cell: ({ row }) => (
-			<span className="font-mono text-sm">{row.original.retryCount ?? 0}</span>
-		),
-	},
-];
-
-// Stage progress component
-function StageProgress({
-	currentStage,
-	status,
-}: {
-	currentStage: SessionCurrentStage | undefined;
-	status: SessionStatus | undefined;
-}) {
-	const currentIndex = workflowStages.findIndex(
-		(stage) => stage.key === currentStage,
-	);
-
-	return (
-		<TooltipProvider>
-			<div className="flex items-center justify-between">
-				{workflowStages.map((stage, index) => {
-					const isActive = index === currentIndex;
-					const isCompleted = index < currentIndex;
-					const isPending = index > currentIndex;
-					const isTerminated = status === SessionStatus.terminated;
-
-					let icon: React.ReactNode;
-					let colorClass: string;
-
-					if (isTerminated) {
-						icon = <XCircleIcon className="size-5" />;
-						colorClass = "text-red-500";
-					} else if (isCompleted) {
-						icon = <CheckCircleIcon className="size-5" />;
-						colorClass = "text-green-500";
-					} else if (isActive) {
-						icon =
-							status === SessionStatus.paused ? (
-								<PauseIcon className="size-5" />
-							) : (
-								<LoaderIcon className="size-5 animate-spin" />
-							);
-						colorClass = "text-orange-500";
-					} else {
-						icon = <CircleIcon className="size-5" />;
-						colorClass = "text-muted-foreground";
-					}
-
-					return (
-						<div key={stage.key} className="flex flex-1 items-center">
-							<Tooltip>
-								<TooltipTrigger asChild>
-									<div
-										className={`flex flex-col items-center gap-1 cursor-pointer transition-opacity ${
-											isPending ? "opacity-50" : ""
-										}`}
-									>
-										<div className={colorClass}>{icon}</div>
-										<span
-											className={`text-xs font-medium ${
-												isActive ? colorClass : "text-muted-foreground"
-											}`}
-										>
-											{stage.label}
-										</span>
-									</div>
-								</TooltipTrigger>
-								<TooltipContent side="top">
-									<p className="font-medium">{stage.label}</p>
-									<p className="text-xs text-muted-foreground">
-										{stage.description}
-									</p>
-								</TooltipContent>
-							</Tooltip>
-							{index < workflowStages.length - 1 && (
-								<div
-									className={`mx-2 h-0.5 flex-1 ${
-										isCompleted || isActive ? "bg-green-500" : "bg-border"
-									}`}
-								/>
-							)}
-						</div>
-					);
-				})}
-			</div>
-		</TooltipProvider>
-	);
 }
 
 // Status badge component
@@ -557,7 +376,7 @@ function IssueDetailPage() {
 				<h2 className="mb-4 text-lg font-semibold text-card-foreground">
 					Tasks ({tasks.length})
 				</h2>
-				<DataTable columns={taskColumns} data={tasks} />
+				<TaskList sessionId={id} tasks={tasks} />
 			</section>
 		</div>
 	);
