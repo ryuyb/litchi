@@ -6,6 +6,7 @@ import (
 	"net"
 
 	"github.com/gofiber/fiber/v3"
+	"github.com/gofiber/contrib/v3/swaggerui"
 	"github.com/ryuyb/litchi/internal/infrastructure/config"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -26,12 +27,19 @@ func NewApp(p Params) *fiber.App {
 	})
 
 	// Health check endpoint
-	app.Get("/health", func(c fiber.Ctx) error {
-		return c.JSON(fiber.Map{
-			"status":  "healthy",
-			"version": p.Config.Server.Version,
-		})
-	})
+	healthHandler := NewHealthHandler(p.Config.Server.Version)
+	app.Get("/health", healthHandler.Handle)
+
+	// Swagger UI - controlled by configuration
+	if p.Config.Server.EnableSwaggerUI {
+		app.Use(swaggerui.New(swaggerui.Config{
+			BasePath: "/",
+			FilePath: "./docs/api/swagger.json",
+			Path:     "swagger",
+			Title:    "Litchi API Documentation",
+		}))
+		p.Logger.Info("Swagger UI enabled at /swagger")
+	}
 
 	return app
 }

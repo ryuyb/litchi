@@ -1,6 +1,6 @@
 # Litchi Project Makefile
 
-.PHONY: help generate-mocks test test-short build clean
+.PHONY: help generate-mocks test test-short build clean swagger-gen
 
 # Default target
 help:
@@ -8,6 +8,7 @@ help:
 	@echo ""
 	@echo "Usage:"
 	@echo "  make generate-mocks  Generate mock implementations using mockery"
+	@echo "  make swagger-gen     Generate Swagger/OpenAPI documentation"
 	@echo "  make test            Run all tests"
 	@echo "  make test-short      Run short tests (skip integration tests)"
 	@echo "  make build           Build all binaries"
@@ -18,6 +19,14 @@ generate-mocks:
 	@echo "Generating mocks with mockery..."
 	mockery
 	@echo "Mocks generated successfully"
+
+# Generate Swagger/OpenAPI documentation (OpenAPI 3.1)
+swagger-gen:
+	@echo "Generating Swagger documentation (OpenAPI 3.1)..."
+	@mkdir -p ./docs/api
+	swag init --v3.1 -g cmd/server/main.go -d . -o ./docs/api \
+		--parseInternal --outputTypes go,json,yaml --propertyStrategy camelcase
+	@echo "Swagger documentation generated in ./docs/api"
 
 # Run all tests (including integration tests with Docker)
 test:

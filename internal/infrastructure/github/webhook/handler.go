@@ -8,6 +8,7 @@ import (
 	"net"
 
 	"github.com/gofiber/fiber/v3"
+	_ "github.com/ryuyb/litchi/internal/application/dto" // Imported for Swagger documentation generation
 	"github.com/ryuyb/litchi/internal/domain/entity"
 	"github.com/ryuyb/litchi/internal/domain/repository"
 	"github.com/ryuyb/litchi/internal/infrastructure/config"
@@ -60,7 +61,20 @@ func NewHandler(p HandlerParams) *Handler {
 }
 
 // Handle handles incoming GitHub webhook requests.
-// Route: POST /api/v1/webhooks/github
+// @Summary        Process GitHub webhook
+// @Description    Receives and processes GitHub webhook events with signature verification
+// @Tags           webhooks
+// @Accept         json
+// @Produce        json
+// @Param          X-Hub-Signature-256  header    string  true  "GitHub webhook signature"
+// @Param          X-GitHub-Delivery    header    string  true  "GitHub delivery ID"
+// @Param          X-GitHub-Event       header    string  true  "GitHub event type (issues, issue_comment, pull_request, etc.)"
+// @Param          payload              body      object  true  "GitHub webhook payload"
+// @Success        200  {object}  dto.WebhookResponse  "Webhook processed successfully"
+// @Failure        400  {object}  dto.ErrorResponse    "Invalid payload or missing headers"
+// @Failure        401  {object}  dto.ErrorResponse    "Invalid signature"
+// @Failure        503  {object}  dto.ErrorResponse    "Service temporarily unavailable"
+// @Router         /webhooks/github [post]
 func (h *Handler) Handle(c fiber.Ctx) error {
 	ctx := c.Context()
 
@@ -201,6 +215,13 @@ func computePayloadHash(payload []byte) string {
 }
 
 // HealthCheck returns the health status of the webhook handler.
+// @Summary        Webhook handler health check
+// @Description    Returns health status including registered event handlers
+// @Tags           webhooks
+// @Accept         json
+// @Produce        json
+// @Success        200  {object}  dto.WebhookHealthResponse  "Health check successful"
+// @Router         /webhooks/health [get]
 func (h *Handler) HealthCheck(c fiber.Ctx) error {
 	return c.JSON(fiber.Map{
 		"status":             "healthy",

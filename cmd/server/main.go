@@ -5,7 +5,16 @@ import (
 	"github.com/ryuyb/litchi/internal/infrastructure/config"
 	"github.com/ryuyb/litchi/internal/pkg/logger"
 	"go.uber.org/fx"
+
+	_ "github.com/ryuyb/litchi/docs/api" // Import generated docs for Swagger embedding
 )
+
+// @title           Litchi API
+// @version         0.1.0
+// @description     Automated development agent system - from GitHub Issue to Pull Request
+
+// @host      localhost:8080
+// @BasePath  /api/v1
 
 func main() {
 	fx.New(

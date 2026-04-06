@@ -6,22 +6,24 @@
 
 ## 6.0 OpenAPI/Swagger 文档
 
-- [ ] **T6.0.1** 配置 Swagger/OpenAPI 文档生成
+- [x] **T6.0.1** 配置 Swagger/OpenAPI 文档生成
   - 验收标准：
-    - [ ] Swagger/OpenAPI 3.0 规范文档生成正确
-    - [ ] 使用 fiber-swagger 或 swaggo/swag 集成
-    - [ ] API 注释格式正确（路由、参数、响应）
-    - [ ] Swagger UI 可访问（/swagger/*）
-    - [ ] 文档自动更新（随 API 变化）
-    - [ ] 导出 swagger.json 供 Orval 使用
-    - [ ] 替换 T1.3.5 手写的临时 swagger.json
-    - [ ] 更新前端 Orval 配置指向新文档路径
-    - [ ] 执行 `orval:generate` 重新生成 API 客户端代码
+    - [x] Swagger/OpenAPI 3.0 规范文档生成正确 (OpenAPI 3.1)
+    - [x] 使用 fiber-swagger 或 swaggo/swag 集成 (swaggo/swag/v2 + swaggerui)
+    - [x] API 注释格式正确（路由、参数、响应）
+    - [x] Swagger UI 可访问（/swagger/*）
+    - [x] 文档自动更新（随 API 变化）
+    - [x] 导出 swagger.json 供 Orval 使用 (docs/api/swagger.json)
+    - [ ] 替换 T1.3.5 手写的临时 swagger.json (等 T6.1 完成后切换)
+    - [x] 更新前端 Orval 配置指向新文档路径 (暂保留 web/swagger.json 作为设计文档)
+    - [x] 执行 `orval:generate` 重新生成 API 客户端代码
   - 依赖：T5.1.*
   - 风险：低
   - 预估：0.5d
   - 可并行：否
-  - 备注：完成后需通知前端重新执行 Orval 生成
+  - 备注：
+    - 完成后需通知前端重新执行 Orval 生成
+    - **Orval 切换时机**: T6.1.1~T6.1.7 完成后，删除 web/swagger.json，修改 orval.config.ts 指向 docs/api/swagger.json
 
 ---
 

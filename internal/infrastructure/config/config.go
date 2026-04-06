@@ -40,10 +40,11 @@ func (c *Config) Validate() error {
 }
 
 type ServerConfig struct {
-	Host    string `mapstructure:"host"`
-	Port    int    `mapstructure:"port"`
-	Mode    string `mapstructure:"mode"` // debug, release, test
-	Version string `mapstructure:"version"`
+	Host            string `mapstructure:"host"`
+	Port            int    `mapstructure:"port"`
+	Mode            string `mapstructure:"mode"`            // debug, release, test
+	Version         string `mapstructure:"version"`
+	EnableSwaggerUI bool   `mapstructure:"enable_swagger"` // Enable Swagger UI endpoint
 }
 
 func (c *ServerConfig) Validate() error {
