@@ -9,18 +9,14 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SettingsIndexRouteImport } from './routes/settings/index'
 import { Route as RepositoriesIndexRouteImport } from './routes/repositories/index'
 import { Route as IssuesIndexRouteImport } from './routes/issues/index'
 import { Route as AuditLogsIndexRouteImport } from './routes/audit-logs/index'
+import { Route as RepositoriesNameRouteImport } from './routes/repositories/$name'
+import { Route as IssuesIdRouteImport } from './routes/issues/$id'
 
-const AboutRoute = AboutRouteImport.update({
-  id: '/about',
-  path: '/about',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -46,10 +42,21 @@ const AuditLogsIndexRoute = AuditLogsIndexRouteImport.update({
   path: '/audit-logs/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RepositoriesNameRoute = RepositoriesNameRouteImport.update({
+  id: '/repositories/$name',
+  path: '/repositories/$name',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IssuesIdRoute = IssuesIdRouteImport.update({
+  id: '/issues/$id',
+  path: '/issues/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/about': typeof AboutRoute
+  '/issues/$id': typeof IssuesIdRoute
+  '/repositories/$name': typeof RepositoriesNameRoute
   '/audit-logs/': typeof AuditLogsIndexRoute
   '/issues/': typeof IssuesIndexRoute
   '/repositories/': typeof RepositoriesIndexRoute
@@ -57,7 +64,8 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/about': typeof AboutRoute
+  '/issues/$id': typeof IssuesIdRoute
+  '/repositories/$name': typeof RepositoriesNameRoute
   '/audit-logs': typeof AuditLogsIndexRoute
   '/issues': typeof IssuesIndexRoute
   '/repositories': typeof RepositoriesIndexRoute
@@ -66,7 +74,8 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/about': typeof AboutRoute
+  '/issues/$id': typeof IssuesIdRoute
+  '/repositories/$name': typeof RepositoriesNameRoute
   '/audit-logs/': typeof AuditLogsIndexRoute
   '/issues/': typeof IssuesIndexRoute
   '/repositories/': typeof RepositoriesIndexRoute
@@ -76,17 +85,26 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/about'
+    | '/issues/$id'
+    | '/repositories/$name'
     | '/audit-logs/'
     | '/issues/'
     | '/repositories/'
     | '/settings/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/about' | '/audit-logs' | '/issues' | '/repositories' | '/settings'
+  to:
+    | '/'
+    | '/issues/$id'
+    | '/repositories/$name'
+    | '/audit-logs'
+    | '/issues'
+    | '/repositories'
+    | '/settings'
   id:
     | '__root__'
     | '/'
-    | '/about'
+    | '/issues/$id'
+    | '/repositories/$name'
     | '/audit-logs/'
     | '/issues/'
     | '/repositories/'
@@ -95,7 +113,8 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AboutRoute: typeof AboutRoute
+  IssuesIdRoute: typeof IssuesIdRoute
+  RepositoriesNameRoute: typeof RepositoriesNameRoute
   AuditLogsIndexRoute: typeof AuditLogsIndexRoute
   IssuesIndexRoute: typeof IssuesIndexRoute
   RepositoriesIndexRoute: typeof RepositoriesIndexRoute
@@ -104,13 +123,6 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/about': {
-      id: '/about'
-      path: '/about'
-      fullPath: '/about'
-      preLoaderRoute: typeof AboutRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/': {
       id: '/'
       path: '/'
@@ -146,12 +158,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuditLogsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/repositories/$name': {
+      id: '/repositories/$name'
+      path: '/repositories/$name'
+      fullPath: '/repositories/$name'
+      preLoaderRoute: typeof RepositoriesNameRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/issues/$id': {
+      id: '/issues/$id'
+      path: '/issues/$id'
+      fullPath: '/issues/$id'
+      preLoaderRoute: typeof IssuesIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AboutRoute: AboutRoute,
+  IssuesIdRoute: IssuesIdRoute,
+  RepositoriesNameRoute: RepositoriesNameRoute,
   AuditLogsIndexRoute: AuditLogsIndexRoute,
   IssuesIndexRoute: IssuesIndexRoute,
   RepositoriesIndexRoute: RepositoriesIndexRoute,

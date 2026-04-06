@@ -1,61 +1,32 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import type { ColumnDef } from "@tanstack/react-table";
-import type { Session } from "#/api/schemas";
-import { SessionCurrentStage, SessionStatus } from "#/api/schemas";
+import { useState } from "react";
+import type {
+	GetApiV1SessionsStage,
+	GetApiV1SessionsStatus,
+	Session,
+} from "#/api/schemas";
+import type { PaginatedResponseSession } from "#/api/schemas/paginatedResponseSession";
+import { useGetApiV1Sessions } from "#/api/sessions/sessions";
 import { DataTable } from "#/components/data-table";
+import { Input } from "#/components/ui/input";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "#/components/ui/select";
+import {
+	getStageColor,
+	getStatusColor,
+	stageConfig,
+	statusConfig,
+} from "#/lib/session-config";
 
 export const Route = createFileRoute("/issues/")({
 	component: IssuesPage,
 });
-
-// Demo data using generated types and constants
-const demoSessions: Session[] = [
-	{
-		id: "550e8400-e29b-41d4-a716-446655440001",
-		currentStage: SessionCurrentStage.execution,
-		status: SessionStatus.active,
-		repository: "ryuyb/litchi",
-		issueNumber: 123,
-		issueTitle: "Add user authentication",
-		issue: {
-			number: 123,
-			title: "Add user authentication",
-			body: "Implement OAuth2 authentication flow",
-			author: "ryuyb",
-			url: "https://github.com/ryuyb/litchi/issues/123",
-		},
-	},
-	{
-		id: "550e8400-e29b-41d4-a716-446655440002",
-		currentStage: SessionCurrentStage.clarification,
-		status: SessionStatus.active,
-		repository: "ryuyb/litchi",
-		issueNumber: 121,
-		issueTitle: "Update API documentation",
-		issue: {
-			number: 121,
-			title: "Update API documentation",
-			body: "Add examples for new endpoints",
-			author: "contributor",
-			url: "https://github.com/ryuyb/litchi/issues/121",
-		},
-	},
-	{
-		id: "550e8400-e29b-41d4-a716-446655440003",
-		currentStage: SessionCurrentStage.design,
-		status: SessionStatus.paused,
-		repository: "ryuyb/litchi",
-		issueNumber: 120,
-		issueTitle: "Fix database connection pool",
-		issue: {
-			number: 120,
-			title: "Fix database connection pool",
-			body: "Connection pool exhausted under high load",
-			author: "ryuyb",
-			url: "https://github.com/ryuyb/litchi/issues/120",
-		},
-	},
-];
 
 const columns: ColumnDef<Session>[] = [
 	{
@@ -86,28 +57,12 @@ const columns: ColumnDef<Session>[] = [
 		header: "Stage",
 		cell: ({ row }) => {
 			const stage = row.original.currentStage;
-			const stageColors: Record<SessionCurrentStage, string> = {
-				[SessionCurrentStage.clarification]:
-					"bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300",
-				[SessionCurrentStage.design]:
-					"bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300",
-				[SessionCurrentStage.task_breakdown]:
-					"bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300",
-				[SessionCurrentStage.execution]:
-					"bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300",
-				[SessionCurrentStage.pull_request]:
-					"bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
-				[SessionCurrentStage.completed]:
-					"bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300",
-			};
-			const colorClass = stage
-				? stageColors[stage]
-				: "bg-gray-100 text-gray-800";
+			const colorClass = getStageColor(stage);
 			return (
 				<span
 					className={`rounded-full px-2 py-0.5 text-xs font-medium ${colorClass}`}
 				>
-					{stage?.replace("_", " ") ?? "unknown"}
+					{stage ? stageConfig[stage].label : "unknown"}
 				</span>
 			);
 		},
@@ -117,30 +72,12 @@ const columns: ColumnDef<Session>[] = [
 		header: "Status",
 		cell: ({ row }) => {
 			const status = row.original.status;
-			if (status === SessionStatus.terminated) {
-				return (
-					<span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800 dark:bg-red-900 dark:text-red-300">
-						Terminated
-					</span>
-				);
-			}
-			if (status === SessionStatus.paused) {
-				return (
-					<span className="rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300">
-						Paused
-					</span>
-				);
-			}
-			if (status === SessionStatus.completed) {
-				return (
-					<span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-800 dark:bg-gray-800 dark:text-gray-300">
-						Completed
-					</span>
-				);
-			}
+			const colorClass = getStatusColor(status);
 			return (
-				<span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900 dark:text-green-300">
-					Active
+				<span
+					className={`rounded-full px-2 py-0.5 text-xs font-medium ${colorClass}`}
+				>
+					{status ? statusConfig[status].label : "unknown"}
 				</span>
 			);
 		},
@@ -148,6 +85,59 @@ const columns: ColumnDef<Session>[] = [
 ];
 
 function IssuesPage() {
+	const navigate = useNavigate();
+	const [page, setPage] = useState(1);
+	const [pageSize, setPageSize] = useState(10);
+	const [statusFilter, setStatusFilter] = useState<string>("all");
+	const [stageFilter, setStageFilter] = useState<string>("all");
+	const [repoSearch, setRepoSearch] = useState("");
+
+	// Build API params
+	const params = {
+		page,
+		pageSize,
+		status:
+			statusFilter !== "all"
+				? (statusFilter as GetApiV1SessionsStatus)
+				: undefined,
+		stage:
+			stageFilter !== "all"
+				? (stageFilter as GetApiV1SessionsStage)
+				: undefined,
+		repo: repoSearch || undefined,
+	};
+
+	// Fetch sessions using the generated hook
+	const {
+		data: response,
+		isLoading,
+		isError,
+		error,
+	} = useGetApiV1Sessions({}, params);
+
+	// Extract data from response - check if success (status 200)
+	const isSuccess = response?.status === 200;
+	const responseData: PaginatedResponseSession | undefined = isSuccess
+		? response?.data
+		: undefined;
+	const sessions = responseData?.data ?? [];
+	const pagination = responseData?.pagination;
+	const totalPages = pagination?.totalPages ?? 1;
+
+	// Handle pagination change
+	const handlePaginationChange = (
+		newPageIndex: number,
+		newPageSize: number,
+	) => {
+		setPage(newPageIndex + 1); // API uses 1-based pagination
+		setPageSize(newPageSize);
+	};
+
+	// Handle row click - navigate to detail page
+	const handleRowClick = (session: Session) => {
+		navigate({ to: `/issues/${session.id}` });
+	};
+
 	return (
 		<div className="space-y-6">
 			<section className="rounded-xl border border-border bg-card p-6 shadow-sm">
@@ -163,8 +153,79 @@ function IssuesPage() {
 				<h2 className="text-lg font-semibold text-card-foreground">
 					Active Sessions
 				</h2>
+
+				{/* Filters */}
+				<div className="mt-4 flex flex-wrap items-center gap-4">
+					{/* Status filter */}
+					<div className="flex items-center gap-2">
+						<span className="text-sm text-muted-foreground">Status:</span>
+						<Select value={statusFilter} onValueChange={setStatusFilter}>
+							<SelectTrigger className="h-8 w-[120px]">
+								<SelectValue placeholder="All" />
+							</SelectTrigger>
+							<SelectContent>
+								<SelectItem value="all">All</SelectItem>
+								{Object.entries(statusConfig).map(([key, value]) => (
+									<SelectItem key={key} value={key}>
+										{value.label}
+									</SelectItem>
+								))}
+							</SelectContent>
+						</Select>
+					</div>
+
+					{/* Stage filter */}
+					<div className="flex items-center gap-2">
+						<span className="text-sm text-muted-foreground">Stage:</span>
+						<Select value={stageFilter} onValueChange={setStageFilter}>
+							<SelectTrigger className="h-8 w-[140px]">
+								<SelectValue placeholder="All" />
+							</SelectTrigger>
+							<SelectContent>
+								<SelectItem value="all">All</SelectItem>
+								{Object.entries(stageConfig).map(([key, value]) => (
+									<SelectItem key={key} value={key}>
+										{value.label}
+									</SelectItem>
+								))}
+							</SelectContent>
+						</Select>
+					</div>
+
+					{/* Repository search */}
+					<div className="flex items-center gap-2">
+						<span className="text-sm text-muted-foreground">Repository:</span>
+						<Input
+							type="text"
+							placeholder="owner/repo"
+							value={repoSearch}
+							onChange={(e) => setRepoSearch(e.target.value)}
+							className="h-8 w-[180px]"
+						/>
+					</div>
+				</div>
+
+				{/* Error state */}
+				{isError && (
+					<div className="mt-4 rounded-lg border border-destructive bg-destructive/10 p-4">
+						<p className="text-sm text-destructive">
+							Failed to load sessions: {error?.message ?? "Unknown error"}
+						</p>
+					</div>
+				)}
+
+				{/* Data table */}
 				<div className="mt-4">
-					<DataTable columns={columns} data={demoSessions} />
+					<DataTable
+						columns={columns}
+						data={sessions}
+						pageCount={totalPages}
+						pageIndex={page - 1} // DataTable uses 0-based, API uses 1-based
+						pageSize={pageSize}
+						onPaginationChange={handlePaginationChange}
+						loading={isLoading}
+						onRowClick={handleRowClick}
+					/>
 				</div>
 			</section>
 		</div>

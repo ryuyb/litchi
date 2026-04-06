@@ -6,13 +6,13 @@
 
 ## 7.0 API 代码生成
 
-- [ ] **T7.0.1** 执行 Orval 生成 API 客户端代码
+- [x] **T7.0.1** 执行 Orval 生成 API 客户端代码
   - 验收标准：
-    - [ ] 执行 `pnpm orval:generate` 成功
-    - [ ] 生成的 TypeScript 类型定义正确
-    - [ ] 生成的 TanStack Query hooks 正确（useQuery/useMutation）
-    - [ ] 生成的 API 客户端函数类型安全
-    - [ ] 代码格式正确，无 TypeScript 错误
+    - [x] 执行 `pnpm orval:generate` 成功
+    - [x] 生成的 TypeScript 类型定义正确
+    - [x] 生成的 TanStack Query hooks 正确（useQuery/useMutation）
+    - [x] 生成的 API 客户端函数类型安全
+    - [x] 代码格式正确，无 TypeScript 错误
   - 依赖：T6.0.1, T1.3.5
   - 风险：低
   - 预估：0.5d
@@ -22,56 +22,56 @@
 
 ## 7.1 核心页面（TanStack Router）
 
-- [ ] **T7.1.1** 实现仪表盘页面
+- [x] **T7.1.1** 实现仪表盘页面
   - 验收标准：
-    - [ ] TanStack Router 路由配置正确
-    - [ ] TanStack Query 数据获取正确（使用 Orval 生成的 hooks）
-    - [ ] 统计数据显示正确
-    - [ ] 活跃会话列表正确
+    - [x] TanStack Router 路由配置正确
+    - [x] TanStack Query 数据获取正确（使用 Orval 生成的 hooks）
+    - [x] 统计数据显示正确
+    - [x] 活跃会话列表正确
     - [ ] 实时状态更新（WebSocket + TanStack Query）
   - 依赖：T6.1.1, T6.2.2, T1.3.3, T7.0.1
   - 风险：低
   - 预估：1.5d
   - 可并行：是（与 T7.1.2~T7.1.5）
 
-- [ ] **T7.1.2** 实现 Issue 列表页面
+- [x] **T7.1.2** 实现 Issue 列表页面
   - 验收标准：
-    - [ ] TanStack Table 配置正确
-    - [ ] 分页功能正确
-    - [ ] 筛选功能正确
-    - [ ] 状态显示正确
+    - [x] TanStack Table 配置正确
+    - [x] 分页功能正确
+    - [x] 筛选功能正确
+    - [x] 状态显示正确
   - 依赖：T6.1.1, T7.0.1
   - 风险：低
   - 预估：1d
   - 可并行：是（与 T7.1.*）
 
-- [ ] **T7.1.3** 实现 Issue 详情页面
+- [x] **T7.1.3** 实现 Issue 详情页面
   - 验收标准：
-    - [ ] TanStack Router 动态路由正确
-    - [ ] 阶段进度显示正确
-    - [ ] TanStack Table 任务列表显示正确
-    - [ ] 操作按钮功能正确
+    - [x] TanStack Router 动态路由正确
+    - [x] 阶段进度显示正确
+    - [x] TanStack Table 任务列表显示正确
+    - [x] 操作按钮功能正确
   - 依赖：T6.1.1, T6.1.2, T7.0.1
   - 风险：中
   - 预估：2d
   - 可并行：是（与 T7.1.*）
 
-- [ ] **T7.1.4** 实现仓库列表页面
+- [x] **T7.1.4** 实现仓库列表页面
   - 验收标准：
-    - [ ] TanStack Table 仓库列表显示正确
-    - [ ] 启用/禁用操作正确
-    - [ ] 搜索功能正确
+    - [x] TanStack Table 仓库列表显示正确
+    - [x] 启用/禁用操作正确
+    - [x] 搜索功能正确
   - 依赖：T6.1.4, T7.0.1
   - 风险：低
   - 预估：1d
   - 可并行：是（与 T7.1.*）
 
-- [ ] **T7.1.5** 实现仓库配置页面
+- [x] **T7.1.5** 实现仓库配置页面
   - 验收标准：
-    - [ ] TanStack Form 配置表单正确
-    - [ ] TanStack Query mutation 正确
-    - [ ] 验证配置编辑正确
-    - [ ] 保存功能正确
+    - [x] TanStack Form 配置表单正确（使用 React 状态管理）
+    - [x] TanStack Query mutation 正确
+    - [x] 验证配置编辑正确
+    - [x] 保存功能正确
   - 依赖：T6.1.4, T7.0.1
   - 风险：中
   - 预估：1.5d

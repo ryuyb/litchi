@@ -24,6 +24,7 @@ interface DataTableProps<TData, TValue> {
 	pageSize?: number;
 	onPaginationChange?: (pageIndex: number, pageSize: number) => void;
 	loading?: boolean;
+	onRowClick?: (row: TData) => void;
 }
 
 export function DataTable<TData, TValue>({
@@ -34,6 +35,7 @@ export function DataTable<TData, TValue>({
 	pageSize = 10,
 	onPaginationChange,
 	loading = false,
+	onRowClick,
 }: DataTableProps<TData, TValue>) {
 	const [sorting, setSorting] = useState<SortingState>([]);
 
@@ -85,6 +87,8 @@ export function DataTable<TData, TValue>({
 								<TableRow
 									key={row.id}
 									data-state={row.getIsSelected() && "selected"}
+									className={onRowClick ? "cursor-pointer" : ""}
+									onClick={() => onRowClick?.(row.original)}
 								>
 									{row.getVisibleCells().map((cell) => (
 										<TableCell key={cell.id}>
