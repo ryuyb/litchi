@@ -1,4 +1,11 @@
-# Litchi Configuration Example
+# Litchi Base Configuration
+#
+# Environment-specific overrides are loaded in this order:
+# 1. config.yaml (this file) - base configuration
+# 2. config.{LITCHI_ENV}.yaml - environment-specific overrides (dev, uat, prod, etc.)
+# 3. config.local.yaml - local developer overrides (git-ignored)
+#
+# Environment detection: LITCHI_ENV > GO_ENV > ENV > default (dev)
 #
 # Required environment variables:
 #   DB_PASSWORD           - PostgreSQL password
@@ -16,6 +23,7 @@ server:
   host: "0.0.0.0"
   port: 8080
   mode: "debug"  # debug, release, test
+  version: "dev"
   enable_swagger: true  # Enable Swagger UI at /swagger
 
 database:
@@ -36,6 +44,15 @@ github:
   webhook_secret: "${GITHUB_WEBHOOK_SECRET}"
   app_id: "${GITHUB_APP_ID}"
   private_key_path: "${GITHUB_PRIVATE_KEY_PATH}"
+
+git:
+  worktree_base_path: "/var/litchi/worktrees"
+  worktree_auto_clean: true
+  branch_naming_pattern: "issue-{number}-{slug}"
+  default_base_branch: "main"
+  commit_sign_off: true
+  git_binary_path: "git"
+  command_timeout: "5m"
 
 webhook:
   idempotency:

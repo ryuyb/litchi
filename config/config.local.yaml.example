@@ -1,0 +1,26 @@
+# Litchi Local Development Configuration
+#
+# This file is for local developer overrides and is git-ignored.
+# Copy this file to config.local.yaml and modify as needed.
+#
+# DO NOT commit this file with real secrets!
+
+# Example: Use a different database for local development
+# database:
+#   host: "localhost"
+#   port: 5433
+#   name: "litchi_local"
+
+# Example: Enable debug logging
+# logging:
+#   level: "debug"
+#   format: "console"
+
+# Example: Disable features for faster local iteration
+# audit:
+#   enabled: false
+
+# Example: Use local Redis
+# redis:
+#   enabled: true
+#   addr: "localhost:6379"

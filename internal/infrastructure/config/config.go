@@ -20,6 +20,14 @@ type Config struct {
 	Failure    FailureConfig    `mapstructure:"failure"`
 	Logging    LoggingConfig    `mapstructure:"logging"`
 	Redis      RedisConfig      `mapstructure:"redis"`
+
+	// env holds the current environment (dev, uat, prod, etc.)
+	env Environment
+}
+
+// Environment returns the current environment.
+func (c *Config) Environment() Environment {
+	return c.env
 }
 
 // Validate validates all configuration fields.

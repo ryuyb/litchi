@@ -1,0 +1,24 @@
+# Litchi UAT Environment Configuration
+#
+# This file overrides base config values for UAT environment.
+# Only specify values that differ from config.yaml.
+
+server:
+  mode: "release"
+  enable_swagger: true  # Enable for testing
+
+database:
+  max_open_conns: 100
+  sslmode: "require"
+
+logging:
+  level: "info"
+  format: "json"
+
+audit:
+  enabled: true
+  retention_days: 30
+
+redis:
+  enabled: true
+  addr: "${REDIS_ADDR:localhost:6379}"

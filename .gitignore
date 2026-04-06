@@ -74,8 +74,8 @@ ehthumbs.db
 
 # ==================== Config & Secrets ====================
 
-# Local config overrides
-config.local.yaml
+# Local config overrides (per-environment and developer-specific)
+config/config.local.yaml
 *.local.yaml
 
 # Secrets

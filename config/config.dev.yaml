@@ -1,0 +1,24 @@
+# Litchi Development Environment Configuration
+#
+# This file overrides base config values for development environment.
+# Only specify values that differ from config.yaml.
+
+server:
+  mode: "debug"
+  enable_swagger: true
+
+database:
+  host: "localhost"
+  sslmode: "disable"
+  max_open_conns: 50
+  max_idle_conns: 5
+
+logging:
+  level: "debug"
+  format: "console"  # Human-readable format for development
+
+audit:
+  enabled: false  # Disable audit in development
+
+redis:
+  enabled: false

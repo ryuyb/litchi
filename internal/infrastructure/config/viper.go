@@ -4,10 +4,13 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/ryuyb/litchi/internal/pkg/fxutil"
 	"github.com/spf13/viper"
 	"go.uber.org/fx"
+	"go.uber.org/zap"
 )
 
 func init() {
@@ -19,27 +22,85 @@ func init() {
 	})
 }
 
+// Environment represents the deployment environment.
+type Environment string
+
+const (
+	EnvDev  Environment = "dev"
+	EnvUAT  Environment = "uat"
+	EnvProd Environment = "prod"
+)
+
 // Module provides the config module for Fx.
 var Module = fx.Module("config",
 	fx.Provide(NewConfig),
 )
 
-// NewConfig creates a Config instance from configuration file and environment variables.
+// detectEnvironment detects the current environment from environment variables.
+// Priority: LITCHI_ENV > GO_ENV > ENV > default (dev).
+func detectEnvironment() Environment {
+	if env := os.Getenv("LITCHI_ENV"); env != "" {
+		return Environment(strings.ToLower(env))
+	}
+	if env := os.Getenv("GO_ENV"); env != "" {
+		return Environment(strings.ToLower(env))
+	}
+	if env := os.Getenv("ENV"); env != "" {
+		return Environment(strings.ToLower(env))
+	}
+	return EnvDev
+}
+
+// getConfigDir returns the config directory path from environment or default.
+func getConfigDir() string {
+	// LITCHI_CONFIG_DIR takes precedence
+	if dir := os.Getenv("LITCHI_CONFIG_DIR"); dir != "" {
+		return dir
+	}
+	// If LITCHI_CONFIG_PATH is set, use its directory
+	if path := os.Getenv("LITCHI_CONFIG_PATH"); path != "" {
+		return filepath.Dir(path)
+	}
+	return "./config"
+}
+
+// isConfigFileNotFound checks if the error is a config file not found error.
+func isConfigFileNotFound(err error) bool {
+	var configFileNotFound viper.ConfigFileNotFoundError
+	if errors.As(err, &configFileNotFound) {
+		return true
+	}
+	// Also check for os.ErrNotExist for file system errors
+	if errors.Is(err, os.ErrNotExist) {
+		return true
+	}
+	return false
+}
+
+// NewConfig creates a Config instance from configuration files and environment variables.
 func NewConfig() (*Config, error) {
+	env := detectEnvironment()
+	return NewConfigWithEnv(env, nil)
+}
+
+// NewConfigWithEnv creates a Config instance with specified environment and optional logger.
+func NewConfigWithEnv(env Environment, logger *zap.Logger) (*Config, error) {
 	v := viper.New()
+
+	configDir := getConfigDir()
 
 	// Set config file details
 	v.SetConfigName("config")
 	v.SetConfigType("yaml")
+	v.AddConfigPath(configDir)
 	v.AddConfigPath(".")
-	v.AddConfigPath("./config")
 	v.AddConfigPath("/etc/litchi")
 
 	// Enable environment variable override
 	v.AutomaticEnv()
 	v.SetEnvPrefix("LITCHI")
 
-	// Bind specific env vars.
+	// Bind specific env vars
 	// Errors are intentionally ignored - if binding fails, values fallback to config file.
 	_ = v.BindEnv("database.password", "DB_PASSWORD")
 	_ = v.BindEnv("github.token", "GITHUB_TOKEN")
@@ -50,13 +111,44 @@ func NewConfig() (*Config, error) {
 	// Set defaults
 	setDefaults(v)
 
-	// Read config file
+	// Step 1: Read base config file (config.yaml)
 	if err := v.ReadInConfig(); err != nil {
-		if errors.Is(err, viper.ConfigFileNotFoundError{}) {
-			// No config file found, use defaults and env vars
+		if isConfigFileNotFound(err) {
+			if logger != nil {
+				logger.Warn("base config file not found, using defaults and env vars",
+					zap.String("config_dir", configDir),
+				)
+			}
 		} else {
 			return nil, fmt.Errorf("config file read error: %w", err)
 		}
+	}
+
+	// Step 2: Read environment-specific config file (config.{env}.yaml)
+	envConfigFile := fmt.Sprintf("config.%s", env)
+	v.SetConfigName(envConfigFile)
+	if err := v.MergeInConfig(); err != nil {
+		if !isConfigFileNotFound(err) {
+			return nil, fmt.Errorf("environment config file read error: %w", err)
+		}
+		// File not found is expected for some environments
+		if logger != nil {
+			logger.Warn("environment config file not found, skipping",
+				zap.String("env", string(env)),
+				zap.String("expected_file", envConfigFile+".yaml"),
+				zap.String("config_dir", configDir),
+			)
+		}
+	}
+
+	// Step 3: Read local override config file (config.local.yaml)
+	// This is for developer-specific overrides, should be in .gitignore
+	v.SetConfigName("config.local")
+	if err := v.MergeInConfig(); err != nil {
+		if !isConfigFileNotFound(err) {
+			return nil, fmt.Errorf("local config file read error: %w", err)
+		}
+		// Local config is optional, no warning needed
 	}
 
 	// Unmarshal to struct
@@ -64,6 +156,9 @@ func NewConfig() (*Config, error) {
 	if err := v.Unmarshal(&cfg); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
 	}
+
+	// Set env in config for reference
+	cfg.env = env
 
 	// Validate configuration
 	if err := cfg.Validate(); err != nil {
@@ -172,5 +267,5 @@ func GetConfigPath() string {
 	if path := os.Getenv("LITCHI_CONFIG_PATH"); path != "" {
 		return path
 	}
-	return "./config.yaml"
+	return filepath.Join(getConfigDir(), "config.yaml")
 }

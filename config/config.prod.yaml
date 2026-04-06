@@ -1,0 +1,37 @@
+# Litchi Production Environment Configuration
+#
+# This file overrides base config values for production environment.
+# Only specify values that differ from config.yaml.
+
+server:
+  mode: "release"
+  enable_swagger: false  # Disable Swagger in production
+
+database:
+  max_open_conns: 200
+  max_idle_conns: 20
+  sslmode: "require"
+
+logging:
+  level: "warn"
+  format: "json"
+
+audit:
+  enabled: true
+  retention_days: 365
+
+failure:
+  retry:
+    max_retries: 5
+
+  rate_limit:
+    enabled: true
+    wait_enabled: true
+    max_wait_duration: "1h"
+
+  queue:
+    max_length: 50
+
+redis:
+  enabled: true
+  addr: "${REDIS_ADDR}"
