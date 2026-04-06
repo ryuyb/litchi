@@ -19,6 +19,7 @@ type Config struct {
 	Audit      AuditConfig      `mapstructure:"audit"`
 	Failure    FailureConfig    `mapstructure:"failure"`
 	Logging    LoggingConfig    `mapstructure:"logging"`
+	Middleware MiddlewareConfig `mapstructure:"middleware"`
 	Redis      RedisConfig      `mapstructure:"redis"`
 
 	// env holds the current environment (dev, uat, prod, etc.)
@@ -44,6 +45,9 @@ func (c *Config) Validate() error {
 	if err := c.Server.Validate(); err != nil {
 		return fmt.Errorf("server config: %w", err)
 	}
+	if err := c.Middleware.Validate(); err != nil {
+		return fmt.Errorf("middleware config: %w", err)
+	}
 	return nil
 }
 
@@ -61,6 +65,7 @@ func (c *Config) Clone() *Config {
 		Audit:      c.Audit,
 		Failure:    c.Failure,
 		Logging:    c.Logging,
+		Middleware: c.Middleware,
 		Redis:      c.Redis,
 	}
 
@@ -72,6 +77,23 @@ func (c *Config) Clone() *Config {
 	if len(c.Failure.Retry.RetryableErrors) > 0 {
 		clone.Failure.Retry.RetryableErrors = make([]string, len(c.Failure.Retry.RetryableErrors))
 		copy(clone.Failure.Retry.RetryableErrors, c.Failure.Retry.RetryableErrors)
+	}
+	// Deep copy middleware slices
+	if len(c.Middleware.CORS.AllowOrigins) > 0 {
+		clone.Middleware.CORS.AllowOrigins = make([]string, len(c.Middleware.CORS.AllowOrigins))
+		copy(clone.Middleware.CORS.AllowOrigins, c.Middleware.CORS.AllowOrigins)
+	}
+	if len(c.Middleware.CORS.AllowMethods) > 0 {
+		clone.Middleware.CORS.AllowMethods = make([]string, len(c.Middleware.CORS.AllowMethods))
+		copy(clone.Middleware.CORS.AllowMethods, c.Middleware.CORS.AllowMethods)
+	}
+	if len(c.Middleware.CORS.AllowHeaders) > 0 {
+		clone.Middleware.CORS.AllowHeaders = make([]string, len(c.Middleware.CORS.AllowHeaders))
+		copy(clone.Middleware.CORS.AllowHeaders, c.Middleware.CORS.AllowHeaders)
+	}
+	if len(c.Middleware.CORS.ExposeHeaders) > 0 {
+		clone.Middleware.CORS.ExposeHeaders = make([]string, len(c.Middleware.CORS.ExposeHeaders))
+		copy(clone.Middleware.CORS.ExposeHeaders, c.Middleware.CORS.ExposeHeaders)
 	}
 
 	return clone
@@ -302,6 +324,80 @@ func (c *WebSocketConfig) Validate() error {
 	}
 	if c.WriteTimeout > 0 && c.WriteTimeout < time.Second {
 		return errors.New("write_timeout must be at least 1s")
+	}
+	return nil
+}
+
+// MiddlewareConfig holds HTTP middleware configuration.
+type MiddlewareConfig struct {
+	Recover   RecoverMiddlewareConfig   `mapstructure:"recover"`
+	RequestID RequestIDMiddlewareConfig `mapstructure:"request_id"`
+	CORS      CORSMiddlewareConfig      `mapstructure:"cors"`
+	Limiter   LimiterMiddlewareConfig   `mapstructure:"limiter"`
+	Compress  CompressMiddlewareConfig  `mapstructure:"compress"`
+}
+
+// Validate validates middleware configuration.
+func (c *MiddlewareConfig) Validate() error {
+	if err := c.Limiter.Validate(); err != nil {
+		return fmt.Errorf("limiter: %w", err)
+	}
+	if err := c.Compress.Validate(); err != nil {
+		return fmt.Errorf("compress: %w", err)
+	}
+	return nil
+}
+
+// RecoverMiddlewareConfig holds recover middleware configuration.
+type RecoverMiddlewareConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	EnableStackTrace bool `mapstructure:"enable_stack_trace"`
+}
+
+// RequestIDMiddlewareConfig holds request ID middleware configuration.
+type RequestIDMiddlewareConfig struct {
+	Enabled bool   `mapstructure:"enabled"`
+	Header  string `mapstructure:"header"`
+}
+
+// CORSMiddlewareConfig holds CORS middleware configuration.
+type CORSMiddlewareConfig struct {
+	Enabled          bool     `mapstructure:"enabled"`
+	AllowOrigins     []string `mapstructure:"allow_origins"`
+	AllowMethods     []string `mapstructure:"allow_methods"`
+	AllowHeaders     []string `mapstructure:"allow_headers"`
+	AllowCredentials bool     `mapstructure:"allow_credentials"`
+	ExposeHeaders    []string `mapstructure:"expose_headers"`
+	MaxAge           int      `mapstructure:"max_age"`
+}
+
+// LimiterMiddlewareConfig holds rate limiter middleware configuration.
+type LimiterMiddlewareConfig struct {
+	Enabled    bool   `mapstructure:"enabled"`
+	Max        int    `mapstructure:"max"`
+	Expiration string `mapstructure:"expiration"` // Duration string like "1m", "30s"
+}
+
+// Validate validates limiter middleware configuration.
+func (c *LimiterMiddlewareConfig) Validate() error {
+	if c.Enabled && c.Expiration != "" {
+		if _, err := time.ParseDuration(c.Expiration); err != nil {
+			return fmt.Errorf("limiter.expiration: %w", err)
+		}
+	}
+	return nil
+}
+
+// CompressMiddlewareConfig holds compress middleware configuration.
+type CompressMiddlewareConfig struct {
+	Enabled bool `mapstructure:"enabled"`
+	Level   int  `mapstructure:"level"` // Compression level (-1 to 2)
+}
+
+// Validate validates compress middleware configuration.
+func (c *CompressMiddlewareConfig) Validate() error {
+	if c.Enabled && (c.Level < -1 || c.Level > 2) {
+		return fmt.Errorf("compress.level must be between -1 and 2 (got %d)", c.Level)
 	}
 	return nil
 }

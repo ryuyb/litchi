@@ -202,6 +202,7 @@ var (
 	ErrBadRequest             = ErrorCode{Code: "L4API0003", Message: "Bad request", Category: "API", Severity: 4}
 	ErrInvalidQueryParam      = ErrorCode{Code: "L4API0004", Message: "Invalid query parameter", Category: "API", Severity: 4}
 	ErrInvalidRequestBody     = ErrorCode{Code: "L4API0005", Message: "Invalid request body", Category: "API", Severity: 4}
+	ErrRateLimitExceeded      = ErrorCode{Code: "L4API0006", Message: "Rate limit exceeded", Category: "API", Severity: 4}
 	ErrDependencyNotMet       = ErrorCode{Code: "L4TASK0004", Message: "Task dependencies not met", Category: "DOM", Severity: 4}
 	ErrRetryLimitExceeded     = ErrorCode{Code: "L4TASK0005", Message: "Task retry limit exceeded", Category: "DOM", Severity: 4}
 
@@ -229,6 +230,7 @@ var (
 	APIErrUnauthorized       = APIErrorCode{Code: 401, Message: "Unauthorized"}
 	APIErrForbidden          = APIErrorCode{Code: 403, Message: "Forbidden"}
 	APIErrNotFound           = APIErrorCode{Code: 404, Message: "Not found"}
+	APIErrTooManyRequests    = APIErrorCode{Code: 429, Message: "Too many requests"}
 	APIErrConflict           = APIErrorCode{Code: 409, Message: "Conflict"}
 	APIErrInternal           = APIErrorCode{Code: 500, Message: "Internal server error"}
 	APIErrServiceUnavailable = APIErrorCode{Code: 503, Message: "Service unavailable"}
@@ -249,6 +251,9 @@ func ToAPIError(err error) APIErrorCode {
 			if litchiErr.Code.Category == "API" {
 				if Is(err, ErrPermissionDenied) {
 					return APIErrForbidden
+				}
+				if Is(err, ErrRateLimitExceeded) {
+					return APIErrTooManyRequests
 				}
 				if Is(err, ErrValidationFailed) || Is(err, ErrBadRequest) ||
 					Is(err, ErrInvalidQueryParam) || Is(err, ErrInvalidRequestBody) {
