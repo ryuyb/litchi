@@ -229,13 +229,17 @@ func (h *Handler) HealthCheck(c fiber.Ctx) error {
 	})
 }
 
-// RegisterRoutes registers webhook routes on the Fiber app.
-func RegisterRoutes(app *fiber.App, handler *Handler) {
+// RegisterRoutes registers webhook routes on the router.
+//
+// Routes:
+//   - POST /webhooks/github - Handle webhook events from GitHub
+//   - GET  /webhooks/health - Health check for webhook integration
+func RegisterRoutes(router fiber.Router, handler *Handler) {
 	// Webhook endpoint
-	app.Post("/api/v1/webhooks/github", handler.Handle)
+	router.Post("/webhooks/github", handler.Handle)
 
 	// Health check for webhook integration
-	app.Get("/api/v1/webhooks/health", handler.HealthCheck)
+	router.Get("/webhooks/health", handler.HealthCheck)
 }
 
 // NoOpHandler returns a handler that does nothing (for testing).

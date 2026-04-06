@@ -5,17 +5,17 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
-// RegisterRoutes registers audit log routes on the Fiber app.
+// RegisterRoutes registers audit log routes on the router.
 //
 // Route structure:
-//   - GET /api/v1/audit                              - ListAuditLogs (with filtering and pagination)
-//   - GET /api/v1/audit/:id                          - GetAuditLog (single audit log by ID)
-//   - GET /api/v1/audit/sessions/:sessionId          - ListBySession (audit logs for a session)
-//   - GET /api/v1/audit/sessions/:sessionId/summary  - GetSessionSummary (aggregated statistics)
-//   - GET /api/v1/audit/repositories/:repository     - ListByRepository (audit logs for a repo)
-func RegisterRoutes(app *fiber.App, handler *Handler) {
+//   - GET /audit                              - ListAuditLogs (with filtering and pagination)
+//   - GET /audit/:id                          - GetAuditLog (single audit log by ID)
+//   - GET /audit/sessions/:sessionId          - ListBySession (audit logs for a session)
+//   - GET /audit/sessions/:sessionId/summary  - GetSessionSummary (aggregated statistics)
+//   - GET /audit/repositories/:repository     - ListByRepository (audit logs for a repo)
+func RegisterRoutes(router fiber.Router, handler *Handler) {
 	// Audit log routes group
-	auditGroup := app.Group("/api/v1/audit")
+	auditGroup := router.Group("/audit")
 
 	// List audit logs with filtering
 	auditGroup.Get("/", handler.ListAuditLogs)

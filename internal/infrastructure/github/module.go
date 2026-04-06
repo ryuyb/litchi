@@ -5,7 +5,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/gofiber/fiber/v3"
+	"github.com/ryuyb/litchi/internal/application/server/router"
 	"github.com/ryuyb/litchi/internal/domain/repository"
 	"github.com/ryuyb/litchi/internal/infrastructure/config"
 	"github.com/ryuyb/litchi/internal/infrastructure/github/webhook"
@@ -102,9 +102,9 @@ func NewWebhookCleanupService(p WebhookCleanupParams) *repositories.CleanupServi
 	return repositories.NewCleanupService(p.Repo, p.Logger, interval)
 }
 
-// RegisterWebhookRoutes registers webhook routes on the Fiber app.
-func RegisterWebhookRoutes(app *fiber.App, handler *webhook.Handler) {
-	webhook.RegisterRoutes(app, handler)
+// RegisterWebhookRoutes registers webhook routes on the API router.
+func RegisterWebhookRoutes(apiRouter router.APIRouter, handler *webhook.Handler) {
+	webhook.RegisterRoutes(apiRouter, handler)
 }
 
 // StartWebhookCleanup starts the cleanup service lifecycle.

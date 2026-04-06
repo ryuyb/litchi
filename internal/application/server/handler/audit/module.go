@@ -4,7 +4,7 @@ package audit
 import (
 	"go.uber.org/fx"
 
-	"github.com/gofiber/fiber/v3"
+	"github.com/ryuyb/litchi/internal/application/server/router"
 )
 
 // Module provides audit log API handlers for Fx dependency injection.
@@ -18,12 +18,10 @@ import (
 //   - Logger: Zap logger for structured logging
 var Module = fx.Module("audit-handler",
 	// Provide the audit handler as a Fx Provider
-	fx.Provide(
-		NewHandler,
-	),
+	fx.Provide(NewHandler),
 
-	// Register routes with the Fiber app
-	fx.Invoke(func(app *fiber.App, handler *Handler) {
-		RegisterRoutes(app, handler)
+	// Register routes with APIRouter
+	fx.Invoke(func(apiRouter router.APIRouter, h *Handler) {
+		RegisterRoutes(apiRouter, h)
 	}),
 )

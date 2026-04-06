@@ -5,25 +5,41 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
-// RegisterRoutes registers repository management routes on the Fiber app.
-func RegisterRoutes(app *fiber.App, handler *Handler) {
-	// Repository CRUD routes
-	app.Get("/api/v1/repositories", handler.ListRepositories)
-	app.Get("/api/v1/repositories/:name", handler.GetRepository)
-	app.Post("/api/v1/repositories", handler.CreateRepository)
-	app.Put("/api/v1/repositories/:name", handler.UpdateRepository)
-	app.Delete("/api/v1/repositories/:name", handler.DeleteRepository)
+// RegisterRoutes registers repository management routes on the router.
+//
+// Route structure:
+//   - GET    /repositories                   - ListRepositories
+//   - POST   /repositories                   - CreateRepository
+//   - GET    /repositories/:name             - GetRepository
+//   - PUT    /repositories/:name             - UpdateRepository
+//   - DELETE /repositories/:name             - DeleteRepository
+//   - POST   /repositories/:name/enable      - EnableRepository
+//   - POST   /repositories/:name/disable     - DisableRepository
+//   - GET    /repositories/:name/effective-config - GetEffectiveConfig
+//   - GET    /repositories/:name/validation-config  - GetValidationConfig
+//   - PUT    /repositories/:name/validation-config  - UpdateValidationConfig
+//   - GET    /repositories/:name/detection   - GetDetectionResult
+//   - POST   /repositories/:name/detection   - RunDetection
+func RegisterRoutes(router fiber.Router, handler *Handler) {
+	repos := router.Group("/repositories")
 
-	// Repository operation routes
-	app.Post("/api/v1/repositories/:name/enable", handler.EnableRepository)
-	app.Post("/api/v1/repositories/:name/disable", handler.DisableRepository)
-	app.Get("/api/v1/repositories/:name/effective-config", handler.GetEffectiveConfig)
+	// CRUD operations
+	repos.Get("/", handler.ListRepositories)
+	repos.Post("/", handler.CreateRepository)
+	repos.Get("/:name", handler.GetRepository)
+	repos.Put("/:name", handler.UpdateRepository)
+	repos.Delete("/:name", handler.DeleteRepository)
 
-	// Validation configuration routes
-	app.Get("/api/v1/repositories/:name/validation-config", handler.GetValidationConfig)
-	app.Put("/api/v1/repositories/:name/validation-config", handler.UpdateValidationConfig)
+	// Repository control operations
+	repos.Post("/:name/enable", handler.EnableRepository)
+	repos.Post("/:name/disable", handler.DisableRepository)
+	repos.Get("/:name/effective-config", handler.GetEffectiveConfig)
 
-	// Project detection routes
-	app.Get("/api/v1/repositories/:name/detection", handler.GetDetectionResult)
-	app.Post("/api/v1/repositories/:name/detection", handler.RunDetection)
+	// Validation configuration
+	repos.Get("/:name/validation-config", handler.GetValidationConfig)
+	repos.Put("/:name/validation-config", handler.UpdateValidationConfig)
+
+	// Project detection
+	repos.Get("/:name/detection", handler.GetDetectionResult)
+	repos.Post("/:name/detection", handler.RunDetection)
 }

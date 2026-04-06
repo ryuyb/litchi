@@ -3,6 +3,8 @@ package session
 
 import (
 	"go.uber.org/fx"
+
+	"github.com/ryuyb/litchi/internal/application/server/router"
 )
 
 // Module provides the session handler as an Fx module.
@@ -11,6 +13,8 @@ var Module = fx.Module("session-handler",
 	// Provide the session handler
 	fx.Provide(NewHandler),
 
-	// Invoke route registration (registers routes to Fiber App)
-	fx.Invoke(RegisterRoutes),
+	// Invoke route registration with APIRouter
+	fx.Invoke(func(apiRouter router.APIRouter, h *Handler) {
+		RegisterRoutes(apiRouter, h)
+	}),
 )

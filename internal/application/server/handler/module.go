@@ -12,12 +12,16 @@ import (
 	"github.com/ryuyb/litchi/internal/application/server/handler/task"
 	"github.com/ryuyb/litchi/internal/application/server/handler/websocket"
 	"github.com/ryuyb/litchi/internal/application/server/middleware"
+	"github.com/ryuyb/litchi/internal/application/server/router"
 )
 
 // Module provides all HTTP API handlers for Fx.
 var Module = fx.Module("api-handlers",
 	// Middleware (ErrorHandler must be created before App)
 	fx.Options(middleware.Module),
+
+	// API Router (provides /api/v1 group)
+	fx.Options(router.Module),
 
 	// Handler sub-modules (each handler as independent Fx Module)
 	fx.Options(

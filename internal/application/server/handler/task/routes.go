@@ -5,17 +5,17 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
-// RegisterRoutes registers task management routes on the Fiber app.
-// Routes are registered under the /api/v1/sessions/:sessionId/tasks prefix.
-func RegisterRoutes(app *fiber.App, handler *Handler) {
+// RegisterRoutes registers task management routes on the router.
+// Routes are registered under the /sessions/:sessionId/tasks prefix.
+func RegisterRoutes(router fiber.Router, handler *Handler) {
 	// Task management routes
-	// GET  /api/v1/sessions/:sessionId/tasks           - Get task list with pagination
-	// GET  /api/v1/sessions/:sessionId/tasks/:taskId   - Get task status
-	// POST /api/v1/sessions/:sessionId/tasks/:taskId/skip  - Skip task
-	// POST /api/v1/sessions/:sessionId/tasks/:taskId/retry - Retry task
+	// GET  /sessions/:sessionId/tasks           - Get task list with pagination
+	// GET  /sessions/:sessionId/tasks/:taskId   - Get task status
+	// POST /sessions/:sessionId/tasks/:taskId/skip  - Skip task
+	// POST /sessions/:sessionId/tasks/:taskId/retry - Retry task
 
 	// Create router group for task endpoints
-	tasks := app.Group("/api/v1/sessions/:sessionId/tasks")
+	tasks := router.Group("/sessions/:sessionId/tasks")
 
 	// Task list endpoint (with pagination support)
 	tasks.Get("/", handler.GetTaskList)

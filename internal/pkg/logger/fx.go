@@ -21,7 +21,7 @@ func init() {
 
 // Module provides the logger module for Fx.
 var Module = fx.Module("logger",
-	fx.Provide(NewLoggerFromConfig, NewSugaredLogger, NewWriters),
+	fx.Provide(NewLoggerFromConfig, NewSugaredLogger),
 	fx.Invoke(RegisterLifecycle),
 )
 
@@ -36,7 +36,7 @@ type Params struct {
 type LoggerResult struct {
 	fx.Out
 
-	Logger *zap.Logger
+	Logger  *zap.Logger
 	Writers []io.Writer
 }
 
@@ -51,11 +51,6 @@ func NewLoggerFromConfig(p Params) (LoggerResult, error) {
 		Logger:  logger,
 		Writers: builder.Writers(),
 	}, nil
-}
-
-// NewWriters extracts writers from logger result.
-func NewWriters(result LoggerResult) []io.Writer {
-	return result.Writers
 }
 
 // NewSugaredLogger creates a sugared logger.
