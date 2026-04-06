@@ -13,7 +13,9 @@ export function MainLayout({ children }: MainLayoutProps) {
 			<AppSidebar />
 			<SidebarInset>
 				<AppHeader />
-				<main className="flex flex-1 flex-col gap-6 p-4 md:p-8 lg:px-12 pt-6 w-full max-w-full overflow-x-hidden">{children}</main>
+				<main className="flex flex-1 flex-col gap-6 p-4 md:p-8 lg:px-12 pt-6 w-full max-w-full overflow-x-hidden">
+					{children}
+				</main>
 			</SidebarInset>
 		</SidebarProvider>
 	);

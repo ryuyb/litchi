@@ -13,6 +13,7 @@ export interface ToolCommand {
 	command?: string;
 	env?: ToolCommandEnv;
 	name?: string;
+	/** Timeout in seconds (1-3600) */
 	timeout?: number;
 	workingDir?: string;
 }

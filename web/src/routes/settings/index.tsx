@@ -1,5 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { LoaderIcon, ServerIcon, SettingsIcon, ShieldCheckIcon } from "lucide-react";
+import {
+	LoaderIcon,
+	ServerIcon,
+	SettingsIcon,
+	ShieldCheckIcon,
+} from "lucide-react";
 import { useGetApiV1Config } from "#/api/config/config";
 import {
 	HealthStatusSection,
@@ -39,7 +44,8 @@ function SettingsPage() {
 						Settings
 					</h1>
 					<p className="mt-3 text-slate-300 max-w-2xl text-lg">
-						Configure system preferences, user integrations, and monitor core application health.
+						Configure system preferences, user integrations, and monitor core
+						application health.
 					</p>
 				</div>
 			</section>
@@ -48,8 +54,8 @@ function SettingsPage() {
 			<div className="glass-card rounded-3xl p-6 shadow-md border border-border/50">
 				<Tabs defaultValue="general" className="space-y-8">
 					<TabsList className="bg-secondary/50 p-1.5 rounded-2xl border border-border/30 inline-flex">
-						<TabsTrigger 
-							value="general" 
+						<TabsTrigger
+							value="general"
 							className="rounded-xl px-6 py-2.5 data-[state=active]:bg-background data-[state=active]:shadow-sm data-[state=active]:font-bold font-medium transition-all"
 						>
 							<div className="flex items-center gap-2">
@@ -57,7 +63,7 @@ function SettingsPage() {
 								<span>General</span>
 							</div>
 						</TabsTrigger>
-						<TabsTrigger 
+						<TabsTrigger
 							value="system"
 							className="rounded-xl px-6 py-2.5 data-[state=active]:bg-background data-[state=active]:shadow-sm data-[state=active]:font-bold font-medium transition-all"
 						>
@@ -68,13 +74,19 @@ function SettingsPage() {
 						</TabsTrigger>
 					</TabsList>
 
-					<TabsContent value="general" className="space-y-6 animate-slide-up-fade text-foreground">
+					<TabsContent
+						value="general"
+						className="space-y-6 animate-slide-up-fade text-foreground"
+					>
 						<div className="p-2">
 							<SettingsForm />
 						</div>
 					</TabsContent>
 
-					<TabsContent value="system" className="space-y-8 animate-slide-up-fade text-foreground">
+					<TabsContent
+						value="system"
+						className="space-y-8 animate-slide-up-fade text-foreground"
+					>
 						{isLoading ? (
 							<div className="flex flex-col items-center justify-center min-h-[300px] gap-4 bg-secondary/10 rounded-2xl border border-dashed border-border p-10">
 								<div className="p-4 bg-background rounded-full shadow-sm">
@@ -95,7 +107,7 @@ function SettingsPage() {
 									</div>
 									<ReadOnlyConfigSection config={config} />
 								</div>
-								
+
 								<div className="glass-card bg-background/50 border border-border/60 rounded-2xl p-6 shadow-sm">
 									<div className="flex items-center gap-3 mb-6 border-b border-border/50 pb-4">
 										<div className="bg-emerald-500/10 text-emerald-500 p-2 rounded-lg">

@@ -1,5 +1,11 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import type { ColumnDef } from "@tanstack/react-table";
+import {
+	AlertCircleIcon,
+	DatabaseIcon,
+	FilterIcon,
+	SearchIcon,
+} from "lucide-react";
 import { useState } from "react";
 import type {
 	GetApiV1SessionsStage,
@@ -30,7 +36,6 @@ import {
 	stageConfig,
 	statusConfig,
 } from "#/lib/session-config";
-import { FilterIcon, DatabaseIcon, AlertCircleIcon, SearchIcon } from "lucide-react";
 
 export const Route = createFileRoute("/issues/")({
 	component: IssuesPage,
@@ -41,14 +46,18 @@ const columns: ColumnDef<Session>[] = [
 		accessorKey: "issueNumber",
 		header: "Issue #",
 		cell: ({ row }) => (
-			<span className="font-mono text-sm bg-secondary/50 px-2 py-0.5 rounded-md text-foreground/80">#{row.original.issueNumber}</span>
+			<span className="font-mono text-sm bg-secondary/50 px-2 py-0.5 rounded-md text-foreground/80">
+				#{row.original.issueNumber}
+			</span>
 		),
 	},
 	{
 		accessorKey: "issueTitle",
 		header: "Title",
 		cell: ({ row }) => (
-			<span className="font-semibold text-foreground/90 group-hover:text-primary transition-colors">{row.original.issueTitle}</span>
+			<span className="font-semibold text-foreground/90 group-hover:text-primary transition-colors">
+				{row.original.issueTitle}
+			</span>
 		),
 	},
 	{
@@ -150,7 +159,7 @@ function IssuesPage() {
 						Issues
 					</h1>
 					<p className="mt-3 text-muted-foreground max-w-2xl text-lg">
-						Manage and track GitHub Issues across your configured repositories. 
+						Manage and track GitHub Issues across your configured repositories.
 						Monitor auto-generated PRs and agent progress.
 					</p>
 				</div>
@@ -165,7 +174,9 @@ function IssuesPage() {
 
 					<div className="flex flex-wrap items-center gap-3 bg-secondary/40 p-2 rounded-2xl border border-border/40">
 						<div className="flex items-center gap-2 bg-background px-3 py-1 rounded-xl shadow-sm border border-border/50">
-							<span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Status</span>
+							<span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+								Status
+							</span>
 							<Select value={statusFilter} onValueChange={setStatusFilter}>
 								<SelectTrigger className="h-8 w-[120px] border-0 bg-transparent shadow-none focus:ring-0 px-1 py-0 font-medium">
 									<SelectValue placeholder="All" />
@@ -182,7 +193,9 @@ function IssuesPage() {
 						</div>
 
 						<div className="flex items-center gap-2 bg-background px-3 py-1 rounded-xl shadow-sm border border-border/50">
-							<span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Stage</span>
+							<span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+								Stage
+							</span>
 							<Select value={stageFilter} onValueChange={setStageFilter}>
 								<SelectTrigger className="h-8 w-[140px] border-0 bg-transparent shadow-none focus:ring-0 px-1 py-0 font-medium">
 									<SelectValue placeholder="All" />
@@ -199,7 +212,10 @@ function IssuesPage() {
 						</div>
 
 						<div className="flex items-center gap-2 bg-background px-3 py-1 rounded-xl shadow-sm border border-border/50 relative">
-							<SearchIcon size={14} className="text-muted-foreground absolute left-3" />
+							<SearchIcon
+								size={14}
+								className="text-muted-foreground absolute left-3"
+							/>
 							<Input
 								type="text"
 								placeholder="Search repo..."

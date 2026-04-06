@@ -793,9 +793,17 @@ const docTemplate = `{
                         "example": true,
                         "type": "boolean"
                     },
+                    "hasInstallation": {
+                        "example": true,
+                        "type": "boolean"
+                    },
                     "id": {
                         "example": "550e8400-e29b-41d4-a716-446655440000",
                         "type": "string"
+                    },
+                    "installationId": {
+                        "example": 12345678,
+                        "type": "integer"
                     },
                     "name": {
                         "example": "owner/repo",
@@ -1201,6 +1209,7 @@ const docTemplate = `{
                         "type": "string"
                     },
                     "timeout": {
+                        "description": "Timeout in seconds (1-3600)",
                         "example": 30,
                         "type": "integer"
                     },

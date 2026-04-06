@@ -2,7 +2,16 @@ import { useForm } from "@tanstack/react-form";
 import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import type { ColumnDef } from "@tanstack/react-table";
-import { LoaderIcon, PlusIcon, SearchIcon, GitBranchIcon, SettingsIcon, GitForkIcon } from "lucide-react";
+import {
+	CheckCircleIcon,
+	GitBranchIcon,
+	GitForkIcon,
+	LoaderIcon,
+	PlusIcon,
+	SearchIcon,
+	SettingsIcon,
+	XCircleIcon,
+} from "lucide-react";
 import { useState } from "react";
 import { z } from "zod";
 import {
@@ -130,7 +139,9 @@ const columns: ColumnDef<Repository>[] = [
 				<div className="bg-primary/10 p-1.5 rounded-lg text-primary">
 					<GitBranchIcon size={16} />
 				</div>
-				<span className="font-semibold text-foreground/90">{row.original.name ?? "N/A"}</span>
+				<span className="font-semibold text-foreground/90">
+					{row.original.name ?? "N/A"}
+				</span>
 			</div>
 		),
 	},
@@ -151,6 +162,27 @@ const columns: ColumnDef<Repository>[] = [
 				<span className="relative inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
 					<span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
 					Inactive
+				</span>
+			);
+		},
+	},
+	{
+		accessorKey: "hasInstallation",
+		header: "App",
+		cell: ({ row }) => {
+			const hasInstallation = row.original.hasInstallation;
+			if (hasInstallation) {
+				return (
+					<span className="inline-flex items-center gap-1.5 rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-semibold text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 border border-blue-200/50 dark:border-blue-800/50">
+						<CheckCircleIcon size={12} />
+						Installed
+					</span>
+				);
+			}
+			return (
+				<span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+					<XCircleIcon size={12} />
+					Not Installed
 				</span>
 			);
 		},
@@ -215,7 +247,8 @@ function AddRepositorySheet({ open, onOpenChange }: AddRepositorySheetProps) {
 						Connect Repository
 					</SheetTitle>
 					<SheetDescription className="text-base text-muted-foreground mt-2 leading-relaxed">
-						Litchi will bind to this repository to automatically triage issues and generate code.
+						Litchi will bind to this repository to automatically triage issues
+						and generate code.
 					</SheetDescription>
 				</SheetHeader>
 
@@ -230,9 +263,15 @@ function AddRepositorySheet({ open, onOpenChange }: AddRepositorySheetProps) {
 					<div className="flex-1 space-y-6">
 						<form.Field
 							name="name"
+							// biome-ignore lint/correctness/noChildrenProp: TanStack Form requires children as prop for render prop pattern
 							children={(field) => (
 								<div className="space-y-3">
-									<Label htmlFor="name" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">GitHub Path</Label>
+									<Label
+										htmlFor="name"
+										className="text-xs font-bold uppercase tracking-widest text-muted-foreground"
+									>
+										GitHub Path
+									</Label>
 									<div className="relative group">
 										<Input
 											id="name"
@@ -243,20 +282,36 @@ function AddRepositorySheet({ open, onOpenChange }: AddRepositorySheetProps) {
 											className={`h-14 bg-secondary/30 border-border/50 rounded-2xl pl-12 pr-4 text-lg transition-all focus-visible:ring-primary/40 focus-visible:bg-background shadow-sm ${field.state.meta.errors.length > 0 ? "border-destructive/50 focus-visible:ring-destructive/30" : ""}`}
 										/>
 										<div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-primary">
-											<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg>
+											<svg
+												width="20"
+												height="20"
+												viewBox="0 0 24 24"
+												fill="none"
+												stroke="currentColor"
+												strokeWidth="2.5"
+												strokeLinecap="round"
+												strokeLinejoin="round"
+												aria-label="GitHub icon"
+											>
+												<path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4" />
+												<path d="M9 18c-4.51 2-5-2-7-2" />
+											</svg>
 										</div>
 									</div>
 									{field.state.meta.errors.length > 0 && (
 										<p className="text-destructive text-sm font-semibold flex items-center gap-1.5 animate-slide-up-fade">
-											<span className="bg-destructive/20 text-destructive rounded-full w-4 h-4 flex items-center justify-center text-[10px] shrink-0">!</span>
+											<span className="bg-destructive/20 text-destructive rounded-full w-4 h-4 flex items-center justify-center text-[10px] shrink-0">
+												!
+											</span>
 											{field.state.meta.errors[0]?.message}
 										</p>
 									)}
-									
+
 									<div className="mt-4 p-4 rounded-xl border border-primary/20 bg-primary/5 flex items-start gap-3">
 										<div className="mt-0.5 w-2 h-2 rounded-full bg-primary/60 shrink-0"></div>
 										<p className="text-xs font-medium text-foreground/70 leading-relaxed">
-											Ensure the Litchi GitHub App is installed on this repository before connecting it here.
+											Ensure the Litchi GitHub App is installed on this
+											repository before connecting it here.
 										</p>
 									</div>
 								</div>
@@ -267,6 +322,7 @@ function AddRepositorySheet({ open, onOpenChange }: AddRepositorySheetProps) {
 					<SheetFooter className="pt-6 border-t border-border/40 mt-auto pb-4">
 						<form.Subscribe
 							selector={(state) => [state.canSubmit, state.isSubmitting]}
+							// biome-ignore lint/correctness/noChildrenProp: TanStack Form Subscribe requires children as prop for render prop pattern
 							children={([canSubmit, isSubmitting]) => (
 								<Button
 									type="submit"
@@ -328,7 +384,8 @@ function RepositoriesPage() {
 						Repositories
 					</h1>
 					<p className="mt-3 text-muted-foreground max-w-2xl text-lg">
-						Configure and manage connected GitHub repositories. Grant access to Litchi agent for automated work.
+						Configure and manage connected GitHub repositories. Grant access to
+						Litchi agent for automated work.
 					</p>
 				</div>
 			</section>
@@ -349,7 +406,7 @@ function RepositoriesPage() {
 								className="pl-9 h-10 bg-background border-border/50 rounded-xl focus-visible:ring-primary/30 w-full"
 							/>
 						</div>
-						<Button 
+						<Button
 							onClick={() => setIsAddSheetOpen(true)}
 							className="h-10 rounded-xl px-4 font-bold shadow-md shadow-primary/10 hover:shadow-lg hover:-translate-y-px transition-all"
 						>

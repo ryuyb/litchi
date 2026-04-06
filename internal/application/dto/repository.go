@@ -8,10 +8,12 @@ import (
 
 // RepositoryResponse represents a repository configuration.
 type RepositoryResponse struct {
-	ID      uuid.UUID   `json:"id" example:"550e8400-e29b-41d4-a716-446655440000"`
-	Name    string      `json:"name" example:"owner/repo"`
-	Enabled bool        `json:"enabled" example:"true"`
-	Config  RepoConfigDTO `json:"config"`
+	ID               uuid.UUID    `json:"id" example:"550e8400-e29b-41d4-a716-446655440000"`
+	Name             string       `json:"name" example:"owner/repo"`
+	Enabled          bool         `json:"enabled" example:"true"`
+	InstallationID   int64        `json:"installationId" example:"12345678"`
+	HasInstallation  bool         `json:"hasInstallation" example:"true"`
+	Config           RepoConfigDTO `json:"config"`
 } // @name Repository
 
 // RepoConfigDTO represents repository configuration overrides.
@@ -55,10 +57,12 @@ type RepositoryListRequest struct {
 // ToRepositoryResponse converts entity.Repository to DTO.
 func ToRepositoryResponse(repo *entity.Repository) RepositoryResponse {
 	return RepositoryResponse{
-		ID:      repo.ID,
-		Name:    repo.Name,
-		Enabled: repo.Enabled,
-		Config:  ToRepoConfigDTO(repo.Config),
+		ID:              repo.ID,
+		Name:            repo.Name,
+		Enabled:         repo.Enabled,
+		InstallationID:  repo.InstallationID,
+		HasInstallation: repo.HasInstallation(),
+		Config:          ToRepoConfigDTO(repo.Config),
 	}
 }
 

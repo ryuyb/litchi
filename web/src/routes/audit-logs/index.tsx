@@ -1,6 +1,12 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import type { ColumnDef } from "@tanstack/react-table";
-import { DownloadIcon, FileTextIcon, FilterIcon, SearchIcon, ClockIcon } from "lucide-react";
+import {
+	ClockIcon,
+	DownloadIcon,
+	FileTextIcon,
+	FilterIcon,
+	SearchIcon,
+} from "lucide-react";
 import { useState } from "react";
 import { useGetApiV1Audit } from "#/api/audit/audit";
 import type { AuditLog } from "#/api/schemas/auditLog";
@@ -65,7 +71,9 @@ const columns: ColumnDef<AuditLog>[] = [
 		header: "Actor",
 		cell: ({ row }) => (
 			<div className="flex flex-col">
-				<span className="text-sm font-bold text-foreground/90">{row.original.actor ?? "-"}</span>
+				<span className="text-sm font-bold text-foreground/90">
+					{row.original.actor ?? "-"}
+				</span>
 				{row.original.actorRole && (
 					<span className="text-[10px] uppercase tracking-wider font-bold text-primary max-w-fit">
 						{row.original.actorRole}
@@ -229,7 +237,8 @@ function AuditLogsPage() {
 							Audit Logs
 						</h1>
 						<p className="mt-3 text-muted-foreground max-w-2xl text-lg">
-							A secure, verifiable record of all system activities, changes, and agent actions.
+							A secure, verifiable record of all system activities, changes, and
+							agent actions.
 						</p>
 					</div>
 					<Button
@@ -253,8 +262,13 @@ function AuditLogsPage() {
 
 					<div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
 						<div className="flex items-center gap-2 bg-secondary/30 px-3 py-1 rounded-xl shadow-sm border border-border/40 w-full sm:w-auto">
-							<span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest shrink-0">Op</span>
-							<Select value={operationFilter} onValueChange={setOperationFilter}>
+							<span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest shrink-0">
+								Op
+							</span>
+							<Select
+								value={operationFilter}
+								onValueChange={setOperationFilter}
+							>
 								<SelectTrigger className="h-9 w-full sm:w-[150px] border-0 bg-transparent shadow-none focus:ring-0 px-1 py-0 font-medium">
 									<SelectValue placeholder="All" />
 								</SelectTrigger>
@@ -270,7 +284,9 @@ function AuditLogsPage() {
 						</div>
 
 						<div className="flex items-center gap-2 bg-secondary/30 px-3 py-1 rounded-xl shadow-sm border border-border/40 w-full sm:w-auto">
-							<span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest shrink-0">Result</span>
+							<span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest shrink-0">
+								Result
+							</span>
 							<Select value={resultFilter} onValueChange={setResultFilter}>
 								<SelectTrigger className="h-9 w-full sm:w-[120px] border-0 bg-transparent shadow-none focus:ring-0 px-1 py-0 font-medium">
 									<SelectValue placeholder="All" />
@@ -287,7 +303,10 @@ function AuditLogsPage() {
 						</div>
 
 						<div className="flex items-center gap-2 bg-secondary/30 px-3 py-1 rounded-xl shadow-sm border border-border/40 relative w-full sm:w-auto">
-							<SearchIcon size={14} className="text-muted-foreground absolute left-3" />
+							<SearchIcon
+								size={14}
+								className="text-muted-foreground absolute left-3"
+							/>
 							<Input
 								type="text"
 								placeholder="Repo..."
@@ -296,9 +315,12 @@ function AuditLogsPage() {
 								className="h-9 w-full sm:w-[140px] border-0 bg-transparent shadow-none focus-visible:ring-0 pl-7 text-sm font-medium"
 							/>
 						</div>
-						
+
 						<div className="flex items-center gap-2 bg-secondary/30 px-3 py-1 rounded-xl shadow-sm border border-border/40 relative w-full sm:w-auto">
-							<SearchIcon size={14} className="text-muted-foreground absolute left-3" />
+							<SearchIcon
+								size={14}
+								className="text-muted-foreground absolute left-3"
+							/>
 							<Input
 								type="text"
 								placeholder="Actor..."

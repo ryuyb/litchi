@@ -10,6 +10,8 @@ import type { RepoConfig } from "./repoConfig";
 export interface Repository {
 	config?: RepoConfig;
 	enabled?: boolean;
+	hasInstallation?: boolean;
 	id?: string;
+	installationId?: number;
 	name?: string;
 }

@@ -1,5 +1,5 @@
+import { MonitorIcon, MoonIcon, SunIcon } from "lucide-react";
 import { useEffect, useState } from "react";
-import { MoonIcon, SunIcon, MonitorIcon } from "lucide-react";
 
 type ThemeMode = "light" | "dark" | "auto";
 
