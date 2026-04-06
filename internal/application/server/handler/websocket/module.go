@@ -27,11 +27,13 @@ var Module = fx.Module("websocket-handler",
 	fx.Provide(NewHandler),
 
 	// Invoke Hub lifecycle - start the hub on app start
+	// Note: We use a background context for Run() because the OnStart context
+	// is cancelled after OnStart returns. Hub lifecycle is controlled via Stop().
 	fx.Invoke(func(lc fx.Lifecycle, hub *Hub, logger *zap.Logger) {
 		lc.Append(fx.Hook{
 			OnStart: func(ctx context.Context) error {
 				logger.Info("starting websocket hub")
-				go hub.Run(ctx)
+				go hub.Run(context.Background())
 				return nil
 			},
 			OnStop: func(ctx context.Context) error {

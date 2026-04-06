@@ -2,6 +2,7 @@ package valueobject
 
 import (
 	"errors"
+	"path/filepath"
 	"strings"
 	"time"
 )
@@ -34,6 +35,11 @@ const (
 	Skip FailureStrategy = "skip"
 )
 
+// IsValid checks if the failure strategy is valid.
+func (fs FailureStrategy) IsValid() bool {
+	return fs == FailFast || fs == AutoFix || fs == WarnContinue || fs == Skip
+}
+
 // NoTestsStrategy defines how to handle when no tests are found.
 type NoTestsStrategy string
 
@@ -46,6 +52,11 @@ const (
 	FailNoTests NoTestsStrategy = "fail"
 )
 
+// IsValid checks if the no tests strategy is valid.
+func (nts NoTestsStrategy) IsValid() bool {
+	return nts == SkipNoTests || nts == WarnNoTests || nts == FailNoTests
+}
+
 // DetectionMode defines the project detection mode.
 type DetectionMode string
 
@@ -57,6 +68,11 @@ const (
 	// ManualOnly - Disable auto detection, use manual config only
 	ManualOnly DetectionMode = "manual_only"
 )
+
+// IsValid checks if the detection mode is valid.
+func (dm DetectionMode) IsValid() bool {
+	return dm == AutoDetectFull || dm == AutoDetectBasic || dm == ManualOnly
+}
 
 // ============================================
 // Project and Tool Enums
@@ -160,11 +176,13 @@ func (tc ToolCommand) Validate() error {
 	}
 	// Validate WorkingDir to prevent path traversal
 	if tc.WorkingDir != "" {
-		if strings.Contains(tc.WorkingDir, "..") {
+		// Clean the path and check for path traversal patterns
+		cleaned := filepath.Clean(tc.WorkingDir)
+		if strings.Contains(cleaned, "..") {
 			return errors.New("workingDir cannot contain path traversal")
 		}
 		// Check for absolute path (starts with / on Unix or drive letter on Windows)
-		if strings.HasPrefix(tc.WorkingDir, "/") || (len(tc.WorkingDir) > 1 && tc.WorkingDir[1] == ':') {
+		if filepath.IsAbs(cleaned) {
 			return errors.New("workingDir must be relative")
 		}
 	}

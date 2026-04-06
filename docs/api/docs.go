@@ -174,6 +174,22 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
+            "AutoDetectionConfig": {
+                "properties": {
+                    "detectedProject": {
+                        "$ref": "#/components/schemas/DetectedProject"
+                    },
+                    "enabled": {
+                        "example": true,
+                        "type": "boolean"
+                    },
+                    "mode": {
+                        "example": "auto_full",
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
             "ClarityConfig": {
                 "properties": {
                     "autoProceedThreshold": {
@@ -341,6 +357,69 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
+            "DetectedProject": {
+                "properties": {
+                    "confidence": {
+                        "example": 85,
+                        "type": "integer"
+                    },
+                    "detectedAt": {
+                        "example": "2024-01-15T10:30:00Z",
+                        "type": "string"
+                    },
+                    "detectedTools": {
+                        "items": {
+                            "$ref": "#/components/schemas/DetectedTool"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "languages": {
+                        "example": [
+                            "Go",
+                            "TypeScript"
+                        ],
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "primaryLanguage": {
+                        "example": "Go",
+                        "type": "string"
+                    },
+                    "type": {
+                        "example": "go",
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "DetectedTool": {
+                "properties": {
+                    "configFile": {
+                        "example": ".golangci.yml",
+                        "type": "string"
+                    },
+                    "detectionBasis": {
+                        "example": ".golangci.yml exists",
+                        "type": "string"
+                    },
+                    "name": {
+                        "example": "gofmt",
+                        "type": "string"
+                    },
+                    "recommendedCommand": {
+                        "$ref": "#/components/schemas/ToolCommand"
+                    },
+                    "type": {
+                        "example": "formatter",
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
             "EffectiveConfig": {
                 "properties": {
                     "effective": {
@@ -400,6 +479,26 @@ const docTemplate = `{
                         "description": "Test results (if applicable)",
                         "items": {
                             "$ref": "#/components/schemas/TestResult"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    }
+                },
+                "type": "object"
+            },
+            "FormattingConfig": {
+                "properties": {
+                    "enabled": {
+                        "example": true,
+                        "type": "boolean"
+                    },
+                    "failureStrategy": {
+                        "example": "fail_fast",
+                        "type": "string"
+                    },
+                    "tools": {
+                        "items": {
+                            "$ref": "#/components/schemas/ToolCommand"
                         },
                         "type": "array",
                         "uniqueItems": false
@@ -554,6 +653,30 @@ const docTemplate = `{
                     "url": {
                         "example": "https://github.com/owner/repo/issues/123",
                         "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "LintingConfig": {
+                "properties": {
+                    "autoFix": {
+                        "example": false,
+                        "type": "boolean"
+                    },
+                    "enabled": {
+                        "example": true,
+                        "type": "boolean"
+                    },
+                    "failureStrategy": {
+                        "example": "warn_continue",
+                        "type": "string"
+                    },
+                    "tools": {
+                        "items": {
+                            "$ref": "#/components/schemas/ToolCommand"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
                     }
                 },
                 "type": "object"
@@ -1026,6 +1149,68 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
+            "TestingConfig": {
+                "properties": {
+                    "command": {
+                        "$ref": "#/components/schemas/ToolCommand"
+                    },
+                    "enabled": {
+                        "example": true,
+                        "type": "boolean"
+                    },
+                    "failureStrategy": {
+                        "example": "fail_fast",
+                        "type": "string"
+                    },
+                    "noTestsStrategy": {
+                        "example": "warn",
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "ToolCommand": {
+                "properties": {
+                    "args": {
+                        "example": [
+                            "-s",
+                            "-w"
+                        ],
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "checkConfigFile": {
+                        "example": ".golangci.yml",
+                        "type": "string"
+                    },
+                    "command": {
+                        "example": "gofmt",
+                        "type": "string"
+                    },
+                    "env": {
+                        "additionalProperties": {
+                            "type": "string"
+                        },
+                        "type": "object"
+                    },
+                    "name": {
+                        "example": "gofmt",
+                        "type": "string"
+                    },
+                    "timeout": {
+                        "example": 30,
+                        "type": "integer"
+                    },
+                    "workingDir": {
+                        "example": "./",
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
             "UpdateConfig": {
                 "properties": {
                     "agent": {
@@ -1050,6 +1235,35 @@ const docTemplate = `{
                 "properties": {
                     "config": {
                         "$ref": "#/components/schemas/RepoConfig"
+                    }
+                },
+                "type": "object"
+            },
+            "UpdateValidationConfigRequest": {
+                "properties": {
+                    "config": {
+                        "$ref": "#/components/schemas/ValidationConfig"
+                    }
+                },
+                "type": "object"
+            },
+            "ValidationConfig": {
+                "properties": {
+                    "autoDetection": {
+                        "$ref": "#/components/schemas/AutoDetectionConfig"
+                    },
+                    "enabled": {
+                        "example": true,
+                        "type": "boolean"
+                    },
+                    "formatting": {
+                        "$ref": "#/components/schemas/FormattingConfig"
+                    },
+                    "linting": {
+                        "$ref": "#/components/schemas/LintingConfig"
+                    },
+                    "testing": {
+                        "$ref": "#/components/schemas/TestingConfig"
                     }
                 },
                 "type": "object"
@@ -1971,6 +2185,108 @@ const docTemplate = `{
                 ]
             }
         },
+        "/api/v1/repositories/{name}/detection": {
+            "get": {
+                "description": "Get the project detection result for a repository (language, tools, confidence)",
+                "parameters": [
+                    {
+                        "description": "Repository name (owner/repo)",
+                        "in": "path",
+                        "name": "name",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DetectedProject"
+                                }
+                            }
+                        },
+                        "description": "Detection result"
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        },
+                        "description": "Repository not found or no detection result"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        },
+                        "description": "Internal server error"
+                    }
+                },
+                "summary": "Get detection result",
+                "tags": [
+                    "repositories"
+                ]
+            },
+            "post": {
+                "description": "Trigger automatic project detection for a repository (detects language, framework, tools)",
+                "parameters": [
+                    {
+                        "description": "Repository name (owner/repo)",
+                        "in": "path",
+                        "name": "name",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DetectedProject"
+                                }
+                            }
+                        },
+                        "description": "Detection result"
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        },
+                        "description": "Repository not found"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        },
+                        "description": "Internal server error or detection failed"
+                    }
+                },
+                "summary": "Run project detection",
+                "tags": [
+                    "repositories"
+                ]
+            }
+        },
         "/api/v1/repositories/{name}/disable": {
             "post": {
                 "description": "Disable a repository from processing incoming GitHub events",
@@ -2130,6 +2446,138 @@ const docTemplate = `{
                     }
                 },
                 "summary": "Enable repository",
+                "tags": [
+                    "repositories"
+                ]
+            }
+        },
+        "/api/v1/repositories/{name}/validation-config": {
+            "get": {
+                "description": "Get the validation configuration for a repository (formatting, linting, testing settings)",
+                "parameters": [
+                    {
+                        "description": "Repository name (owner/repo)",
+                        "in": "path",
+                        "name": "name",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationConfig"
+                                }
+                            }
+                        },
+                        "description": "Validation configuration"
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        },
+                        "description": "Repository not found"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        },
+                        "description": "Internal server error"
+                    }
+                },
+                "summary": "Get validation config",
+                "tags": [
+                    "repositories"
+                ]
+            },
+            "put": {
+                "description": "Update the validation configuration for a repository (formatting, linting, testing settings)",
+                "parameters": [
+                    {
+                        "description": "Repository name (owner/repo)",
+                        "in": "path",
+                        "name": "name",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "oneOf": [
+                                    {
+                                        "type": "object"
+                                    },
+                                    {
+                                        "$ref": "#/components/schemas/UpdateValidationConfigRequest",
+                                        "summary": "body",
+                                        "description": "Validation configuration update request"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "description": "Validation configuration update request",
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationConfig"
+                                }
+                            }
+                        },
+                        "description": "Updated validation configuration"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        },
+                        "description": "Invalid request body"
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        },
+                        "description": "Repository not found"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiError"
+                                }
+                            }
+                        },
+                        "description": "Internal server error"
+                    }
+                },
+                "summary": "Update validation config",
                 "tags": [
                     "repositories"
                 ]

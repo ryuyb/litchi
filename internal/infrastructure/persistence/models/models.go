@@ -11,12 +11,14 @@ import (
 
 // Repository represents a GitHub repository configuration.
 type Repository struct {
-	ID        uuid.UUID      `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
-	Name      string         `gorm:"type:varchar(255);unique;not null"` // e.g. "org/repo"
-	Enabled   bool           `gorm:"default:true"`
-	Config    datatypes.JSON `gorm:"type:jsonb;default:'{}'"` // repository-level config override
-	CreatedAt time.Time      `gorm:"autoCreateTime"`
-	UpdatedAt time.Time      `gorm:"autoUpdateTime"`
+	ID               uuid.UUID      `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
+	Name             string         `gorm:"type:varchar(255);unique;not null"` // e.g. "org/repo"
+	Enabled          bool           `gorm:"default:true"`
+	Config           datatypes.JSON `gorm:"type:jsonb;default:'{}'"`           // repository-level config override
+	ValidationConfig datatypes.JSON `gorm:"type:jsonb"`                        // validation configuration (nullable)
+	DetectedProject  datatypes.JSON `gorm:"type:jsonb"`                        // detected project info (nullable)
+	CreatedAt        time.Time      `gorm:"autoCreateTime"`
+	UpdatedAt        time.Time      `gorm:"autoUpdateTime"`
 }
 
 // Issue represents a GitHub issue entity.

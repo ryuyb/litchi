@@ -617,10 +617,12 @@ func (a *AuditLog) IsDenied() bool {
 // Repository represents a repository configuration entity.
 // It stores configuration overrides for specific repositories.
 type Repository struct {
-	ID      uuid.UUID  `json:"id"`      // Unique identifier
-	Name    string     `json:"name"`    // Repository name (owner/repo format)
-	Enabled bool       `json:"enabled"` // Whether the repository is enabled
-	Config  RepoConfig `json:"config"`  // Repository-specific configuration overrides
+	ID               uuid.UUID                                  `json:"id"`               // Unique identifier
+	Name             string                                     `json:"name"`             // Repository name (owner/repo format)
+	Enabled          bool                                       `json:"enabled"`          // Whether the repository is enabled
+	Config           RepoConfig                                 `json:"config"`           // Repository-specific configuration overrides
+	ValidationConfig *valueobject.ExecutionValidationConfig     `json:"validationConfig"` // Validation configuration (optional)
+	DetectedProject  *valueobject.DetectedProject               `json:"detectedProject"`  // Detected project info (optional)
 }
 
 // RepoConfig represents repository-specific configuration overrides.
@@ -640,6 +642,16 @@ func NewRepository(name string) *Repository {
 		Enabled: true,
 		Config:  RepoConfig{},
 	}
+}
+
+// SetValidationConfig sets the validation configuration.
+func (r *Repository) SetValidationConfig(config *valueobject.ExecutionValidationConfig) {
+	r.ValidationConfig = config
+}
+
+// SetDetectedProject sets the detected project information.
+func (r *Repository) SetDetectedProject(project *valueobject.DetectedProject) {
+	r.DetectedProject = project
 }
 
 // Validate validates the Repository entity.

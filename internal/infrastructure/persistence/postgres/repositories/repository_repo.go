@@ -49,7 +49,10 @@ func (r *RepositoryRepo) FindByName(ctx context.Context, name string) (*entity.R
 
 // Save saves a repository configuration.
 func (r *RepositoryRepo) Save(ctx context.Context, repo *entity.Repository) error {
-	model := converter.RepositoryToModel(repo)
+	model, err := converter.RepositoryToModel(repo)
+	if err != nil {
+		return err
+	}
 
 	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		// Check if exists

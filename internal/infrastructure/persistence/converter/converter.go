@@ -627,10 +627,10 @@ func ExecutionFromModel(m *models.Execution) *entity.Execution {
 // ============================================
 
 // RepositoryToModel converts a domain Repository entity to a GORM model.
-// Returns nil if repo is nil, or if config marshaling fails.
-func RepositoryToModel(repo *entity.Repository) *models.Repository {
+// Returns nil and an error if repo is nil or if JSON marshaling fails.
+func RepositoryToModel(repo *entity.Repository) (*models.Repository, error) {
 	if repo == nil {
-		return nil
+		return nil, nil
 	}
 
 	m := &models.Repository{
@@ -643,14 +643,30 @@ func RepositoryToModel(repo *entity.Repository) *models.Repository {
 	if repo.Config != (entity.RepoConfig{}) {
 		configJSON, err := json.Marshal(repo.Config)
 		if err != nil {
-			// WARNING: Config marshaling failed - returning model without config.
-			// This is a data loss scenario. The caller should validate config before saving.
-			return m
+			return nil, fmt.Errorf("failed to marshal repository config: %w", err)
 		}
 		m.Config = configJSON
 	}
 
-	return m
+	// Marshal validation config to JSON if present
+	if repo.ValidationConfig != nil {
+		validationConfigJSON, err := json.Marshal(repo.ValidationConfig)
+		if err != nil {
+			return nil, fmt.Errorf("failed to marshal validation config: %w", err)
+		}
+		m.ValidationConfig = validationConfigJSON
+	}
+
+	// Marshal detected project to JSON if present
+	if repo.DetectedProject != nil {
+		detectedProjectJSON, err := json.Marshal(repo.DetectedProject)
+		if err != nil {
+			return nil, fmt.Errorf("failed to marshal detected project: %w", err)
+		}
+		m.DetectedProject = detectedProjectJSON
+	}
+
+	return m, nil
 }
 
 // RepositoryFromModel converts a GORM Repository model to a domain entity.
@@ -669,10 +685,28 @@ func RepositoryFromModel(m *models.Repository) *entity.Repository {
 	// Unmarshal config from JSON if present
 	if len(m.Config) > 0 {
 		if err := json.Unmarshal(m.Config, &repo.Config); err != nil {
-			// WARNING: Config unmarshaling failed - returning entity with empty config.
-			// This indicates corrupted data in database. The caller should handle this.
+			// Invalid config data - return entity with empty config.
+			// The caller should check if this is acceptable for their use case.
 			repo.Config = entity.RepoConfig{}
 		}
+	}
+
+	// Unmarshal validation config from JSON if present
+	if len(m.ValidationConfig) > 0 {
+		var validationConfig valueobject.ExecutionValidationConfig
+		if err := json.Unmarshal(m.ValidationConfig, &validationConfig); err == nil {
+			repo.ValidationConfig = &validationConfig
+		}
+		// Silently ignore unmarshal errors - validation config is optional
+	}
+
+	// Unmarshal detected project from JSON if present
+	if len(m.DetectedProject) > 0 {
+		var detectedProject valueobject.DetectedProject
+		if err := json.Unmarshal(m.DetectedProject, &detectedProject); err == nil {
+			repo.DetectedProject = &detectedProject
+		}
+		// Silently ignore unmarshal errors - detected project is optional
 	}
 
 	return repo

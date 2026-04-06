@@ -25,6 +25,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import type {
 	ApiError,
 	DeleteApiV1RepositoriesNameBody,
+	DetectedProject,
 	EffectiveConfig,
 	GetApiV1RepositoriesParams,
 	PaginatedResponseRepository,
@@ -32,8 +33,10 @@ import type {
 	PostApiV1RepositoriesNameDisableBody,
 	PostApiV1RepositoriesNameEnableBody,
 	PutApiV1RepositoriesNameBody,
+	PutApiV1RepositoriesNameValidationConfigBody,
 	Repository,
 	Success,
+	ValidationConfig,
 } from "../schemas";
 
 /**
@@ -875,6 +878,353 @@ export const usePutApiV1RepositoriesName = <
 	);
 };
 /**
+ * Get the project detection result for a repository (language, tools, confidence)
+ * @summary Get detection result
+ */
+export type getApiV1RepositoriesNameDetectionResponse200 = {
+	data: DetectedProject;
+	status: 200;
+};
+
+export type getApiV1RepositoriesNameDetectionResponse404 = {
+	data: ApiError;
+	status: 404;
+};
+
+export type getApiV1RepositoriesNameDetectionResponse500 = {
+	data: ApiError;
+	status: 500;
+};
+
+export type getApiV1RepositoriesNameDetectionResponseSuccess =
+	getApiV1RepositoriesNameDetectionResponse200 & {
+		headers: Headers;
+	};
+export type getApiV1RepositoriesNameDetectionResponseError = (
+	| getApiV1RepositoriesNameDetectionResponse404
+	| getApiV1RepositoriesNameDetectionResponse500
+) & {
+	headers: Headers;
+};
+
+export type getApiV1RepositoriesNameDetectionResponse =
+	| getApiV1RepositoriesNameDetectionResponseSuccess
+	| getApiV1RepositoriesNameDetectionResponseError;
+
+export const getGetApiV1RepositoriesNameDetectionUrl = (name: string) => {
+	return `/api/v1/repositories/${name}/detection`;
+};
+
+export const getApiV1RepositoriesNameDetection = async (
+	name: string,
+	options?: RequestInit,
+): Promise<getApiV1RepositoriesNameDetectionResponse> => {
+	const res = await fetch(getGetApiV1RepositoriesNameDetectionUrl(name), {
+		...options,
+		method: "GET",
+	});
+
+	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+	const data: getApiV1RepositoriesNameDetectionResponse["data"] = body
+		? JSON.parse(body)
+		: {};
+	return {
+		data,
+		status: res.status,
+		headers: res.headers,
+	} as getApiV1RepositoriesNameDetectionResponse;
+};
+
+export const getGetApiV1RepositoriesNameDetectionQueryKey = (name: string) => {
+	return [`/api/v1/repositories/${name}/detection`] as const;
+};
+
+export const getGetApiV1RepositoriesNameDetectionQueryOptions = <
+	TData = Awaited<ReturnType<typeof getApiV1RepositoriesNameDetection>>,
+	TError = ApiError,
+>(
+	name: string,
+	options?: {
+		query?: Partial<
+			UseQueryOptions<
+				Awaited<ReturnType<typeof getApiV1RepositoriesNameDetection>>,
+				TError,
+				TData
+			>
+		>;
+		fetch?: RequestInit;
+	},
+) => {
+	const { query: queryOptions, fetch: fetchOptions } = options ?? {};
+
+	const queryKey =
+		queryOptions?.queryKey ??
+		getGetApiV1RepositoriesNameDetectionQueryKey(name);
+
+	const queryFn: QueryFunction<
+		Awaited<ReturnType<typeof getApiV1RepositoriesNameDetection>>
+	> = ({ signal }) =>
+		getApiV1RepositoriesNameDetection(name, { signal, ...fetchOptions });
+
+	return {
+		queryKey,
+		queryFn,
+		enabled: !!name,
+		...queryOptions,
+	} as UseQueryOptions<
+		Awaited<ReturnType<typeof getApiV1RepositoriesNameDetection>>,
+		TError,
+		TData
+	> & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetApiV1RepositoriesNameDetectionQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getApiV1RepositoriesNameDetection>>
+>;
+export type GetApiV1RepositoriesNameDetectionQueryError = ApiError;
+
+export function useGetApiV1RepositoriesNameDetection<
+	TData = Awaited<ReturnType<typeof getApiV1RepositoriesNameDetection>>,
+	TError = ApiError,
+>(
+	name: string,
+	options: {
+		query: Partial<
+			UseQueryOptions<
+				Awaited<ReturnType<typeof getApiV1RepositoriesNameDetection>>,
+				TError,
+				TData
+			>
+		> &
+			Pick<
+				DefinedInitialDataOptions<
+					Awaited<ReturnType<typeof getApiV1RepositoriesNameDetection>>,
+					TError,
+					Awaited<ReturnType<typeof getApiV1RepositoriesNameDetection>>
+				>,
+				"initialData"
+			>;
+		fetch?: RequestInit;
+	},
+	queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+	queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetApiV1RepositoriesNameDetection<
+	TData = Awaited<ReturnType<typeof getApiV1RepositoriesNameDetection>>,
+	TError = ApiError,
+>(
+	name: string,
+	options?: {
+		query?: Partial<
+			UseQueryOptions<
+				Awaited<ReturnType<typeof getApiV1RepositoriesNameDetection>>,
+				TError,
+				TData
+			>
+		> &
+			Pick<
+				UndefinedInitialDataOptions<
+					Awaited<ReturnType<typeof getApiV1RepositoriesNameDetection>>,
+					TError,
+					Awaited<ReturnType<typeof getApiV1RepositoriesNameDetection>>
+				>,
+				"initialData"
+			>;
+		fetch?: RequestInit;
+	},
+	queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+	queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetApiV1RepositoriesNameDetection<
+	TData = Awaited<ReturnType<typeof getApiV1RepositoriesNameDetection>>,
+	TError = ApiError,
+>(
+	name: string,
+	options?: {
+		query?: Partial<
+			UseQueryOptions<
+				Awaited<ReturnType<typeof getApiV1RepositoriesNameDetection>>,
+				TError,
+				TData
+			>
+		>;
+		fetch?: RequestInit;
+	},
+	queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+	queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary Get detection result
+ */
+
+export function useGetApiV1RepositoriesNameDetection<
+	TData = Awaited<ReturnType<typeof getApiV1RepositoriesNameDetection>>,
+	TError = ApiError,
+>(
+	name: string,
+	options?: {
+		query?: Partial<
+			UseQueryOptions<
+				Awaited<ReturnType<typeof getApiV1RepositoriesNameDetection>>,
+				TError,
+				TData
+			>
+		>;
+		fetch?: RequestInit;
+	},
+	queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+	queryKey: DataTag<QueryKey, TData, TError>;
+} {
+	const queryOptions = getGetApiV1RepositoriesNameDetectionQueryOptions(
+		name,
+		options,
+	);
+
+	const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+		TData,
+		TError
+	> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+	return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * Trigger automatic project detection for a repository (detects language, framework, tools)
+ * @summary Run project detection
+ */
+export type postApiV1RepositoriesNameDetectionResponse200 = {
+	data: DetectedProject;
+	status: 200;
+};
+
+export type postApiV1RepositoriesNameDetectionResponse404 = {
+	data: ApiError;
+	status: 404;
+};
+
+export type postApiV1RepositoriesNameDetectionResponse500 = {
+	data: ApiError;
+	status: 500;
+};
+
+export type postApiV1RepositoriesNameDetectionResponseSuccess =
+	postApiV1RepositoriesNameDetectionResponse200 & {
+		headers: Headers;
+	};
+export type postApiV1RepositoriesNameDetectionResponseError = (
+	| postApiV1RepositoriesNameDetectionResponse404
+	| postApiV1RepositoriesNameDetectionResponse500
+) & {
+	headers: Headers;
+};
+
+export type postApiV1RepositoriesNameDetectionResponse =
+	| postApiV1RepositoriesNameDetectionResponseSuccess
+	| postApiV1RepositoriesNameDetectionResponseError;
+
+export const getPostApiV1RepositoriesNameDetectionUrl = (name: string) => {
+	return `/api/v1/repositories/${name}/detection`;
+};
+
+export const postApiV1RepositoriesNameDetection = async (
+	name: string,
+	options?: RequestInit,
+): Promise<postApiV1RepositoriesNameDetectionResponse> => {
+	const res = await fetch(getPostApiV1RepositoriesNameDetectionUrl(name), {
+		...options,
+		method: "POST",
+	});
+
+	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+	const data: postApiV1RepositoriesNameDetectionResponse["data"] = body
+		? JSON.parse(body)
+		: {};
+	return {
+		data,
+		status: res.status,
+		headers: res.headers,
+	} as postApiV1RepositoriesNameDetectionResponse;
+};
+
+export const getPostApiV1RepositoriesNameDetectionMutationOptions = <
+	TError = ApiError,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof postApiV1RepositoriesNameDetection>>,
+		TError,
+		{ name: string },
+		TContext
+	>;
+	fetch?: RequestInit;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof postApiV1RepositoriesNameDetection>>,
+	TError,
+	{ name: string },
+	TContext
+> => {
+	const mutationKey = ["postApiV1RepositoriesNameDetection"];
+	const { mutation: mutationOptions, fetch: fetchOptions } = options
+		? options.mutation &&
+			"mutationKey" in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey }, fetch: undefined };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof postApiV1RepositoriesNameDetection>>,
+		{ name: string }
+	> = (props) => {
+		const { name } = props ?? {};
+
+		return postApiV1RepositoriesNameDetection(name, fetchOptions);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type PostApiV1RepositoriesNameDetectionMutationResult = NonNullable<
+	Awaited<ReturnType<typeof postApiV1RepositoriesNameDetection>>
+>;
+
+export type PostApiV1RepositoriesNameDetectionMutationError = ApiError;
+
+/**
+ * @summary Run project detection
+ */
+export const usePostApiV1RepositoriesNameDetection = <
+	TError = ApiError,
+	TContext = unknown,
+>(
+	options?: {
+		mutation?: UseMutationOptions<
+			Awaited<ReturnType<typeof postApiV1RepositoriesNameDetection>>,
+			TError,
+			{ name: string },
+			TContext
+		>;
+		fetch?: RequestInit;
+	},
+	queryClient?: QueryClient,
+): UseMutationResult<
+	Awaited<ReturnType<typeof postApiV1RepositoriesNameDetection>>,
+	TError,
+	{ name: string },
+	TContext
+> => {
+	return useMutation(
+		getPostApiV1RepositoriesNameDetectionMutationOptions(options),
+		queryClient,
+	);
+};
+/**
  * Disable a repository from processing incoming GitHub events
  * @summary Disable repository
  */
@@ -1352,6 +1702,376 @@ export const usePostApiV1RepositoriesNameEnable = <
 > => {
 	return useMutation(
 		getPostApiV1RepositoriesNameEnableMutationOptions(options),
+		queryClient,
+	);
+};
+/**
+ * Get the validation configuration for a repository (formatting, linting, testing settings)
+ * @summary Get validation config
+ */
+export type getApiV1RepositoriesNameValidationConfigResponse200 = {
+	data: ValidationConfig;
+	status: 200;
+};
+
+export type getApiV1RepositoriesNameValidationConfigResponse404 = {
+	data: ApiError;
+	status: 404;
+};
+
+export type getApiV1RepositoriesNameValidationConfigResponse500 = {
+	data: ApiError;
+	status: 500;
+};
+
+export type getApiV1RepositoriesNameValidationConfigResponseSuccess =
+	getApiV1RepositoriesNameValidationConfigResponse200 & {
+		headers: Headers;
+	};
+export type getApiV1RepositoriesNameValidationConfigResponseError = (
+	| getApiV1RepositoriesNameValidationConfigResponse404
+	| getApiV1RepositoriesNameValidationConfigResponse500
+) & {
+	headers: Headers;
+};
+
+export type getApiV1RepositoriesNameValidationConfigResponse =
+	| getApiV1RepositoriesNameValidationConfigResponseSuccess
+	| getApiV1RepositoriesNameValidationConfigResponseError;
+
+export const getGetApiV1RepositoriesNameValidationConfigUrl = (
+	name: string,
+) => {
+	return `/api/v1/repositories/${name}/validation-config`;
+};
+
+export const getApiV1RepositoriesNameValidationConfig = async (
+	name: string,
+	options?: RequestInit,
+): Promise<getApiV1RepositoriesNameValidationConfigResponse> => {
+	const res = await fetch(
+		getGetApiV1RepositoriesNameValidationConfigUrl(name),
+		{
+			...options,
+			method: "GET",
+		},
+	);
+
+	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+	const data: getApiV1RepositoriesNameValidationConfigResponse["data"] = body
+		? JSON.parse(body)
+		: {};
+	return {
+		data,
+		status: res.status,
+		headers: res.headers,
+	} as getApiV1RepositoriesNameValidationConfigResponse;
+};
+
+export const getGetApiV1RepositoriesNameValidationConfigQueryKey = (
+	name: string,
+) => {
+	return [`/api/v1/repositories/${name}/validation-config`] as const;
+};
+
+export const getGetApiV1RepositoriesNameValidationConfigQueryOptions = <
+	TData = Awaited<ReturnType<typeof getApiV1RepositoriesNameValidationConfig>>,
+	TError = ApiError,
+>(
+	name: string,
+	options?: {
+		query?: Partial<
+			UseQueryOptions<
+				Awaited<ReturnType<typeof getApiV1RepositoriesNameValidationConfig>>,
+				TError,
+				TData
+			>
+		>;
+		fetch?: RequestInit;
+	},
+) => {
+	const { query: queryOptions, fetch: fetchOptions } = options ?? {};
+
+	const queryKey =
+		queryOptions?.queryKey ??
+		getGetApiV1RepositoriesNameValidationConfigQueryKey(name);
+
+	const queryFn: QueryFunction<
+		Awaited<ReturnType<typeof getApiV1RepositoriesNameValidationConfig>>
+	> = ({ signal }) =>
+		getApiV1RepositoriesNameValidationConfig(name, { signal, ...fetchOptions });
+
+	return {
+		queryKey,
+		queryFn,
+		enabled: !!name,
+		...queryOptions,
+	} as UseQueryOptions<
+		Awaited<ReturnType<typeof getApiV1RepositoriesNameValidationConfig>>,
+		TError,
+		TData
+	> & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetApiV1RepositoriesNameValidationConfigQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getApiV1RepositoriesNameValidationConfig>>
+>;
+export type GetApiV1RepositoriesNameValidationConfigQueryError = ApiError;
+
+export function useGetApiV1RepositoriesNameValidationConfig<
+	TData = Awaited<ReturnType<typeof getApiV1RepositoriesNameValidationConfig>>,
+	TError = ApiError,
+>(
+	name: string,
+	options: {
+		query: Partial<
+			UseQueryOptions<
+				Awaited<ReturnType<typeof getApiV1RepositoriesNameValidationConfig>>,
+				TError,
+				TData
+			>
+		> &
+			Pick<
+				DefinedInitialDataOptions<
+					Awaited<ReturnType<typeof getApiV1RepositoriesNameValidationConfig>>,
+					TError,
+					Awaited<ReturnType<typeof getApiV1RepositoriesNameValidationConfig>>
+				>,
+				"initialData"
+			>;
+		fetch?: RequestInit;
+	},
+	queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+	queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetApiV1RepositoriesNameValidationConfig<
+	TData = Awaited<ReturnType<typeof getApiV1RepositoriesNameValidationConfig>>,
+	TError = ApiError,
+>(
+	name: string,
+	options?: {
+		query?: Partial<
+			UseQueryOptions<
+				Awaited<ReturnType<typeof getApiV1RepositoriesNameValidationConfig>>,
+				TError,
+				TData
+			>
+		> &
+			Pick<
+				UndefinedInitialDataOptions<
+					Awaited<ReturnType<typeof getApiV1RepositoriesNameValidationConfig>>,
+					TError,
+					Awaited<ReturnType<typeof getApiV1RepositoriesNameValidationConfig>>
+				>,
+				"initialData"
+			>;
+		fetch?: RequestInit;
+	},
+	queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+	queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetApiV1RepositoriesNameValidationConfig<
+	TData = Awaited<ReturnType<typeof getApiV1RepositoriesNameValidationConfig>>,
+	TError = ApiError,
+>(
+	name: string,
+	options?: {
+		query?: Partial<
+			UseQueryOptions<
+				Awaited<ReturnType<typeof getApiV1RepositoriesNameValidationConfig>>,
+				TError,
+				TData
+			>
+		>;
+		fetch?: RequestInit;
+	},
+	queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+	queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary Get validation config
+ */
+
+export function useGetApiV1RepositoriesNameValidationConfig<
+	TData = Awaited<ReturnType<typeof getApiV1RepositoriesNameValidationConfig>>,
+	TError = ApiError,
+>(
+	name: string,
+	options?: {
+		query?: Partial<
+			UseQueryOptions<
+				Awaited<ReturnType<typeof getApiV1RepositoriesNameValidationConfig>>,
+				TError,
+				TData
+			>
+		>;
+		fetch?: RequestInit;
+	},
+	queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+	queryKey: DataTag<QueryKey, TData, TError>;
+} {
+	const queryOptions = getGetApiV1RepositoriesNameValidationConfigQueryOptions(
+		name,
+		options,
+	);
+
+	const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+		TData,
+		TError
+	> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+	return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * Update the validation configuration for a repository (formatting, linting, testing settings)
+ * @summary Update validation config
+ */
+export type putApiV1RepositoriesNameValidationConfigResponse200 = {
+	data: ValidationConfig;
+	status: 200;
+};
+
+export type putApiV1RepositoriesNameValidationConfigResponse400 = {
+	data: ApiError;
+	status: 400;
+};
+
+export type putApiV1RepositoriesNameValidationConfigResponse404 = {
+	data: ApiError;
+	status: 404;
+};
+
+export type putApiV1RepositoriesNameValidationConfigResponse500 = {
+	data: ApiError;
+	status: 500;
+};
+
+export type putApiV1RepositoriesNameValidationConfigResponseSuccess =
+	putApiV1RepositoriesNameValidationConfigResponse200 & {
+		headers: Headers;
+	};
+export type putApiV1RepositoriesNameValidationConfigResponseError = (
+	| putApiV1RepositoriesNameValidationConfigResponse400
+	| putApiV1RepositoriesNameValidationConfigResponse404
+	| putApiV1RepositoriesNameValidationConfigResponse500
+) & {
+	headers: Headers;
+};
+
+export type putApiV1RepositoriesNameValidationConfigResponse =
+	| putApiV1RepositoriesNameValidationConfigResponseSuccess
+	| putApiV1RepositoriesNameValidationConfigResponseError;
+
+export const getPutApiV1RepositoriesNameValidationConfigUrl = (
+	name: string,
+) => {
+	return `/api/v1/repositories/${name}/validation-config`;
+};
+
+export const putApiV1RepositoriesNameValidationConfig = async (
+	name: string,
+	putApiV1RepositoriesNameValidationConfigBody: PutApiV1RepositoriesNameValidationConfigBody,
+	options?: RequestInit,
+): Promise<putApiV1RepositoriesNameValidationConfigResponse> => {
+	const res = await fetch(
+		getPutApiV1RepositoriesNameValidationConfigUrl(name),
+		{
+			...options,
+			method: "PUT",
+			headers: { "Content-Type": "application/json", ...options?.headers },
+			body: JSON.stringify(putApiV1RepositoriesNameValidationConfigBody),
+		},
+	);
+
+	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+	const data: putApiV1RepositoriesNameValidationConfigResponse["data"] = body
+		? JSON.parse(body)
+		: {};
+	return {
+		data,
+		status: res.status,
+		headers: res.headers,
+	} as putApiV1RepositoriesNameValidationConfigResponse;
+};
+
+export const getPutApiV1RepositoriesNameValidationConfigMutationOptions = <
+	TError = ApiError,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof putApiV1RepositoriesNameValidationConfig>>,
+		TError,
+		{ name: string; data: PutApiV1RepositoriesNameValidationConfigBody },
+		TContext
+	>;
+	fetch?: RequestInit;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof putApiV1RepositoriesNameValidationConfig>>,
+	TError,
+	{ name: string; data: PutApiV1RepositoriesNameValidationConfigBody },
+	TContext
+> => {
+	const mutationKey = ["putApiV1RepositoriesNameValidationConfig"];
+	const { mutation: mutationOptions, fetch: fetchOptions } = options
+		? options.mutation &&
+			"mutationKey" in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey }, fetch: undefined };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof putApiV1RepositoriesNameValidationConfig>>,
+		{ name: string; data: PutApiV1RepositoriesNameValidationConfigBody }
+	> = (props) => {
+		const { name, data } = props ?? {};
+
+		return putApiV1RepositoriesNameValidationConfig(name, data, fetchOptions);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type PutApiV1RepositoriesNameValidationConfigMutationResult =
+	NonNullable<
+		Awaited<ReturnType<typeof putApiV1RepositoriesNameValidationConfig>>
+	>;
+export type PutApiV1RepositoriesNameValidationConfigMutationBody =
+	PutApiV1RepositoriesNameValidationConfigBody;
+export type PutApiV1RepositoriesNameValidationConfigMutationError = ApiError;
+
+/**
+ * @summary Update validation config
+ */
+export const usePutApiV1RepositoriesNameValidationConfig = <
+	TError = ApiError,
+	TContext = unknown,
+>(
+	options?: {
+		mutation?: UseMutationOptions<
+			Awaited<ReturnType<typeof putApiV1RepositoriesNameValidationConfig>>,
+			TError,
+			{ name: string; data: PutApiV1RepositoriesNameValidationConfigBody },
+			TContext
+		>;
+		fetch?: RequestInit;
+	},
+	queryClient?: QueryClient,
+): UseMutationResult<
+	Awaited<ReturnType<typeof putApiV1RepositoriesNameValidationConfig>>,
+	TError,
+	{ name: string; data: PutApiV1RepositoriesNameValidationConfigBody },
+	TContext
+> => {
+	return useMutation(
+		getPutApiV1RepositoriesNameValidationConfigMutationOptions(options),
 		queryClient,
 	);
 };

@@ -4,6 +4,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -609,4 +610,278 @@ func (s *RepositoryService) recordAuditLog(
 			zap.Error(err),
 		)
 	}
+}
+// ============================================
+// Validation Configuration Methods
+// ============================================
+
+// GetValidationConfig retrieves the validation configuration for a repository.
+// Returns an empty config if repository not found or no validation config set.
+func (s *RepositoryService) GetValidationConfig(
+	ctx context.Context,
+	name string,
+) (*valueobject.ExecutionValidationConfig, error) {
+	repo, err := s.repoRepo.FindByName(ctx, name)
+	if err != nil {
+		s.logger.Error("failed to find repository",
+			zap.String("name", name),
+			zap.Error(err),
+		)
+		return nil, litchierrors.Wrap(litchierrors.ErrDatabaseOperation, err)
+	}
+
+	if repo == nil {
+		return nil, litchierrors.New(litchierrors.ErrRepositoryNotFound).
+			WithDetail("repository not found: " + name)
+	}
+
+	if repo.ValidationConfig == nil {
+		// Return default config
+		return &valueobject.ExecutionValidationConfig{
+			Enabled: false,
+		}, nil
+	}
+
+	return repo.ValidationConfig, nil
+}
+
+// UpdateValidationConfig updates the validation configuration for a repository.
+func (s *RepositoryService) UpdateValidationConfig(
+	ctx context.Context,
+	name string,
+	config *valueobject.ExecutionValidationConfig,
+	actor string,
+	actorRole valueobject.ActorRole,
+) (*valueobject.ExecutionValidationConfig, error) {
+	startTime := time.Now()
+
+	// 1. Find repository
+	repo, err := s.repoRepo.FindByName(ctx, name)
+	if err != nil {
+		s.logger.Error("failed to find repository",
+			zap.String("name", name),
+			zap.Error(err),
+		)
+		return nil, litchierrors.Wrap(litchierrors.ErrDatabaseOperation, err)
+	}
+	if repo == nil {
+		return nil, litchierrors.New(litchierrors.ErrRepositoryNotFound).
+			WithDetail("repository not found: " + name)
+	}
+
+	// 2. Update validation config
+	repo.SetValidationConfig(config)
+
+	// 3. Save repository
+	if err := s.repoRepo.Save(ctx, repo); err != nil {
+		s.logger.Error("failed to update validation config",
+			zap.String("name", name),
+			zap.Error(err),
+		)
+		s.recordAuditLog(ctx, repo, actor, actorRole,
+			valueobject.OpValidationConfigUpdate, startTime, false, err.Error())
+		return nil, litchierrors.Wrap(litchierrors.ErrDatabaseOperation, err)
+	}
+
+	// 4. Record audit log
+	s.recordAuditLog(ctx, repo, actor, actorRole,
+		valueobject.OpValidationConfigUpdate, startTime, true, "validation config updated")
+
+	s.logger.Info("validation config updated",
+		zap.String("repo_id", repo.ID.String()),
+		zap.String("name", name),
+	)
+
+	return config, nil
+}
+
+// GetDetectionResult retrieves the project detection result for a repository.
+// Returns nil if no detection has been run.
+func (s *RepositoryService) GetDetectionResult(
+	ctx context.Context,
+	name string,
+) (*valueobject.DetectedProject, error) {
+	repo, err := s.repoRepo.FindByName(ctx, name)
+	if err != nil {
+		s.logger.Error("failed to find repository",
+			zap.String("name", name),
+			zap.Error(err),
+		)
+		return nil, litchierrors.Wrap(litchierrors.ErrDatabaseOperation, err)
+	}
+
+	if repo == nil {
+		return nil, litchierrors.New(litchierrors.ErrRepositoryNotFound).
+			WithDetail("repository not found: " + name)
+	}
+
+	return repo.DetectedProject, nil
+}
+
+// RunDetection triggers project detection for a repository.
+// This performs automatic detection of project type, language, and tools.
+// Note: This is a placeholder implementation that returns mock data.
+// The actual detection logic requires cloning the repository and analyzing files.
+func (s *RepositoryService) RunDetection(
+	ctx context.Context,
+	name string,
+) (*valueobject.DetectedProject, error) {
+	startTime := time.Now()
+
+	// 1. Find repository
+	repo, err := s.repoRepo.FindByName(ctx, name)
+	if err != nil {
+		s.logger.Error("failed to find repository",
+			zap.String("name", name),
+			zap.Error(err),
+		)
+		return nil, litchierrors.Wrap(litchierrors.ErrDatabaseOperation, err)
+	}
+	if repo == nil {
+		return nil, litchierrors.New(litchierrors.ErrRepositoryNotFound).
+			WithDetail("repository not found: " + name)
+	}
+
+	// 2. Run detection (placeholder - returns mock data for now)
+	// TODO: Implement actual project detection using ProjectDetector service
+	detectedProject := s.performMockDetection(name)
+
+	// 3. Save detection result to repository
+	repo.SetDetectedProject(detectedProject)
+
+	// 4. Save repository
+	if err := s.repoRepo.Save(ctx, repo); err != nil {
+		s.logger.Error("failed to save detection result",
+			zap.String("name", name),
+			zap.Error(err),
+		)
+		return nil, litchierrors.Wrap(litchierrors.ErrDatabaseOperation, err)
+	}
+
+	s.logger.Info("project detection completed",
+		zap.String("repo_id", repo.ID.String()),
+		zap.String("name", name),
+		zap.String("type", string(detectedProject.Type)),
+		zap.Int("confidence", detectedProject.Confidence),
+		zap.Duration("duration", time.Since(startTime)),
+	)
+
+	return detectedProject, nil
+}
+
+// performMockDetection returns a mock detection result.
+// TODO: This is a PLACEHOLDER implementation for development/testing purposes only.
+// It uses simple heuristics based on repository name patterns and should NOT be used
+// in production. The actual ProjectDetector service should be implemented to:
+// 1. Clone the repository to a temporary location
+// 2. Analyze configuration files (go.mod, package.json, pyproject.toml, etc.)
+// 3. Detect language, framework, and tool configurations
+// 4. Return accurate detection results with high confidence
+func (s *RepositoryService) performMockDetection(name string) *valueobject.DetectedProject {
+	// Detect project type based on repository name pattern
+	projectType := valueobject.ProjectTypeUnknown
+	primaryLanguage := "Unknown"
+	confidence := 50
+
+	// Simple heuristics based on common patterns
+	if len(name) > 0 {
+		switch {
+		case containsAny(name, []string{"go", "golang"}):
+			projectType = valueobject.ProjectTypeGo
+			primaryLanguage = "Go"
+			confidence = 85
+		case containsAny(name, []string{"node", "js", "ts", "react", "vue", "next"}):
+			projectType = valueobject.ProjectTypeNodeJS
+			primaryLanguage = "TypeScript"
+			confidence = 80
+		case containsAny(name, []string{"py", "python", "django", "flask"}):
+			projectType = valueobject.ProjectTypePython
+			primaryLanguage = "Python"
+			confidence = 80
+		case containsAny(name, []string{"rs", "rust", "cargo"}):
+			projectType = valueobject.ProjectTypeRust
+			primaryLanguage = "Rust"
+			confidence = 85
+		case containsAny(name, []string{"java", "spring", "kotlin"}):
+			projectType = valueobject.ProjectTypeJava
+			primaryLanguage = "Java"
+			confidence = 80
+		}
+	}
+
+	project := valueobject.NewDetectedProject(projectType, primaryLanguage, confidence)
+
+	// Add detected tools based on project type
+	switch projectType {
+	case valueobject.ProjectTypeGo:
+		project.AddTool(valueobject.NewDetectedTool(
+			valueobject.ToolTypeFormatter,
+			"gofmt",
+			"Go standard formatter",
+			valueobject.NewToolCommand("gofmt", "gofmt", []string{"-s", "-w"}, 30),
+		))
+		project.AddTool(valueobject.NewDetectedTool(
+			valueobject.ToolTypeLinter,
+			"golangci-lint",
+			"Common Go linter",
+			valueobject.NewToolCommand("golangci-lint", "golangci-lint", []string{"run"}, 60),
+		).WithConfigFile(".golangci.yml"))
+		project.AddTool(valueobject.NewDetectedTool(
+			valueobject.ToolTypeTester,
+			"go test",
+			"Go test",
+			valueobject.NewToolCommand("go test", "go", []string{"test", "./..."}, 120),
+		))
+	case valueobject.ProjectTypeNodeJS:
+		project.AddTool(valueobject.NewDetectedTool(
+			valueobject.ToolTypeFormatter,
+			"prettier",
+			"Common JS/TS formatter",
+			valueobject.NewToolCommand("prettier", "npx", []string{"prettier", "--write", "."}, 60),
+		).WithConfigFile(".prettierrc"))
+		project.AddTool(valueobject.NewDetectedTool(
+			valueobject.ToolTypeLinter,
+			"eslint",
+			"Common JS/TS linter",
+			valueobject.NewToolCommand("eslint", "npx", []string{"eslint", "."}, 60),
+		).WithConfigFile(".eslintrc"))
+		project.AddTool(valueobject.NewDetectedTool(
+			valueobject.ToolTypeTester,
+			"jest",
+			"Common JS/TS test runner",
+			valueobject.NewToolCommand("jest", "npx", []string{"jest"}, 120),
+		))
+	case valueobject.ProjectTypePython:
+		project.AddTool(valueobject.NewDetectedTool(
+			valueobject.ToolTypeFormatter,
+			"black",
+			"Common Python formatter",
+			valueobject.NewToolCommand("black", "black", []string{"."}, 60),
+		))
+		project.AddTool(valueobject.NewDetectedTool(
+			valueobject.ToolTypeLinter,
+			"ruff",
+			"Modern Python linter",
+			valueobject.NewToolCommand("ruff", "ruff", []string{"check", "."}, 60),
+		))
+		project.AddTool(valueobject.NewDetectedTool(
+			valueobject.ToolTypeTester,
+			"pytest",
+			"Common Python test runner",
+			valueobject.NewToolCommand("pytest", "pytest", []string{}, 120),
+		))
+	}
+
+	return project
+}
+
+// containsAny checks if s contains any of the substrings (case-insensitive).
+func containsAny(s string, substrings []string) bool {
+	sLower := strings.ToLower(s)
+	for _, sub := range substrings {
+		if strings.Contains(sLower, strings.ToLower(sub)) {
+			return true
+		}
+	}
+	return false
 }

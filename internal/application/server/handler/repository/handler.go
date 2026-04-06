@@ -410,3 +410,161 @@ func (h *Handler) GetEffectiveConfig(c fiber.Ctx) error {
 
 	return c.JSON(response)
 }
+
+// GetValidationConfig retrieves validation config for a repository.
+// @Summary        Get validation config
+// @Description    Get the validation configuration for a repository (formatting, linting, testing settings)
+// @Tags           repositories
+// @Produce        json
+// @Param          name  path    string  true  "Repository name (owner/repo)"
+// @Success        200  {object}  dto.ValidationConfigDTO  "Validation configuration"
+// @Failure        404  {object}  dto.ErrorResponse  "Repository not found"
+// @Failure        500  {object}  dto.ErrorResponse  "Internal server error"
+// @Router         /api/v1/repositories/{name}/validation-config [get]
+func (h *Handler) GetValidationConfig(c fiber.Ctx) error {
+	ctx := c.Context()
+	name := c.Params("name")
+
+	if name == "" {
+		return litchierrors.New(litchierrors.ErrInvalidQueryParam).
+			WithDetail("repository name is required")
+	}
+
+	config, err := h.repoService.GetValidationConfig(ctx, name)
+	if err != nil {
+		h.logger.Error("failed to get validation config",
+			zap.String("name", name),
+			zap.Error(err),
+		)
+		return err
+	}
+
+	response := dto.FromValidationConfig(config)
+	return c.JSON(response)
+}
+
+// UpdateValidationConfigRequest represents update validation config request.
+type UpdateValidationConfigRequest struct {
+	Config dto.ValidationConfigDTO `json:"config"`
+} // @name UpdateValidationConfigRequest
+
+// UpdateValidationConfig updates validation config for a repository.
+// @Summary        Update validation config
+// @Description    Update the validation configuration for a repository (formatting, linting, testing settings)
+// @Tags           repositories
+// @Accept         json
+// @Produce        json
+// @Param          name  path    string  true  "Repository name (owner/repo)"
+// @Param          body  body    UpdateValidationConfigRequest  true  "Validation configuration update request"
+// @Success        200  {object}  dto.ValidationConfigDTO  "Updated validation configuration"
+// @Failure        400  {object}  dto.ErrorResponse  "Invalid request body"
+// @Failure        404  {object}  dto.ErrorResponse  "Repository not found"
+// @Failure        500  {object}  dto.ErrorResponse  "Internal server error"
+// @Router         /api/v1/repositories/{name}/validation-config [put]
+func (h *Handler) UpdateValidationConfig(c fiber.Ctx) error {
+	ctx := c.Context()
+	name := c.Params("name")
+
+	if name == "" {
+		return litchierrors.New(litchierrors.ErrInvalidQueryParam).
+			WithDetail("repository name is required")
+	}
+
+	var req UpdateValidationConfigRequest
+	if err := c.Bind().JSON(&req); err != nil {
+		h.logger.Warn("failed to parse update validation config request", zap.Error(err))
+		return litchierrors.New(litchierrors.ErrInvalidRequestBody).
+			WithDetail("invalid request body")
+	}
+
+	// Convert DTO to domain value object
+	config := dto.ToValidationConfig(req.Config)
+
+	// Update validation config via service
+	updatedConfig, err := h.repoService.UpdateValidationConfig(
+		ctx,
+		name,
+		config,
+		"api_user",
+		valueobject.ActorRoleAdmin,
+	)
+	if err != nil {
+		h.logger.Error("failed to update validation config",
+			zap.String("name", name),
+			zap.Error(err),
+		)
+		return err
+	}
+
+	response := dto.FromValidationConfig(updatedConfig)
+	return c.JSON(response)
+}
+
+// GetDetectionResult retrieves detection result for a repository.
+// @Summary        Get detection result
+// @Description    Get the project detection result for a repository (language, tools, confidence)
+// @Tags           repositories
+// @Produce        json
+// @Param          name  path    string  true  "Repository name (owner/repo)"
+// @Success        200  {object}  dto.DetectedProjectDTO  "Detection result"
+// @Failure        404  {object}  dto.ErrorResponse  "Repository not found or no detection result"
+// @Failure        500  {object}  dto.ErrorResponse  "Internal server error"
+// @Router         /api/v1/repositories/{name}/detection [get]
+func (h *Handler) GetDetectionResult(c fiber.Ctx) error {
+	ctx := c.Context()
+	name := c.Params("name")
+
+	if name == "" {
+		return litchierrors.New(litchierrors.ErrInvalidQueryParam).
+			WithDetail("repository name is required")
+	}
+
+	project, err := h.repoService.GetDetectionResult(ctx, name)
+	if err != nil {
+		h.logger.Error("failed to get detection result",
+			zap.String("name", name),
+			zap.Error(err),
+		)
+		return err
+	}
+
+	if project == nil {
+		return litchierrors.New(litchierrors.ErrValidationFailed).
+			WithDetail("no detection result available for repository: " + name)
+	}
+
+	response := dto.FromDetectedProject(project)
+	return c.JSON(response)
+}
+
+// RunDetection triggers project detection for a repository.
+// @Summary        Run project detection
+// @Description    Trigger automatic project detection for a repository (detects language, framework, tools)
+// @Tags           repositories
+// @Produce        json
+// @Param          name  path    string  true  "Repository name (owner/repo)"
+// @Success        200  {object}  dto.DetectedProjectDTO  "Detection result"
+// @Failure        404  {object}  dto.ErrorResponse  "Repository not found"
+// @Failure        500  {object}  dto.ErrorResponse  "Internal server error or detection failed"
+// @Router         /api/v1/repositories/{name}/detection [post]
+func (h *Handler) RunDetection(c fiber.Ctx) error {
+	ctx := c.Context()
+	name := c.Params("name")
+
+	if name == "" {
+		return litchierrors.New(litchierrors.ErrInvalidQueryParam).
+			WithDetail("repository name is required")
+	}
+
+	project, err := h.repoService.RunDetection(ctx, name)
+	if err != nil {
+		h.logger.Error("failed to run detection",
+			zap.String("name", name),
+			zap.Error(err),
+		)
+		return err
+	}
+
+	response := dto.FromDetectedProject(project)
+	return c.JSON(response)
+}

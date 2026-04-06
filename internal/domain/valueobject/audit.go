@@ -86,6 +86,12 @@ const (
 	OpRepositoryDelete  OperationType = "repository_delete"
 	OpRepositoryEnable  OperationType = "repository_enable"
 	OpRepositoryDisable OperationType = "repository_disable"
+
+	// Validation config operations
+	OpValidationConfigUpdate OperationType = "validation_config_update"
+
+	// Project detection operations
+	OpProjectDetectionRun OperationType = "project_detection_run"
 )
 
 // validOperationTypes stores all valid operation types for O(1) lookup.
@@ -114,6 +120,10 @@ var validOperationTypes = map[OperationType]bool{
 	// Repository
 	OpRepositoryCreate: true, OpRepositoryUpdate: true, OpRepositoryDelete: true,
 	OpRepositoryEnable: true, OpRepositoryDisable: true,
+		// Validation config
+		OpValidationConfigUpdate: true,
+		// Project detection
+		OpProjectDetectionRun: true,
 }
 
 // IsValid checks if the operation type is valid.
