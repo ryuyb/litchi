@@ -16,6 +16,7 @@
 *.out
 /bin/
 /dist/
+server
 
 # Go workspace
 go.work
@@ -71,6 +72,11 @@ ehthumbs.db
 # Worktree directories (created per session)
 .worktrees/
 .claude/worktrees/
+
+# Embedded frontend dist (copied from web/dist for production build)
+# Ignore all contents except .gitkeep
+internal/infrastructure/static/dist/*
+!internal/infrastructure/static/dist/.gitkeep
 
 # ==================== Config & Secrets ====================
 

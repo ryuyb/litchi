@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/ryuyb/litchi/internal/application/server"
 	"github.com/ryuyb/litchi/internal/infrastructure/config"
+	"github.com/ryuyb/litchi/internal/infrastructure/static"
 	"github.com/ryuyb/litchi/internal/pkg/logger"
 	"go.uber.org/fx"
 
@@ -22,7 +23,11 @@ func main() {
 		// Logger depends on config
 		logger.Module,
 		// Server depends on logger and config
-		// StartAppHook ensures fiber.App is instantiated and starts
+		// API routes are registered here
 		server.Module,
+		// Static file serving (embedded frontend)
+		// Registers SPA fallback route after API routes
+		// Fiber matches exact routes before wildcards, so API routes take priority
+		static.Module,
 	).Run()
 }
