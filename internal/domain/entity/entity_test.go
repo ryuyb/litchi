@@ -517,8 +517,7 @@ func TestExecutionBranchManagement(t *testing.T) {
 	e := NewExecution("/path", "feature-branch")
 
 	// Deprecate branch
-	prNumber := 123
-	e.DeprecateBranch("Rollback to design", &prNumber, "design")
+	e.DeprecateBranch("Rollback to design", new(123), "design")
 
 	if !e.Branch.IsDeprecated {
 		t.Errorf("Branch should be deprecated")
@@ -711,10 +710,10 @@ func TestRepositoryGetEffectiveConfig(t *testing.T) {
 
 	// Global config
 	globalConfig := RepoConfig{
-		MaxConcurrency:      ptrInt(3),
-		ComplexityThreshold: ptrInt(70),
-		ForceDesignConfirm:  ptrBool(false),
-		TaskRetryLimit:      ptrInt(3),
+		MaxConcurrency:      new(3),
+		ComplexityThreshold: new(70),
+		ForceDesignConfirm:  new(false),
+		TaskRetryLimit:      new(3),
 	}
 
 	effective := repo.GetEffectiveConfig(globalConfig)

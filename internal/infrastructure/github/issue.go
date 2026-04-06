@@ -400,8 +400,7 @@ func (s *IssueService) AssignIssue(ctx context.Context, owner, repo string, numb
 
 // IsNotFoundError checks if the error is a not found error.
 func IsNotFoundError(err error) bool {
-	var ghErr *github.ErrorResponse
-	if stderrors.As(err, &ghErr) {
+	if ghErr, ok := stderrors.AsType[*github.ErrorResponse](err); ok {
 		return ghErr.Response.StatusCode == 404
 	}
 	return false

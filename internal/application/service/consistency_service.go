@@ -7,11 +7,11 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	litchierrors "github.com/ryuyb/litchi/internal/pkg/errors"
 	"github.com/ryuyb/litchi/internal/domain/aggregate"
 	"github.com/ryuyb/litchi/internal/domain/repository"
 	"github.com/ryuyb/litchi/internal/domain/service"
 	"github.com/ryuyb/litchi/internal/domain/valueobject"
+	litchierrors "github.com/ryuyb/litchi/internal/pkg/errors"
 	"go.uber.org/zap"
 )
 
@@ -450,8 +450,7 @@ func buildCacheFromSession(session *aggregate.WorkSession) *repository.Execution
 	if session.Design != nil {
 		var complexityScore *int
 		if session.Design.ComplexityScore.Value() > 0 {
-			score := session.Design.ComplexityScore.Value()
-			complexityScore = &score
+			complexityScore = new(session.Design.ComplexityScore.Value())
 		}
 		cache.Design = &repository.DesignCache{
 			Status:              "approved",

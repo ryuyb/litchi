@@ -244,8 +244,7 @@ func (r *auditLogRepository) toModel(e *entity.AuditLog) *models.AuditLog {
 
 	// Handle nullable IssueNumber
 	if e.IssueNumber > 0 {
-		issueNum := int64(e.IssueNumber)
-		model.IssueNumber = &issueNum
+		model.IssueNumber = new(int64(e.IssueNumber))
 	}
 
 	// Convert Parameters map to JSON
@@ -309,6 +308,5 @@ func ptrToInt64(v int) *int64 {
 	if v == 0 {
 		return nil
 	}
-	v64 := int64(v)
-	return &v64
+	return new(int64(v))
 }

@@ -24,9 +24,9 @@ func newTestRepositoryService(
 ) *RepositoryService {
 	cfg := &config.Config{
 		Agent: config.AgentConfig{
-			MaxConcurrency:  5,
-			TaskRetryLimit:  3,
-			Type:            "claude-opus-4-6",
+			MaxConcurrency: 5,
+			TaskRetryLimit: 3,
+			Type:           "claude-opus-4-6",
 		},
 		Complexity: config.ComplexityConfig{
 			Threshold:          70,
@@ -79,18 +79,12 @@ func TestRepositoryService_CreateRepository_WithConfigOverrides(t *testing.T) {
 	auditRepo := repository.NewMockAuditLogRepository(t)
 	svc := newTestRepositoryService(repoRepo, auditRepo)
 
-	maxConcurrency := 10
-	complexityThreshold := 80
-	forceDesignConfirm := true
-	defaultModel := "claude-sonnet-4-6"
-	taskRetryLimit := 5
-
 	configOverrides := &entity.RepoConfig{
-		MaxConcurrency:      &maxConcurrency,
-		ComplexityThreshold: &complexityThreshold,
-		ForceDesignConfirm:  &forceDesignConfirm,
-		DefaultModel:        &defaultModel,
-		TaskRetryLimit:      &taskRetryLimit,
+		MaxConcurrency:      new(10),
+		ComplexityThreshold: new(80),
+		ForceDesignConfirm:  new(true),
+		DefaultModel:        new("claude-sonnet-4-6"),
+		TaskRetryLimit:      new(5),
 	}
 
 	repoRepo.EXPECT().ExistsByName(ctx, "owner/repo").Return(false, nil)
@@ -156,8 +150,7 @@ func TestRepositoryService_CreateRepository_InvalidName(t *testing.T) {
 		t.Fatal("expected error for invalid name")
 	}
 
-	var litchiErr *litchierrors.Error
-	if !errors.As(err, &litchiErr) {
+	if _, ok := errors.AsType[*litchierrors.Error](err); !ok {
 		t.Errorf("expected litchierrors.Error, got %T", err)
 	}
 }
@@ -199,9 +192,8 @@ func TestRepositoryService_UpdateRepository_Success(t *testing.T) {
 	repoRepo.EXPECT().Save(ctx, mockRepoSaved("owner/repo")).Return(nil)
 	auditRepo.EXPECT().Save(ctx, mockAuditLogSaved()).Return(nil)
 
-	maxConcurrency := 15
 	configOverrides := &entity.RepoConfig{
-		MaxConcurrency: &maxConcurrency,
+		MaxConcurrency: new(15),
 	}
 
 	repo, err := svc.UpdateRepository(ctx, "owner/repo", configOverrides, "admin", valueobject.ActorRoleAdmin)
@@ -222,9 +214,8 @@ func TestRepositoryService_UpdateRepository_NotFound(t *testing.T) {
 
 	repoRepo.EXPECT().FindByName(ctx, "owner/repo").Return(nil, nil)
 
-	maxConcurrency := 15
 	configOverrides := &entity.RepoConfig{
-		MaxConcurrency: &maxConcurrency,
+		MaxConcurrency: new(15),
 	}
 
 	_, err := svc.UpdateRepository(ctx, "owner/repo", configOverrides, "admin", valueobject.ActorRoleAdmin)
@@ -232,8 +223,7 @@ func TestRepositoryService_UpdateRepository_NotFound(t *testing.T) {
 		t.Fatal("expected error for repository not found")
 	}
 
-	var litchiErr *litchierrors.Error
-	if !errors.As(err, &litchiErr) {
+	if _, ok := errors.AsType[*litchierrors.Error](err); !ok {
 		t.Errorf("expected litchierrors.Error, got %T", err)
 	}
 }
@@ -248,9 +238,8 @@ func TestRepositoryService_UpdateRepository_InvalidConfig(t *testing.T) {
 	repoRepo.EXPECT().FindByName(ctx, "owner/repo").Return(existingRepo, nil)
 	auditRepo.EXPECT().Save(ctx, mockAuditLogSaved()).Return(nil)
 
-	maxConcurrency := 0
 	configOverrides := &entity.RepoConfig{
-		MaxConcurrency: &maxConcurrency,
+		MaxConcurrency: new(0),
 	}
 
 	_, err := svc.UpdateRepository(ctx, "owner/repo", configOverrides, "admin", valueobject.ActorRoleAdmin)
@@ -258,8 +247,7 @@ func TestRepositoryService_UpdateRepository_InvalidConfig(t *testing.T) {
 		t.Fatal("expected error for invalid config")
 	}
 
-	var litchiErr *litchierrors.Error
-	if !errors.As(err, &litchiErr) {
+	if _, ok := errors.AsType[*litchierrors.Error](err); !ok {
 		t.Errorf("expected litchierrors.Error, got %T", err)
 	}
 }
@@ -296,8 +284,7 @@ func TestRepositoryService_DeleteRepository_NotFound(t *testing.T) {
 		t.Fatal("expected error for repository not found")
 	}
 
-	var litchiErr *litchierrors.Error
-	if !errors.As(err, &litchiErr) {
+	if _, ok := errors.AsType[*litchierrors.Error](err); !ok {
 		t.Errorf("expected litchierrors.Error, got %T", err)
 	}
 }
@@ -448,8 +435,7 @@ func TestRepositoryService_EnableRepository_NotFound(t *testing.T) {
 		t.Fatal("expected error for repository not found")
 	}
 
-	var litchiErr *litchierrors.Error
-	if !errors.As(err, &litchiErr) {
+	if _, ok := errors.AsType[*litchierrors.Error](err); !ok {
 		t.Errorf("expected litchierrors.Error, got %T", err)
 	}
 }
@@ -490,8 +476,7 @@ func TestRepositoryService_DisableRepository_NotFound(t *testing.T) {
 		t.Fatal("expected error for repository not found")
 	}
 
-	var litchiErr *litchierrors.Error
-	if !errors.As(err, &litchiErr) {
+	if _, ok := errors.AsType[*litchierrors.Error](err); !ok {
 		t.Errorf("expected litchierrors.Error, got %T", err)
 	}
 }
@@ -565,16 +550,11 @@ func TestRepositoryService_ValidateConfig_Valid(t *testing.T) {
 	auditRepo := repository.NewMockAuditLogRepository(t)
 	svc := newTestRepositoryService(repoRepo, auditRepo)
 
-	maxConcurrency := 10
-	complexityThreshold := 80
-	taskRetryLimit := 5
-	defaultModel := "claude-sonnet-4-6"
-
 	config := entity.RepoConfig{
-		MaxConcurrency:      &maxConcurrency,
-		ComplexityThreshold: &complexityThreshold,
-		TaskRetryLimit:      &taskRetryLimit,
-		DefaultModel:        &defaultModel,
+		MaxConcurrency:      new(10),
+		ComplexityThreshold: new(80),
+		TaskRetryLimit:      new(5),
+		DefaultModel:        new("claude-sonnet-4-6"),
 	}
 
 	err := svc.ValidateConfig(ctx, config)
@@ -589,9 +569,8 @@ func TestRepositoryService_ValidateConfig_InvalidMaxConcurrency(t *testing.T) {
 	auditRepo := repository.NewMockAuditLogRepository(t)
 	svc := newTestRepositoryService(repoRepo, auditRepo)
 
-	maxConcurrency := 0
 	config := entity.RepoConfig{
-		MaxConcurrency: &maxConcurrency,
+		MaxConcurrency: new(0),
 	}
 
 	err := svc.ValidateConfig(ctx, config)
@@ -599,8 +578,7 @@ func TestRepositoryService_ValidateConfig_InvalidMaxConcurrency(t *testing.T) {
 		t.Fatal("expected error for invalid MaxConcurrency")
 	}
 
-	var litchiErr *litchierrors.Error
-	if !errors.As(err, &litchiErr) {
+	if _, ok := errors.AsType[*litchierrors.Error](err); !ok {
 		t.Errorf("expected litchierrors.Error, got %T", err)
 	}
 }
@@ -638,9 +616,8 @@ func TestRepositoryService_ValidateConfig_InvalidTaskRetryLimit(t *testing.T) {
 	auditRepo := repository.NewMockAuditLogRepository(t)
 	svc := newTestRepositoryService(repoRepo, auditRepo)
 
-	taskRetryLimit := -1
 	config := entity.RepoConfig{
-		TaskRetryLimit: &taskRetryLimit,
+		TaskRetryLimit: new(-1),
 	}
 
 	err := svc.ValidateConfig(ctx, config)
@@ -648,8 +625,7 @@ func TestRepositoryService_ValidateConfig_InvalidTaskRetryLimit(t *testing.T) {
 		t.Fatal("expected error for invalid TaskRetryLimit")
 	}
 
-	var litchiErr *litchierrors.Error
-	if !errors.As(err, &litchiErr) {
+	if _, ok := errors.AsType[*litchierrors.Error](err); !ok {
 		t.Errorf("expected litchierrors.Error, got %T", err)
 	}
 }
@@ -660,9 +636,8 @@ func TestRepositoryService_ValidateConfig_EmptyDefaultModel(t *testing.T) {
 	auditRepo := repository.NewMockAuditLogRepository(t)
 	svc := newTestRepositoryService(repoRepo, auditRepo)
 
-	defaultModel := ""
 	config := entity.RepoConfig{
-		DefaultModel: &defaultModel,
+		DefaultModel: new(""),
 	}
 
 	err := svc.ValidateConfig(ctx, config)
@@ -670,8 +645,7 @@ func TestRepositoryService_ValidateConfig_EmptyDefaultModel(t *testing.T) {
 		t.Fatal("expected error for empty DefaultModel")
 	}
 
-	var litchiErr *litchierrors.Error
-	if !errors.As(err, &litchiErr) {
+	if _, ok := errors.AsType[*litchierrors.Error](err); !ok {
 		t.Errorf("expected litchierrors.Error, got %T", err)
 	}
 }

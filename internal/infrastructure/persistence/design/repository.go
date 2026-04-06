@@ -283,8 +283,7 @@ func (r *Repository) FindVersionByNumber(ctx context.Context, sessionID uuid.UUI
 		return nil, err
 	}
 
-	version := toDomainDesignVersion(&dbVersion)
-	return &version, nil
+	return new(toDomainDesignVersion(&dbVersion)), nil
 }
 
 // Delete removes a design and all its versions from the database.
@@ -317,8 +316,7 @@ func toDBModel(design *entity.Design, sessionID uuid.UUID) models.Design {
 
 	// Set complexity score
 	if design.ComplexityScore.Value() > 0 {
-		score := design.ComplexityScore.Value()
-		dbDesign.ComplexityScore = &score
+		dbDesign.ComplexityScore = new(design.ComplexityScore.Value())
 	}
 
 	// Convert versions

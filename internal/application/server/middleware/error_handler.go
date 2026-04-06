@@ -52,8 +52,7 @@ func (h *ErrorHandler) Handle(c fiber.Ctx, err error) error {
 	}
 
 	// Add details in debug mode
-	var litchiErr *litchierrors.Error
-	if errors.As(err, &litchiErr) {
+	if litchiErr, ok := errors.AsType[*litchierrors.Error](err); ok {
 		if litchiErr.Detail != "" && h.debug {
 			response.Details = litchiErr.Detail
 		}

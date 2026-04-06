@@ -22,9 +22,9 @@ import (
 
 // mockCacheRepository implements repository.CacheRepository for testing.
 type mockCacheRepository struct {
-	cache    *repository.ExecutionContextCache
-	loadErr  error
-	saveErr  error
+	cache     *repository.ExecutionContextCache
+	loadErr   error
+	saveErr   error
 	deleteErr error
 }
 
@@ -153,8 +153,7 @@ func TestConsistencyService_Check_StalePauseContext(t *testing.T) {
 	session, _ := aggregate.NewWorkSession(issue)
 
 	// Add stale pause context
-	pauseCtx := valueobject.NewPauseContext(valueobject.PauseReasonTaskFailed)
-	session.PauseContext = &pauseCtx
+	session.PauseContext = new(valueobject.NewPauseContext(valueobject.PauseReasonTaskFailed))
 	// Session is still active, which is inconsistent
 
 	cacheRepo := &mockCacheRepository{cache: nil}
@@ -314,8 +313,7 @@ func TestConsistencyService_Repair_StalePauseContext(t *testing.T) {
 	issue := entity.NewIssue(1, "Test Issue", "Body", "org/repo", "author")
 	session, _ := aggregate.NewWorkSession(issue)
 	session.SessionStatus = aggregate.SessionStatusActive
-	pauseCtx := valueobject.NewPauseContext(valueobject.PauseReasonTaskFailed)
-	session.PauseContext = &pauseCtx
+	session.PauseContext = new(valueobject.NewPauseContext(valueobject.PauseReasonTaskFailed))
 
 	cacheRepo := &mockCacheRepository{cache: nil}
 	svc := NewConsistencyService(nil, cacheRepo, zap.NewNop())
@@ -350,9 +348,8 @@ func TestConsistencyService_CheckAndRepair(t *testing.T) {
 	issue := entity.NewIssue(1, "Test Issue", "Body", "org/repo", "author")
 	session, _ := aggregate.NewWorkSession(issue)
 	session.CurrentStage = valueobject.StageCompleted
-	session.SessionStatus = aggregate.SessionStatusActive // Issue 1: Status mismatch
-	pauseCtx := valueobject.NewPauseContext(valueobject.PauseReasonTaskFailed)
-	session.PauseContext = &pauseCtx // Issue 2: Stale pause context
+	session.SessionStatus = aggregate.SessionStatusActive                                      // Issue 1: Status mismatch
+	session.PauseContext = new(valueobject.NewPauseContext(valueobject.PauseReasonTaskFailed)) // Issue 2: Stale pause context
 
 	cacheRepo := &mockCacheRepository{cache: nil}
 	svc := NewConsistencyService(nil, cacheRepo, zap.NewNop())

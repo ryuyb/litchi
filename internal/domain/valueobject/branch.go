@@ -19,9 +19,8 @@ func NewBranch(name string) Branch {
 
 // Deprecate marks the branch as deprecated.
 func (b *Branch) Deprecate(reason string) {
-	now := time.Now()
 	b.IsDeprecated = true
-	b.DeprecatedAt = &now
+	b.DeprecatedAt = new(time.Now())
 }
 
 // IsActive returns true if the branch is still active.

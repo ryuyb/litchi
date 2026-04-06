@@ -76,8 +76,7 @@ func (e *DefaultComplexityEvaluator) Evaluate(
 
 	// Use default weights if not provided
 	if weights == nil {
-		defaultWeights := DefaultComplexityWeights()
-		weights = &defaultWeights
+		weights = new(DefaultComplexityWeights())
 	}
 
 	// Validate weights

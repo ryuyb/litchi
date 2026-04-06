@@ -193,8 +193,7 @@ func TestStageOrder(t *testing.T) {
 
 func TestStageIsTerminal(t *testing.T) {
 	// Test pointer receiver method
-	completed := StageCompleted
-	if !(&completed).IsTerminal() {
+	if !(new(StageCompleted)).IsTerminal() {
 		t.Errorf("(&StageCompleted).IsTerminal() should be true")
 	}
 	// Test helper function
@@ -231,8 +230,7 @@ func TestStageIsTerminal(t *testing.T) {
 
 func TestStageIsFirst(t *testing.T) {
 	// Test pointer receiver method
-	clarification := StageClarification
-	if !(&clarification).IsFirst() {
+	if !(new(StageClarification)).IsFirst() {
 		t.Errorf("(&StageClarification).IsFirst() should be true")
 	}
 	// Test helper function
@@ -529,8 +527,7 @@ func TestStageJSONSerialization(t *testing.T) {
 	}
 
 	// Invalid stage should not marshal
-	invalidStage := Stage("invalid")
-	_, err := json.Marshal(&invalidStage)
+	_, err := json.Marshal(new(Stage("invalid")))
 	if err == nil {
 		t.Errorf("Marshal(&invalid) should return error")
 	}
@@ -641,8 +638,7 @@ func TestStageValue(t *testing.T) {
 	}
 
 	// Invalid stage
-	invalidStage := Stage("invalid")
-	_, err := (&invalidStage).Value()
+	_, err := (new(Stage("invalid"))).Value()
 	if err == nil {
 		t.Errorf("Value(&invalid) should return error")
 	}

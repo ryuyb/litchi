@@ -79,8 +79,7 @@ func WrapWithDetail(code ErrorCode, err error, detail string) *Error {
 // Is checks if an error matches a specific error code.
 // Supports Go 1.13+ error chain via errors.As.
 func Is(err error, code ErrorCode) bool {
-	var litchiErr *Error
-	if errors.As(err, &litchiErr) {
+	if litchiErr, ok := errors.AsType[*Error](err); ok {
 		return litchiErr.Code.Code == code.Code
 	}
 	return false
@@ -89,8 +88,7 @@ func Is(err error, code ErrorCode) bool {
 // GetCode extracts the error code from an error.
 // Uses errors.As to support error chain traversal.
 func GetCode(err error) string {
-	var litchiErr *Error
-	if errors.As(err, &litchiErr) {
+	if litchiErr, ok := errors.AsType[*Error](err); ok {
 		return litchiErr.Code.Code
 	}
 	return "UNKNOWN"
@@ -99,8 +97,7 @@ func GetCode(err error) string {
 // GetSeverity extracts the severity level from an error.
 // Uses errors.As to support error chain traversal.
 func GetSeverity(err error) int {
-	var litchiErr *Error
-	if errors.As(err, &litchiErr) {
+	if litchiErr, ok := errors.AsType[*Error](err); ok {
 		return litchiErr.Code.Severity
 	}
 	return 0
@@ -163,13 +160,13 @@ var (
 	ErrGitConflictDetected = ErrorCode{Code: "L3GIT0021", Message: "Git conflict detected", Category: "GIT", Severity: 3}
 
 	// Git general errors (L3GIT0022-L3GIT0028)
-	ErrGitRepoNotFound      = ErrorCode{Code: "L3GIT0022", Message: "Git repository not found", Category: "GIT", Severity: 3}
-	ErrGitRepoOpenFailed    = ErrorCode{Code: "L3GIT0023", Message: "Git repository open failed", Category: "GIT", Severity: 3}
-	ErrGitCloneFailed       = ErrorCode{Code: "L3GIT0024", Message: "Git clone failed", Category: "GIT", Severity: 3}
-	ErrGitFetchFailed       = ErrorCode{Code: "L3GIT0025", Message: "Git fetch failed", Category: "GIT", Severity: 3}
-	ErrGitCommandFailed     = ErrorCode{Code: "L3GIT0026", Message: "Git command execution failed", Category: "GIT", Severity: 3}
-	ErrGitAuthentication    = ErrorCode{Code: "L3GIT0027", Message: "Git authentication failed", Category: "GIT", Severity: 3}
-	ErrGitOperationFailed   = ErrorCode{Code: "L3GIT0028", Message: "Git operation failed", Category: "GIT", Severity: 3}
+	ErrGitRepoNotFound    = ErrorCode{Code: "L3GIT0022", Message: "Git repository not found", Category: "GIT", Severity: 3}
+	ErrGitRepoOpenFailed  = ErrorCode{Code: "L3GIT0023", Message: "Git repository open failed", Category: "GIT", Severity: 3}
+	ErrGitCloneFailed     = ErrorCode{Code: "L3GIT0024", Message: "Git clone failed", Category: "GIT", Severity: 3}
+	ErrGitFetchFailed     = ErrorCode{Code: "L3GIT0025", Message: "Git fetch failed", Category: "GIT", Severity: 3}
+	ErrGitCommandFailed   = ErrorCode{Code: "L3GIT0026", Message: "Git command execution failed", Category: "GIT", Severity: 3}
+	ErrGitAuthentication  = ErrorCode{Code: "L3GIT0027", Message: "Git authentication failed", Category: "GIT", Severity: 3}
+	ErrGitOperationFailed = ErrorCode{Code: "L3GIT0028", Message: "Git operation failed", Category: "GIT", Severity: 3}
 
 	ErrNetworkTimeout     = ErrorCode{Code: "L3NET0001", Message: "Network timeout", Category: "NET", Severity: 3}
 	ErrNetworkConnection  = ErrorCode{Code: "L3NET0002", Message: "Network connection failed", Category: "NET", Severity: 3}
@@ -210,13 +207,13 @@ var (
 	ErrGitBranchNamingViolation = ErrorCode{Code: "L4GIT0001", Message: "Git branch naming convention violation", Category: "GIT", Severity: 4}
 
 	// PR operation errors
-	ErrPRCreateFailed    = ErrorCode{Code: "L4PR0001", Message: "PR creation failed", Category: "DOM", Severity: 4}
-	ErrPRUpdateFailed    = ErrorCode{Code: "L4PR0002", Message: "PR update failed", Category: "DOM", Severity: 4}
-	ErrPRNotFound        = ErrorCode{Code: "L4PR0003", Message: "PR not found", Category: "DOM", Severity: 4}
-	ErrPRConflict        = ErrorCode{Code: "L4PR0004", Message: "PR has merge conflicts", Category: "DOM", Severity: 4}
-	ErrPRAlreadyExists   = ErrorCode{Code: "L4PR0005", Message: "PR already exists for this branch", Category: "DOM", Severity: 4}
-	ErrPRMergeFailed     = ErrorCode{Code: "L4PR0006", Message: "PR merge failed", Category: "DOM", Severity: 4}
-	ErrPRReviewRequired  = ErrorCode{Code: "L4PR0007", Message: "PR requires review approval", Category: "DOM", Severity: 4}
+	ErrPRCreateFailed   = ErrorCode{Code: "L4PR0001", Message: "PR creation failed", Category: "DOM", Severity: 4}
+	ErrPRUpdateFailed   = ErrorCode{Code: "L4PR0002", Message: "PR update failed", Category: "DOM", Severity: 4}
+	ErrPRNotFound       = ErrorCode{Code: "L4PR0003", Message: "PR not found", Category: "DOM", Severity: 4}
+	ErrPRConflict       = ErrorCode{Code: "L4PR0004", Message: "PR has merge conflicts", Category: "DOM", Severity: 4}
+	ErrPRAlreadyExists  = ErrorCode{Code: "L4PR0005", Message: "PR already exists for this branch", Category: "DOM", Severity: 4}
+	ErrPRMergeFailed    = ErrorCode{Code: "L4PR0006", Message: "PR merge failed", Category: "DOM", Severity: 4}
+	ErrPRReviewRequired = ErrorCode{Code: "L4PR0007", Message: "PR requires review approval", Category: "DOM", Severity: 4}
 )
 
 // API response error codes (for HTTP responses)
@@ -239,8 +236,7 @@ var (
 // ToAPIError converts domain error to API error code.
 // Uses errors.As to support error chain traversal.
 func ToAPIError(err error) APIErrorCode {
-	var litchiErr *Error
-	if errors.As(err, &litchiErr) {
+	if litchiErr, ok := errors.AsType[*Error](err); ok {
 		switch litchiErr.Code.Severity {
 		case 1:
 			return APIErrInternal

@@ -98,8 +98,7 @@ func TestEvaluateRollback_R4_PullRequestToExecution(t *testing.T) {
 
 	// Create session in PullRequest stage with PR number
 	session := createTestSessionAtStage(valueobject.StagePullRequest)
-	prNumber := 42
-	session.PRNumber = &prNumber
+	session.PRNumber = new(42)
 
 	result := service.EvaluateRollback(session, valueobject.StageExecution, ctx)
 
@@ -129,8 +128,7 @@ func TestEvaluateRollback_R5_PullRequestToDesign(t *testing.T) {
 
 	// Create session in PullRequest stage with PR number
 	session := createTestSessionAtStage(valueobject.StagePullRequest)
-	prNumber := 42
-	session.PRNumber = &prNumber
+	session.PRNumber = new(42)
 
 	result := service.EvaluateRollback(session, valueobject.StageDesign, ctx)
 
@@ -161,8 +159,7 @@ func TestEvaluateRollback_R6_PullRequestToClarification(t *testing.T) {
 
 	// Create session in PullRequest stage with PR number
 	session := createTestSessionAtStage(valueobject.StagePullRequest)
-	prNumber := 42
-	session.PRNumber = &prNumber
+	session.PRNumber = new(42)
 
 	result := service.EvaluateRollback(session, valueobject.StageClarification, ctx)
 
@@ -192,8 +189,7 @@ func TestEvaluateRollback_PRRollbackCountLimit(t *testing.T) {
 
 	// Create session in PullRequest stage with PR number and max rollback count
 	session := createTestSessionAtStage(valueobject.StagePullRequest)
-	prNumber := 42
-	session.PRNumber = &prNumber
+	session.PRNumber = new(42)
 	session.PRRollbackCount = 2 // Already at max
 
 	result := service.EvaluateRollback(session, valueobject.StageExecution, ctx)
@@ -212,8 +208,7 @@ func TestEvaluateRollback_PRRollbackDisabled(t *testing.T) {
 
 	// Create session in PullRequest stage
 	session := createTestSessionAtStage(valueobject.StagePullRequest)
-	prNumber := 42
-	session.PRNumber = &prNumber
+	session.PRNumber = new(42)
 
 	result := service.EvaluateRollback(session, valueobject.StageExecution, ctx)
 
@@ -297,8 +292,7 @@ func TestDetermineRollbackType(t *testing.T) {
 		// Test rollback type indirectly through EvaluateRollback
 		session := createTestSessionAtStage(tt.current)
 		if tt.current == valueobject.StagePullRequest {
-			prNumber := 42
-			session.PRNumber = &prNumber
+			session.PRNumber = new(42)
 		}
 
 		ctx := TransitionContext{

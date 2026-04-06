@@ -42,8 +42,7 @@ func TestTaskStatusString(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(string(tt.status), func(t *testing.T) {
-			status := tt.status
-			if got := (&status).String(); got != tt.expected {
+			if got := (new(tt.status)).String(); got != tt.expected {
 				t.Errorf("(&TaskStatus).String() = %s, expected %s", got, tt.expected)
 			}
 		})
@@ -158,8 +157,7 @@ func TestTaskStatusDisplayName(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(string(tt.status), func(t *testing.T) {
-			status := tt.status
-			if got := (&status).DisplayName(); got != tt.expected {
+			if got := (new(tt.status)).DisplayName(); got != tt.expected {
 				t.Errorf("(&TaskStatus).DisplayName() = %s, expected %s", got, tt.expected)
 			}
 			if got := TaskStatusDisplayName(tt.status); got != tt.expected {
@@ -204,13 +202,11 @@ func TestTaskStatusIsTerminal(t *testing.T) {
 }
 
 func TestTaskStatusCanStart(t *testing.T) {
-	pending := TaskStatusPending
-	if !(&pending).CanStart() {
+	if !(new(TaskStatusPending)).CanStart() {
 		t.Errorf("Pending.CanStart() should be true")
 	}
 
-	inProgress := TaskStatusInProgress
-	if (&inProgress).CanStart() {
+	if (new(TaskStatusInProgress)).CanStart() {
 		t.Errorf("InProgress.CanStart() should be false")
 	}
 
@@ -224,13 +220,11 @@ func TestTaskStatusCanStart(t *testing.T) {
 }
 
 func TestTaskStatusCanComplete(t *testing.T) {
-	inProgress := TaskStatusInProgress
-	if !(&inProgress).CanComplete() {
+	if !(new(TaskStatusInProgress)).CanComplete() {
 		t.Errorf("InProgress.CanComplete() should be true")
 	}
 
-	pending := TaskStatusPending
-	if (&pending).CanComplete() {
+	if (new(TaskStatusPending)).CanComplete() {
 		t.Errorf("Pending.CanComplete() should be false")
 	}
 
@@ -244,13 +238,11 @@ func TestTaskStatusCanComplete(t *testing.T) {
 }
 
 func TestTaskStatusCanFail(t *testing.T) {
-	inProgress := TaskStatusInProgress
-	if !(&inProgress).CanFail() {
+	if !(new(TaskStatusInProgress)).CanFail() {
 		t.Errorf("InProgress.CanFail() should be true")
 	}
 
-	pending := TaskStatusPending
-	if (&pending).CanFail() {
+	if (new(TaskStatusPending)).CanFail() {
 		t.Errorf("Pending.CanFail() should be false")
 	}
 
@@ -265,19 +257,16 @@ func TestTaskStatusCanFail(t *testing.T) {
 
 func TestTaskStatusCanSkip(t *testing.T) {
 	// Can skip from Pending or InProgress
-	pending := TaskStatusPending
-	if !(&pending).CanSkip() {
+	if !(new(TaskStatusPending)).CanSkip() {
 		t.Errorf("Pending.CanSkip() should be true")
 	}
 
-	inProgress := TaskStatusInProgress
-	if !(&inProgress).CanSkip() {
+	if !(new(TaskStatusInProgress)).CanSkip() {
 		t.Errorf("InProgress.CanSkip() should be true")
 	}
 
 	// Cannot skip from other statuses
-	failed := TaskStatusFailed
-	if (&failed).CanSkip() {
+	if (new(TaskStatusFailed)).CanSkip() {
 		t.Errorf("Failed.CanSkip() should be false")
 	}
 
@@ -291,13 +280,11 @@ func TestTaskStatusCanSkip(t *testing.T) {
 }
 
 func TestTaskStatusCanRetry(t *testing.T) {
-	failed := TaskStatusFailed
-	if !(&failed).CanRetry() {
+	if !(new(TaskStatusFailed)).CanRetry() {
 		t.Errorf("Failed.CanRetry() should be true")
 	}
 
-	completed := TaskStatusCompleted
-	if (&completed).CanRetry() {
+	if (new(TaskStatusCompleted)).CanRetry() {
 		t.Errorf("Completed.CanRetry() should be false")
 	}
 
@@ -373,8 +360,7 @@ func TestTaskStatusJSONSerialization(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(string(tt.status), func(t *testing.T) {
-			status := tt.status
-			data, err := json.Marshal(&status)
+			data, err := json.Marshal(new(tt.status))
 			if err != nil {
 				t.Errorf("Marshal(&%s) unexpected error: %v", tt.status, err)
 			}
@@ -385,8 +371,7 @@ func TestTaskStatusJSONSerialization(t *testing.T) {
 	}
 
 	// Invalid status should not marshal
-	invalidStatus := TaskStatus("invalid")
-	_, err := json.Marshal(&invalidStatus)
+	_, err := json.Marshal(new(TaskStatus("invalid")))
 	if err == nil {
 		t.Errorf("Marshal(&invalid) should return error")
 	}
@@ -454,8 +439,7 @@ func TestTaskStatusValue(t *testing.T) {
 	}
 
 	// Invalid status
-	invalidStatus := TaskStatus("invalid")
-	_, err := (&invalidStatus).Value()
+	_, err := (new(TaskStatus("invalid"))).Value()
 	if err == nil {
 		t.Errorf("Value(&invalid) should return error")
 	}

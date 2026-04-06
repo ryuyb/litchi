@@ -25,14 +25,11 @@ func TestFileCacheRepository_Save(t *testing.T) {
 	ctx := context.Background()
 
 	sessionID := uuid.New()
-	complexityScore := 75
-	pauseReason := "waiting for input"
-
 	cache := &repository.ExecutionContextCache{
 		SessionID:    sessionID,
 		CurrentStage: "Execution",
 		Status:       "paused",
-		PauseReason:  &pauseReason,
+		PauseReason:  new("waiting for input"),
 		Clarification: &repository.ClarificationCache{
 			Status:           "completed",
 			ConfirmedPoints:  []string{"point1", "point2"},
@@ -41,12 +38,12 @@ func TestFileCacheRepository_Save(t *testing.T) {
 		Design: &repository.DesignCache{
 			Status:              "confirmed",
 			CurrentVersion:      2,
-			ComplexityScore:     &complexityScore,
+			ComplexityScore:     new(75),
 			RequireConfirmation: true,
 			Confirmed:           true,
 		},
 		Execution: &repository.ExecutionCache{
-			CurrentTaskID:    ptr(uuid.New()),
+			CurrentTaskID:    new(uuid.New()),
 			CompletedTaskIDs: []uuid.UUID{uuid.New()},
 			Branch:           "feature/test",
 			BranchDeprecated: false,
@@ -55,8 +52,8 @@ func TestFileCacheRepository_Save(t *testing.T) {
 		Tasks: []repository.TaskCache{
 			{
 				ID:         uuid.New(),
-				Status:      "completed",
-				RetryCount:  0,
+				Status:     "completed",
+				RetryCount: 0,
 			},
 		},
 		UpdatedAt: time.Now(),
@@ -97,10 +94,7 @@ func TestFileCacheRepository_Load(t *testing.T) {
 	repo := NewFileCacheRepository(logger)
 	ctx := context.Background()
 
-	sessionID := uuid.New()
-	complexityScore := 80
-
-	// Save a cache first
+	sessionID := uuid.New() // Save a cache first
 	originalCache := &repository.ExecutionContextCache{
 		SessionID:    sessionID,
 		CurrentStage: "Design",
@@ -108,7 +102,7 @@ func TestFileCacheRepository_Load(t *testing.T) {
 		Design: &repository.DesignCache{
 			Status:              "in_progress",
 			CurrentVersion:      1,
-			ComplexityScore:     &complexityScore,
+			ComplexityScore:     new(80),
 			RequireConfirmation: false,
 			Confirmed:           false,
 		},

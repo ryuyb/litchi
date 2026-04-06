@@ -50,8 +50,6 @@ func NewWebhookDeliveryRepository(p WebhookDeliveryRepoParams) repository.Webhoo
 // Returns false if already processed or being processed by another handler.
 func (r *webhookDeliveryRepository) TryAcquire(ctx context.Context, deliveryID, eventType, repository, payloadHash string) (bool, error) {
 	// Set expiration time based on configured TTL
-	expiresAt := time.Now().Add(r.ttl)
-
 	// Insert a "processing" record. If delivery_id exists, ON CONFLICT DO NOTHING.
 	result := r.db.WithContext(ctx).
 		Clauses(clause.OnConflict{
@@ -65,7 +63,7 @@ func (r *webhookDeliveryRepository) TryAcquire(ctx context.Context, deliveryID, 
 			PayloadHash:   payloadHash,
 			Processed:     false,
 			ProcessResult: entity.ProcessResultProcessing,
-			ExpiresAt:     &expiresAt,
+			ExpiresAt:     new(time.Now().Add(r.ttl)),
 		})
 
 	if result.Error != nil {

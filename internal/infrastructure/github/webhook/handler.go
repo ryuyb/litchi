@@ -18,19 +18,19 @@ import (
 
 // Headers used by GitHub webhooks.
 const (
-	HeaderSignature    = "X-Hub-Signature-256"
-	HeaderDelivery     = "X-GitHub-Delivery"
-	HeaderEventType    = "X-GitHub-Event"
+	HeaderSignature = "X-Hub-Signature-256"
+	HeaderDelivery  = "X-GitHub-Delivery"
+	HeaderEventType = "X-GitHub-Event"
 )
 
 // Handler handles GitHub webhook HTTP requests.
 type Handler struct {
-	verifier         *SignatureVerifier
-	parser           *EventParser
-	dispatcher       *EventDispatcher
-	dedupRepo        repository.WebhookDeliveryRepository
-	logger           *zap.Logger
-	idempotencyCfg   config.IdempotencyConfig
+	verifier       *SignatureVerifier
+	parser         *EventParser
+	dispatcher     *EventDispatcher
+	dedupRepo      repository.WebhookDeliveryRepository
+	logger         *zap.Logger
+	idempotencyCfg config.IdempotencyConfig
 }
 
 // HandlerParams contains dependencies for creating a webhook handler.
@@ -131,18 +131,18 @@ func (h *Handler) Handle(c fiber.Ctx) error {
 			// For transient errors (database connectivity, timeout), return 503 to let GitHub retry
 			if isTransientError(err) {
 				return c.Status(503).JSON(fiber.Map{
-					"error":       "service temporarily unavailable",
-					"error_code":  "TRANSIENT_ERROR",
-					"retry_safe":  true,
+					"error":      "service temporarily unavailable",
+					"error_code": "TRANSIENT_ERROR",
+					"retry_safe": true,
 				})
 			}
 
 			// For persistent errors, return 200 to avoid infinite retry
 			return c.Status(200).JSON(fiber.Map{
-				"status":      "error_acquiring_lock",
-				"error_code":  "ACQUIRE_FAILED",
-				"message":     err.Error(),
-				"retry_safe":  false,
+				"status":     "error_acquiring_lock",
+				"error_code": "ACQUIRE_FAILED",
+				"message":    err.Error(),
+				"retry_safe": false,
 			})
 		}
 
@@ -151,9 +151,9 @@ func (h *Handler) Handle(c fiber.Ctx) error {
 				zap.String("delivery_id", deliveryID),
 			)
 			return c.Status(200).JSON(fiber.Map{
-				"status":      "already_processed",
-				"error_code":  "DUPLICATE_DELIVERY",
-				"retry_safe":  false,
+				"status":     "already_processed",
+				"error_code": "DUPLICATE_DELIVERY",
+				"retry_safe": false,
 			})
 		}
 	}
@@ -170,10 +170,10 @@ func (h *Handler) Handle(c fiber.Ctx) error {
 		h.updateDeliveryResult(ctx, deliveryID, entity.ProcessResultError, err.Error())
 		// Return 200 to avoid GitHub retry - we handle errors internally
 		return c.Status(200).JSON(fiber.Map{
-			"status":      "processing_error",
-			"error_code":  "DISPATCH_FAILED",
-			"message":     err.Error(),
-			"retry_safe":  false,
+			"status":     "processing_error",
+			"error_code": "DISPATCH_FAILED",
+			"message":    err.Error(),
+			"retry_safe": false,
 		})
 	}
 
@@ -223,7 +223,7 @@ func computePayloadHash(payload []byte) string {
 // @Router         /api/v1/webhooks/health [get]
 func (h *Handler) HealthCheck(c fiber.Ctx) error {
 	return c.JSON(fiber.Map{
-		"status":             "healthy",
+		"status":              "healthy",
 		"idempotency_enabled": h.idempotencyCfg.Enabled,
 		"registered_handlers": h.dispatcher.RegisteredEventTypes(),
 	})
@@ -263,8 +263,7 @@ func isTransientError(err error) bool {
 	}
 
 	// Check for network errors (DNS, connection refused, etc.)
-	var netErr net.Error
-	if errors.As(err, &netErr) {
+	if _, ok := errors.AsType[net.Error](err); ok {
 		return true
 	}
 

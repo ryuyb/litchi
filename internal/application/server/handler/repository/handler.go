@@ -7,8 +7,8 @@ import (
 
 	"github.com/ryuyb/litchi/internal/application/dto"
 	"github.com/ryuyb/litchi/internal/application/service"
-	domainrepo "github.com/ryuyb/litchi/internal/domain/repository"
 	"github.com/ryuyb/litchi/internal/domain/entity"
+	domainrepo "github.com/ryuyb/litchi/internal/domain/repository"
 	"github.com/ryuyb/litchi/internal/domain/valueobject"
 	litchierrors "github.com/ryuyb/litchi/internal/pkg/errors"
 	"go.uber.org/zap"
@@ -63,9 +63,9 @@ func (h *Handler) ListRepositories(c fiber.Ctx) error {
 	if enabledFilter != "all" {
 		filter = &domainrepo.RepositoryFilter{}
 		if enabledFilter == "true" {
-			filter.Enabled = boolPtr(true)
+			filter.Enabled = new(true)
 		} else if enabledFilter == "false" {
-			filter.Enabled = boolPtr(false)
+			filter.Enabled = new(false)
 		}
 	}
 

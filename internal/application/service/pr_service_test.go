@@ -255,8 +255,7 @@ func newTestSessionForPR(stage valueobject.Stage, withPR bool, allTasksCompleted
 
 	// Add PR if needed
 	if withPR {
-		prNum := 456
-		session.PRNumber = &prNum
+		session.PRNumber = new(456)
 	}
 
 	return session
@@ -607,9 +606,9 @@ func TestPRService_BuildPRTitle_NilIssue(t *testing.T) {
 
 	// Create session with nil issue
 	session := &aggregate.WorkSession{
-		ID:        uuid.New(),
-		Issue:     nil,
-		Tasks:     []*entity.Task{},
+		ID:    uuid.New(),
+		Issue: nil,
+		Tasks: []*entity.Task{},
 	}
 
 	title := svc.buildPRTitle(session)
@@ -767,8 +766,8 @@ func TestPRService_GitHubTypes(t *testing.T) {
 	}
 
 	var _ *github.PRUpdateRequest = &github.PRUpdateRequest{
-		Title: strPtr("test"),
-		Body:  strPtr("body"),
+		Title: new("test"),
+		Body:  new("body"),
 	}
 
 	var _ *github.PRInfo = &github.PRInfo{

@@ -14,7 +14,7 @@ func TestUpdateConfig_Atomicity(t *testing.T) {
 		// Create initial config
 		cfg := &config.Config{
 			Agent: config.AgentConfig{
-				MaxConcurrency:  5,
+				MaxConcurrency: 5,
 				TaskRetryLimit: 3,
 			},
 			Clarity: config.ClarityConfig{
@@ -36,7 +36,7 @@ func TestUpdateConfig_Atomicity(t *testing.T) {
 		// Create update request with invalid agent value
 		req := &dto.UpdateConfigRequest{
 			Agent: &dto.AgentConfigUpdate{
-				MaxConcurrency: intPtr(15), // Invalid: > 10
+				MaxConcurrency: new(15), // Invalid: > 10
 			},
 		}
 
@@ -57,7 +57,7 @@ func TestUpdateConfig_Atomicity(t *testing.T) {
 	t.Run("partial update failure does not modify original", func(t *testing.T) {
 		cfg := &config.Config{
 			Agent: config.AgentConfig{
-				MaxConcurrency:  5,
+				MaxConcurrency: 5,
 				TaskRetryLimit: 3,
 			},
 			Git: config.GitConfig{
@@ -77,10 +77,10 @@ func TestUpdateConfig_Atomicity(t *testing.T) {
 		// Create update request with one valid and one invalid update
 		req := &dto.UpdateConfigRequest{
 			Agent: &dto.AgentConfigUpdate{
-				MaxConcurrency: intPtr(10), // Valid
+				MaxConcurrency: new(10), // Valid
 			},
 			Git: &dto.GitConfigUpdate{
-				WorktreeBasePath: strPtr(""), // Invalid: empty string
+				WorktreeBasePath: new(""), // Invalid: empty string
 			},
 		}
 
@@ -101,7 +101,7 @@ func TestUpdateConfig_Atomicity(t *testing.T) {
 	t.Run("successful update replaces original", func(t *testing.T) {
 		cfg := &config.Config{
 			Agent: config.AgentConfig{
-				MaxConcurrency:  5,
+				MaxConcurrency: 5,
 				TaskRetryLimit: 3,
 			},
 		}
@@ -114,7 +114,7 @@ func TestUpdateConfig_Atomicity(t *testing.T) {
 		// Create valid update request
 		req := &dto.UpdateConfigRequest{
 			Agent: &dto.AgentConfigUpdate{
-				MaxConcurrency: intPtr(8),
+				MaxConcurrency: new(8),
 			},
 		}
 

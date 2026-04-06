@@ -18,12 +18,12 @@ import (
 // --- Mocks for AuditService tests (following design_service_test.go pattern) ---
 
 type mockAuditLogRepository struct {
-	logs         []*entity.AuditLog
-	findErr      error
-	listErr      error
-	countErr     error
-	deleteErr    error
-	deleteCount  int64
+	logs                []*entity.AuditLog
+	findErr             error
+	listErr             error
+	countErr            error
+	deleteErr           error
+	deleteCount         int64
 	listBySessionResult []*entity.AuditLog
 }
 
@@ -236,9 +236,9 @@ func newTestAuditService(
 ) *AuditService {
 	cfg := &config.Config{
 		Audit: config.AuditConfig{
-			Enabled:         true,
-			RetentionDays:   30,
-			MaxOutputLength: 500,
+			Enabled:             true,
+			RetentionDays:       30,
+			MaxOutputLength:     500,
 			SensitiveOperations: []string{},
 		},
 	}
@@ -428,8 +428,7 @@ func TestAuditService_ListAuditLogs_DatabaseError(t *testing.T) {
 	}
 
 	// Verify error type
-	var litchiErr *litchierrors.Error
-	if !errors.As(err, &litchiErr) {
+	if _, ok := errors.AsType[*litchierrors.Error](err); !ok {
 		t.Errorf("expected litchierrors.Error, got %T", err)
 	}
 }
@@ -596,8 +595,7 @@ func TestAuditService_ListByTimeRange_InvalidRange(t *testing.T) {
 	}
 
 	// Verify error type
-	var litchiErr *litchierrors.Error
-	if !errors.As(err, &litchiErr) {
+	if _, ok := errors.AsType[*litchierrors.Error](err); !ok {
 		t.Errorf("expected litchierrors.Error, got %T", err)
 	}
 }
@@ -638,8 +636,7 @@ func TestAuditService_CountBySession_DatabaseError(t *testing.T) {
 	}
 
 	// Verify error type
-	var litchiErr *litchierrors.Error
-	if !errors.As(err, &litchiErr) {
+	if _, ok := errors.AsType[*litchierrors.Error](err); !ok {
 		t.Errorf("expected litchierrors.Error, got %T", err)
 	}
 }
@@ -712,8 +709,7 @@ func TestAuditService_DeleteExpired_DatabaseError(t *testing.T) {
 	}
 
 	// Verify error type
-	var litchiErr *litchierrors.Error
-	if !errors.As(err, &litchiErr) {
+	if _, ok := errors.AsType[*litchierrors.Error](err); !ok {
 		t.Errorf("expected litchierrors.Error, got %T", err)
 	}
 }
@@ -851,7 +847,7 @@ func TestAuditService_IsSensitiveOperation_CustomConfig(t *testing.T) {
 	auditRepo := newMockAuditLogRepository()
 	cfg := &config.Config{
 		Audit: config.AuditConfig{
-			Enabled: true,
+			Enabled:             true,
 			SensitiveOperations: []string{"session_start", "design_confirm"},
 		},
 	}
@@ -875,15 +871,12 @@ func TestAuditService_ValidateFilterParams_Valid(t *testing.T) {
 	svc := newTestAuditService(auditRepo)
 
 	now := time.Now()
-	startTime := now.Add(-1 * time.Hour)
-	endTime := now
-
 	filter := AuditLogFilterParams{
-		ActorRole:    valueobject.ActorRoleAdmin,
-		Operation:    valueobject.OpSessionStart,
-		Result:       valueobject.AuditResultSuccess,
-		StartTime:    &startTime,
-		EndTime:      &endTime,
+		ActorRole: valueobject.ActorRoleAdmin,
+		Operation: valueobject.OpSessionStart,
+		Result:    valueobject.AuditResultSuccess,
+		StartTime: new(now.Add(-1 * time.Hour)),
+		EndTime:   new(now),
 	}
 
 	err := svc.ValidateFilterParams(filter)
@@ -906,8 +899,7 @@ func TestAuditService_ValidateFilterParams_InvalidActorRole(t *testing.T) {
 	}
 
 	// Verify error type
-	var litchiErr *litchierrors.Error
-	if !errors.As(err, &litchiErr) {
+	if _, ok := errors.AsType[*litchierrors.Error](err); !ok {
 		t.Errorf("expected litchierrors.Error, got %T", err)
 	}
 }
@@ -926,8 +918,7 @@ func TestAuditService_ValidateFilterParams_InvalidOperation(t *testing.T) {
 	}
 
 	// Verify error type
-	var litchiErr *litchierrors.Error
-	if !errors.As(err, &litchiErr) {
+	if _, ok := errors.AsType[*litchierrors.Error](err); !ok {
 		t.Errorf("expected litchierrors.Error, got %T", err)
 	}
 }
@@ -946,8 +937,7 @@ func TestAuditService_ValidateFilterParams_InvalidResult(t *testing.T) {
 	}
 
 	// Verify error type
-	var litchiErr *litchierrors.Error
-	if !errors.As(err, &litchiErr) {
+	if _, ok := errors.AsType[*litchierrors.Error](err); !ok {
 		t.Errorf("expected litchierrors.Error, got %T", err)
 	}
 }
@@ -957,11 +947,10 @@ func TestAuditService_ValidateFilterParams_InvalidTimeRange(t *testing.T) {
 	svc := newTestAuditService(auditRepo)
 
 	now := time.Now()
-	startTime := now
 	endTime := now.Add(-1 * time.Hour) // End before start
 
 	filter := AuditLogFilterParams{
-		StartTime: &startTime,
+		StartTime: new(now),
 		EndTime:   &endTime,
 	}
 
@@ -971,8 +960,7 @@ func TestAuditService_ValidateFilterParams_InvalidTimeRange(t *testing.T) {
 	}
 
 	// Verify error type
-	var litchiErr *litchierrors.Error
-	if !errors.As(err, &litchiErr) {
+	if _, ok := errors.AsType[*litchierrors.Error](err); !ok {
 		t.Errorf("expected litchierrors.Error, got %T", err)
 	}
 }

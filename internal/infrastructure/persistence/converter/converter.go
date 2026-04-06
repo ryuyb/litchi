@@ -119,7 +119,7 @@ func WorkSessionFromModel(m *models.WorkSession) (*aggregate.WorkSession, error)
 		CurrentStage:    stage,
 		SessionStatus:   aggregate.SessionStatus(m.Status),
 		Version:         m.Version,
-		PRRollbackCount: 0, // Will be set from Execution if available
+		PRRollbackCount: 0,                           // Will be set from Execution if available
 		PauseHistory:    []valueobject.PauseRecord{}, // Initialize empty
 	}
 
@@ -268,8 +268,7 @@ func ClarificationToModel(c *entity.Clarification, sessionID uuid.UUID) (*models
 
 	var clarityScore *int
 	if c.ClarityDimensions.TotalScore() > 0 {
-		score := c.ClarityDimensions.TotalScore()
-		clarityScore = &score
+		clarityScore = new(c.ClarityDimensions.TotalScore())
 	}
 
 	return &models.Clarification{
@@ -332,8 +331,7 @@ func DesignToModel(d *entity.Design, sessionID uuid.UUID) (*models.Design, error
 
 	var complexityScore *int
 	if d.ComplexityScore.Value() > 0 {
-		score := d.ComplexityScore.Value()
-		complexityScore = &score
+		complexityScore = new(d.ComplexityScore.Value())
 	}
 
 	m := &models.Design{

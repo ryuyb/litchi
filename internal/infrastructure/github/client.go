@@ -189,8 +189,7 @@ func (c *Client) wrapError(err error) error {
 	}
 
 	// Check for specific error types
-	var ghErr *github.ErrorResponse
-	if stderrors.As(err, &ghErr) {
+	if ghErr, ok := stderrors.AsType[*github.ErrorResponse](err); ok {
 		switch ghErr.Response.StatusCode {
 		case 401:
 			return errors.Wrap(errors.ErrGitHubAuthFailed, err)
