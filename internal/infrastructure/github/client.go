@@ -14,18 +14,8 @@ import (
 	"github.com/ryuyb/litchi/internal/infrastructure/config"
 	"github.com/ryuyb/litchi/internal/pkg/errors"
 	"github.com/ryuyb/litchi/internal/pkg/health"
-	"go.uber.org/fx"
 	"go.uber.org/zap"
-	"golang.org/x/oauth2"
 )
-
-// ClientParams contains dependencies for creating a GitHubClient.
-type ClientParams struct {
-	fx.In
-
-	Config *config.Config
-	Logger *zap.Logger
-}
 
 // Client wraps go-github client with rate limit handling and retry logic.
 type Client struct {
@@ -33,57 +23,6 @@ type Client struct {
 	logger      *zap.Logger
 	rateLimiter *RateLimiter
 	retryPolicy valueobject.RetryPolicy
-	config      *config.GitHubConfig
-}
-
-// NewClient creates a GitHub client with authentication.
-// Supports both Personal Access Token and GitHub App authentication.
-func NewClient(p ClientParams) (*Client, error) {
-	if p.Config == nil || p.Logger == nil {
-		return nil, fmt.Errorf("config and logger are required")
-	}
-
-	ghConfig := &p.Config.GitHub
-	var client *github.Client
-
-	// Authentication strategy
-	if ghConfig.AppID != "" && ghConfig.PrivateKeyPath != "" {
-		// GitHub App authentication (reserved for future use)
-		// TODO: Implement GitHub App authentication when needed
-		p.Logger.Warn("GitHub App authentication configured but not yet implemented, falling back to token authentication",
-			zap.String("app_id", ghConfig.AppID),
-		)
-	}
-
-	// Personal Access Token authentication
-	if ghConfig.Token != "" {
-		ts := oauth2.StaticTokenSource(
-			&oauth2.Token{AccessToken: ghConfig.Token},
-		)
-		tc := oauth2.NewClient(context.Background(), ts)
-		client = github.NewClient(tc)
-	} else {
-		return nil, errors.New(errors.ErrGitHubAuthFailed).
-			WithDetail("no authentication method configured")
-	}
-
-	// Create rate limiter using config
-	rateLimitCfg := &p.Config.Failure.RateLimit
-	rateLimiter := NewRateLimiter(RateLimiterParams{
-		Config: rateLimitCfg,
-		Logger: p.Logger,
-	})
-
-	// Use default retry policy
-	retryPolicy := valueobject.DefaultRetryPolicy
-
-	return &Client{
-		client:      client,
-		logger:      p.Logger.Named("github"),
-		rateLimiter: rateLimiter,
-		retryPolicy: retryPolicy,
-		config:      ghConfig,
-	}, nil
 }
 
 // GitHub returns the underlying go-github client for direct API access.

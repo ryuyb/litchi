@@ -89,7 +89,6 @@ func NewClientManager(p ClientManagerParams) (*ClientManager, error) {
 			logger:      p.Logger.Named("github"),
 			rateLimiter: rateLimiter,
 			retryPolicy: valueobject.DefaultRetryPolicy,
-			config:      ghConfig,
 		}
 	} else {
 		// For App mode, get JWT transport from strategy
