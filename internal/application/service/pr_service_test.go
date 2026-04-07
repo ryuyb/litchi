@@ -21,182 +21,6 @@ import (
 	"go.uber.org/zap"
 )
 
-// --- Local Mocks for Testing ---
-
-// LocalMockSessionRepoForPR is a local mock for WorkSessionRepository.
-type LocalMockSessionRepoForPR struct {
-	mock.Mock
-}
-
-func (m *LocalMockSessionRepoForPR) FindByID(ctx context.Context, id uuid.UUID) (*aggregate.WorkSession, error) {
-	args := m.Called(ctx, id)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*aggregate.WorkSession), args.Error(1)
-}
-
-func (m *LocalMockSessionRepoForPR) Update(ctx context.Context, session *aggregate.WorkSession) error {
-	args := m.Called(ctx, session)
-	return args.Error(0)
-}
-
-// Implement other required methods with no-ops
-func (m *LocalMockSessionRepoForPR) Create(ctx context.Context, session *aggregate.WorkSession) error {
-	return nil
-}
-
-func (m *LocalMockSessionRepoForPR) FindByIssueID(ctx context.Context, issueID uuid.UUID) (*aggregate.WorkSession, error) {
-	return nil, nil
-}
-
-func (m *LocalMockSessionRepoForPR) FindByGitHubIssue(ctx context.Context, repository string, issueNumber int) (*aggregate.WorkSession, error) {
-	return nil, nil
-}
-
-func (m *LocalMockSessionRepoForPR) FindByStatus(ctx context.Context, status aggregate.SessionStatus) ([]*aggregate.WorkSession, error) {
-	return nil, nil
-}
-
-func (m *LocalMockSessionRepoForPR) FindByStage(ctx context.Context, stage valueobject.Stage) ([]*aggregate.WorkSession, error) {
-	return nil, nil
-}
-
-func (m *LocalMockSessionRepoForPR) ListWithPagination(ctx context.Context, params repository.PaginationParams, filter *repository.WorkSessionFilter) ([]*aggregate.WorkSession, *repository.PaginationResult, error) {
-	return nil, nil, nil
-}
-
-func (m *LocalMockSessionRepoForPR) FindActiveByRepository(ctx context.Context, repository string) ([]*aggregate.WorkSession, error) {
-	return nil, nil
-}
-
-func (m *LocalMockSessionRepoForPR) Delete(ctx context.Context, id uuid.UUID) error {
-	return nil
-}
-
-func (m *LocalMockSessionRepoForPR) ExistsByGitHubIssue(ctx context.Context, repository string, issueNumber int) (bool, error) {
-	return false, nil
-}
-
-// LocalMockAuditRepoForPR is a local mock for AuditLogRepository.
-type LocalMockAuditRepoForPR struct {
-	mock.Mock
-}
-
-func (m *LocalMockAuditRepoForPR) Save(ctx context.Context, log *entity.AuditLog) error {
-	args := m.Called(ctx, log)
-	return args.Error(0)
-}
-
-func (m *LocalMockAuditRepoForPR) FindByID(ctx context.Context, id uuid.UUID) (*entity.AuditLog, error) {
-	return nil, nil
-}
-
-func (m *LocalMockAuditRepoForPR) List(ctx context.Context, opts repository.AuditLogListOptions) ([]*entity.AuditLog, int64, error) {
-	return nil, 0, nil
-}
-
-func (m *LocalMockAuditRepoForPR) ListBySessionID(ctx context.Context, sessionID uuid.UUID, offset, limit int) ([]*entity.AuditLog, int64, error) {
-	return nil, 0, nil
-}
-
-func (m *LocalMockAuditRepoForPR) ListByRepository(ctx context.Context, repository string, offset, limit int) ([]*entity.AuditLog, int64, error) {
-	return nil, 0, nil
-}
-
-func (m *LocalMockAuditRepoForPR) ListByActor(ctx context.Context, actor string, offset, limit int) ([]*entity.AuditLog, int64, error) {
-	return nil, 0, nil
-}
-
-func (m *LocalMockAuditRepoForPR) ListByTimeRange(ctx context.Context, startTime, endTime time.Time, offset, limit int) ([]*entity.AuditLog, int64, error) {
-	return nil, 0, nil
-}
-
-func (m *LocalMockAuditRepoForPR) CountBySession(ctx context.Context, sessionID uuid.UUID) (int64, error) {
-	return 0, nil
-}
-
-func (m *LocalMockAuditRepoForPR) DeleteBeforeTime(ctx context.Context, before time.Time) (int64, error) {
-	return 0, nil
-}
-
-// LocalMockConflictDetector is a mock for ConflictDetector.
-type LocalMockConflictDetector struct {
-	mock.Mock
-}
-
-func (m *LocalMockConflictDetector) DetectConflicts(ctx context.Context, repoPath, sourceBranch, targetBranch string) ([]git.ConflictInfo, error) {
-	args := m.Called(ctx, repoPath, sourceBranch, targetBranch)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).([]git.ConflictInfo), args.Error(1)
-}
-
-func (m *LocalMockConflictDetector) HasConflicts(ctx context.Context, repoPath string) bool {
-	args := m.Called(ctx, repoPath)
-	return args.Bool(0)
-}
-
-func (m *LocalMockConflictDetector) GetConflictedFiles(ctx context.Context, repoPath string) ([]string, error) {
-	args := m.Called(ctx, repoPath)
-	return args.Get(0).([]string), args.Error(1)
-}
-
-func (m *LocalMockConflictDetector) AbortMerge(ctx context.Context, repoPath string) error {
-	args := m.Called(ctx, repoPath)
-	return args.Error(0)
-}
-
-func (m *LocalMockConflictDetector) GetMergeStatus(ctx context.Context, repoPath string) (*git.MergeStatus, error) {
-	args := m.Called(ctx, repoPath)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*git.MergeStatus), args.Error(1)
-}
-
-// LocalMockBranchServiceForPR is a mock for BranchService.
-type LocalMockBranchServiceForPR struct {
-	mock.Mock
-}
-
-func (m *LocalMockBranchServiceForPR) CreateBranch(ctx context.Context, repoPath, branchName string) error {
-	return nil
-}
-
-func (m *LocalMockBranchServiceForPR) CreateBranchFromRef(ctx context.Context, repoPath, branchName, startPoint string) error {
-	return nil
-}
-
-func (m *LocalMockBranchServiceForPR) SwitchBranch(ctx context.Context, repoPath, branchName string) error {
-	return nil
-}
-
-func (m *LocalMockBranchServiceForPR) DeleteBranch(ctx context.Context, repoPath, branchName string) error {
-	return nil
-}
-
-func (m *LocalMockBranchServiceForPR) DeleteBranchForce(ctx context.Context, repoPath, branchName string) error {
-	return nil
-}
-
-func (m *LocalMockBranchServiceForPR) ListBranches(ctx context.Context, repoPath string) ([]git.BranchInfo, error) {
-	return nil, nil
-}
-
-func (m *LocalMockBranchServiceForPR) BranchExists(ctx context.Context, repoPath, branchName string) bool {
-	return true
-}
-
-func (m *LocalMockBranchServiceForPR) ValidateBranchName(branchName string) error {
-	return nil
-}
-
-func (m *LocalMockBranchServiceForPR) GenerateBranchName(issueNumber int, title string) string {
-	return ""
-}
-
 // --- Test Fixtures ---
 
 func newTestPRService(
@@ -267,109 +91,103 @@ func TestPRService_CreatePR_SessionNotFound(t *testing.T) {
 	ctx := context.Background()
 	sessionID := uuid.New()
 
-	sessionRepo := new(LocalMockSessionRepoForPR)
-	auditRepo := new(LocalMockAuditRepoForPR)
-	conflictDetector := new(LocalMockConflictDetector)
-	branchService := new(LocalMockBranchServiceForPR)
+	sessionRepo := repository.NewMockWorkSessionRepository(t)
+	auditRepo := repository.NewMockAuditLogRepository(t)
+	conflictDetector := git.NewMockConflictDetector(t)
+	branchService := git.NewMockBranchService(t)
 
 	svc := newTestPRService(sessionRepo, auditRepo, conflictDetector, branchService)
 
-	sessionRepo.On("FindByID", ctx, sessionID).Return(nil, nil)
+	sessionRepo.EXPECT().FindByID(ctx, sessionID).Return(nil, nil)
 
 	_, err := svc.CreatePR(ctx, sessionID)
 
 	assert.Error(t, err)
 	assert.True(t, litchierrors.Is(err, litchierrors.ErrSessionNotFound))
-	sessionRepo.AssertExpectations(t)
 }
 
 func TestPRService_CreatePR_WrongStage(t *testing.T) {
 	ctx := context.Background()
 	session := newTestSessionForPR(valueobject.StageExecution, false, true)
 
-	sessionRepo := new(LocalMockSessionRepoForPR)
-	auditRepo := new(LocalMockAuditRepoForPR)
-	conflictDetector := new(LocalMockConflictDetector)
-	branchService := new(LocalMockBranchServiceForPR)
+	sessionRepo := repository.NewMockWorkSessionRepository(t)
+	auditRepo := repository.NewMockAuditLogRepository(t)
+	conflictDetector := git.NewMockConflictDetector(t)
+	branchService := git.NewMockBranchService(t)
 
 	svc := newTestPRService(sessionRepo, auditRepo, conflictDetector, branchService)
 
-	sessionRepo.On("FindByID", ctx, session.ID).Return(session, nil)
+	sessionRepo.EXPECT().FindByID(ctx, session.ID).Return(session, nil)
 
 	_, err := svc.CreatePR(ctx, session.ID)
 
 	assert.Error(t, err)
 	assert.True(t, litchierrors.Is(err, litchierrors.ErrInvalidStage))
-	sessionRepo.AssertExpectations(t)
 }
 
 func TestPRService_CreatePR_AlreadyExists(t *testing.T) {
 	ctx := context.Background()
 	session := newTestSessionForPR(valueobject.StagePullRequest, true, true)
 
-	sessionRepo := new(LocalMockSessionRepoForPR)
-	auditRepo := new(LocalMockAuditRepoForPR)
-	conflictDetector := new(LocalMockConflictDetector)
-	branchService := new(LocalMockBranchServiceForPR)
+	sessionRepo := repository.NewMockWorkSessionRepository(t)
+	auditRepo := repository.NewMockAuditLogRepository(t)
+	conflictDetector := git.NewMockConflictDetector(t)
+	branchService := git.NewMockBranchService(t)
 
 	svc := newTestPRService(sessionRepo, auditRepo, conflictDetector, branchService)
 
-	sessionRepo.On("FindByID", ctx, session.ID).Return(session, nil)
+	sessionRepo.EXPECT().FindByID(ctx, session.ID).Return(session, nil)
 
 	_, err := svc.CreatePR(ctx, session.ID)
 
 	assert.Error(t, err)
 	assert.True(t, litchierrors.Is(err, litchierrors.ErrPRAlreadyExists))
-	sessionRepo.AssertExpectations(t)
 }
 
 func TestPRService_CreatePR_TasksNotCompleted(t *testing.T) {
 	ctx := context.Background()
 	session := newTestSessionForPR(valueobject.StagePullRequest, false, false)
 
-	sessionRepo := new(LocalMockSessionRepoForPR)
-	auditRepo := new(LocalMockAuditRepoForPR)
-	conflictDetector := new(LocalMockConflictDetector)
-	branchService := new(LocalMockBranchServiceForPR)
+	sessionRepo := repository.NewMockWorkSessionRepository(t)
+	auditRepo := repository.NewMockAuditLogRepository(t)
+	conflictDetector := git.NewMockConflictDetector(t)
+	branchService := git.NewMockBranchService(t)
 
 	svc := newTestPRService(sessionRepo, auditRepo, conflictDetector, branchService)
 
-	sessionRepo.On("FindByID", ctx, session.ID).Return(session, nil)
+	sessionRepo.EXPECT().FindByID(ctx, session.ID).Return(session, nil)
 
 	_, err := svc.CreatePR(ctx, session.ID)
 
 	assert.Error(t, err)
 	assert.True(t, litchierrors.Is(err, litchierrors.ErrValidationFailed))
 	assert.Contains(t, err.Error(), "not all tasks are completed")
-	sessionRepo.AssertExpectations(t)
 }
 
 func TestPRService_CreatePR_ConflictDetected(t *testing.T) {
 	ctx := context.Background()
 	session := newTestSessionForPR(valueobject.StagePullRequest, false, true)
 
-	sessionRepo := new(LocalMockSessionRepoForPR)
-	auditRepo := new(LocalMockAuditRepoForPR)
-	conflictDetector := new(LocalMockConflictDetector)
-	branchService := new(LocalMockBranchServiceForPR)
+	sessionRepo := repository.NewMockWorkSessionRepository(t)
+	auditRepo := repository.NewMockAuditLogRepository(t)
+	conflictDetector := git.NewMockConflictDetector(t)
+	branchService := git.NewMockBranchService(t)
 
 	svc := newTestPRService(sessionRepo, auditRepo, conflictDetector, branchService)
 
-	sessionRepo.On("FindByID", ctx, session.ID).Return(session, nil)
-	conflictDetector.On("DetectConflicts", ctx, "/path/to/worktree", "issue-123-test-issue", "main").
+	sessionRepo.EXPECT().FindByID(ctx, session.ID).Return(session, nil)
+	conflictDetector.EXPECT().DetectConflicts(ctx, "/path/to/worktree", "issue-123-test-issue", "main").
 		Return([]git.ConflictInfo{
 			{FilePath: "file1.go", ConflictType: "modify/modify"},
 			{FilePath: "file2.go", ConflictType: "delete/modify"},
 		}, nil)
-	auditRepo.On("Save", ctx, mock.AnythingOfType("*entity.AuditLog")).Return(nil)
+	auditRepo.EXPECT().Save(ctx, mock.AnythingOfType("*entity.AuditLog")).Return(nil)
 
 	_, err := svc.CreatePR(ctx, session.ID)
 
 	assert.Error(t, err)
 	assert.True(t, litchierrors.Is(err, litchierrors.ErrPRConflict))
 	assert.Contains(t, err.Error(), "file1.go")
-	sessionRepo.AssertExpectations(t)
-	conflictDetector.AssertExpectations(t)
 }
 
 func TestPRService_CreatePR_Success(t *testing.T) {
@@ -384,20 +202,19 @@ func TestPRService_UpdatePR_NoPRExists(t *testing.T) {
 	ctx := context.Background()
 	session := newTestSessionForPR(valueobject.StagePullRequest, false, true)
 
-	sessionRepo := new(LocalMockSessionRepoForPR)
-	auditRepo := new(LocalMockAuditRepoForPR)
-	conflictDetector := new(LocalMockConflictDetector)
-	branchService := new(LocalMockBranchServiceForPR)
+	sessionRepo := repository.NewMockWorkSessionRepository(t)
+	auditRepo := repository.NewMockAuditLogRepository(t)
+	conflictDetector := git.NewMockConflictDetector(t)
+	branchService := git.NewMockBranchService(t)
 
 	svc := newTestPRService(sessionRepo, auditRepo, conflictDetector, branchService)
 
-	sessionRepo.On("FindByID", ctx, session.ID).Return(session, nil)
+	sessionRepo.EXPECT().FindByID(ctx, session.ID).Return(session, nil)
 
 	err := svc.UpdatePR(ctx, session.ID, "test")
 
 	assert.Error(t, err)
 	assert.True(t, litchierrors.Is(err, litchierrors.ErrPRNotFound))
-	sessionRepo.AssertExpectations(t)
 }
 
 func TestPRService_UpdatePR_Success(t *testing.T) {
@@ -408,71 +225,66 @@ func TestPRService_CheckConflicts_NoConflicts(t *testing.T) {
 	ctx := context.Background()
 	session := newTestSessionForPR(valueobject.StageExecution, false, true)
 
-	sessionRepo := new(LocalMockSessionRepoForPR)
-	auditRepo := new(LocalMockAuditRepoForPR)
-	conflictDetector := new(LocalMockConflictDetector)
-	branchService := new(LocalMockBranchServiceForPR)
+	sessionRepo := repository.NewMockWorkSessionRepository(t)
+	auditRepo := repository.NewMockAuditLogRepository(t)
+	conflictDetector := git.NewMockConflictDetector(t)
+	branchService := git.NewMockBranchService(t)
 
 	svc := newTestPRService(sessionRepo, auditRepo, conflictDetector, branchService)
 
-	sessionRepo.On("FindByID", ctx, session.ID).Return(session, nil)
-	conflictDetector.On("DetectConflicts", ctx, "/path/to/worktree", "issue-123-test-issue", "main").
+	sessionRepo.EXPECT().FindByID(ctx, session.ID).Return(session, nil)
+	conflictDetector.EXPECT().DetectConflicts(ctx, "/path/to/worktree", "issue-123-test-issue", "main").
 		Return(nil, nil)
-	auditRepo.On("Save", ctx, mock.AnythingOfType("*entity.AuditLog")).Return(nil)
+	auditRepo.EXPECT().Save(ctx, mock.AnythingOfType("*entity.AuditLog")).Return(nil)
 
 	conflicts, err := svc.CheckConflicts(ctx, session.ID)
 
 	assert.NoError(t, err)
 	assert.Empty(t, conflicts)
-	sessionRepo.AssertExpectations(t)
-	conflictDetector.AssertExpectations(t)
 }
 
 func TestPRService_CheckConflicts_HasConflicts(t *testing.T) {
 	ctx := context.Background()
 	session := newTestSessionForPR(valueobject.StageExecution, false, true)
 
-	sessionRepo := new(LocalMockSessionRepoForPR)
-	auditRepo := new(LocalMockAuditRepoForPR)
-	conflictDetector := new(LocalMockConflictDetector)
-	branchService := new(LocalMockBranchServiceForPR)
+	sessionRepo := repository.NewMockWorkSessionRepository(t)
+	auditRepo := repository.NewMockAuditLogRepository(t)
+	conflictDetector := git.NewMockConflictDetector(t)
+	branchService := git.NewMockBranchService(t)
 
 	svc := newTestPRService(sessionRepo, auditRepo, conflictDetector, branchService)
 
-	sessionRepo.On("FindByID", ctx, session.ID).Return(session, nil)
-	conflictDetector.On("DetectConflicts", ctx, "/path/to/worktree", "issue-123-test-issue", "main").
+	sessionRepo.EXPECT().FindByID(ctx, session.ID).Return(session, nil)
+	conflictDetector.EXPECT().DetectConflicts(ctx, "/path/to/worktree", "issue-123-test-issue", "main").
 		Return([]git.ConflictInfo{
 			{FilePath: "conflict.go", ConflictType: "modify/modify"},
 		}, nil)
-	auditRepo.On("Save", ctx, mock.AnythingOfType("*entity.AuditLog")).Return(nil)
+	auditRepo.EXPECT().Save(ctx, mock.AnythingOfType("*entity.AuditLog")).Return(nil)
 
 	conflicts, err := svc.CheckConflicts(ctx, session.ID)
 
 	assert.NoError(t, err)
 	assert.Len(t, conflicts, 1)
 	assert.Equal(t, "conflict.go", conflicts[0])
-	sessionRepo.AssertExpectations(t)
-	conflictDetector.AssertExpectations(t)
 }
 
 func TestPRService_GetPRStatus_NoPR(t *testing.T) {
 	ctx := context.Background()
 	session := newTestSessionForPR(valueobject.StageExecution, false, true)
 
-	sessionRepo := new(LocalMockSessionRepoForPR)
-	auditRepo := new(LocalMockAuditRepoForPR)
-	conflictDetector := new(LocalMockConflictDetector)
-	branchService := new(LocalMockBranchServiceForPR)
+	sessionRepo := repository.NewMockWorkSessionRepository(t)
+	auditRepo := repository.NewMockAuditLogRepository(t)
+	conflictDetector := git.NewMockConflictDetector(t)
+	branchService := git.NewMockBranchService(t)
 
 	svc := newTestPRService(sessionRepo, auditRepo, conflictDetector, branchService)
 
-	sessionRepo.On("FindByID", ctx, session.ID).Return(session, nil)
+	sessionRepo.EXPECT().FindByID(ctx, session.ID).Return(session, nil)
 
 	status, err := svc.GetPRStatus(ctx, session.ID)
 
 	assert.NoError(t, err)
 	assert.False(t, status.HasPR)
-	sessionRepo.AssertExpectations(t)
 }
 
 func TestPRService_GetPRStatus_Success(t *testing.T) {
@@ -483,20 +295,19 @@ func TestPRService_ClosePR_NoPRExists(t *testing.T) {
 	ctx := context.Background()
 	session := newTestSessionForPR(valueobject.StagePullRequest, false, true)
 
-	sessionRepo := new(LocalMockSessionRepoForPR)
-	auditRepo := new(LocalMockAuditRepoForPR)
-	conflictDetector := new(LocalMockConflictDetector)
-	branchService := new(LocalMockBranchServiceForPR)
+	sessionRepo := repository.NewMockWorkSessionRepository(t)
+	auditRepo := repository.NewMockAuditLogRepository(t)
+	conflictDetector := git.NewMockConflictDetector(t)
+	branchService := git.NewMockBranchService(t)
 
 	svc := newTestPRService(sessionRepo, auditRepo, conflictDetector, branchService)
 
-	sessionRepo.On("FindByID", ctx, session.ID).Return(session, nil)
+	sessionRepo.EXPECT().FindByID(ctx, session.ID).Return(session, nil)
 
 	err := svc.ClosePR(ctx, session.ID, "test")
 
 	assert.Error(t, err)
 	assert.True(t, litchierrors.Is(err, litchierrors.ErrPRNotFound))
-	sessionRepo.AssertExpectations(t)
 }
 
 func TestPRService_ClosePR_Success(t *testing.T) {
@@ -504,10 +315,10 @@ func TestPRService_ClosePR_Success(t *testing.T) {
 }
 
 func TestPRService_BuildPRTitle(t *testing.T) {
-	sessionRepo := new(LocalMockSessionRepoForPR)
-	auditRepo := new(LocalMockAuditRepoForPR)
-	conflictDetector := new(LocalMockConflictDetector)
-	branchService := new(LocalMockBranchServiceForPR)
+	sessionRepo := repository.NewMockWorkSessionRepository(t)
+	auditRepo := repository.NewMockAuditLogRepository(t)
+	conflictDetector := git.NewMockConflictDetector(t)
+	branchService := git.NewMockBranchService(t)
 
 	svc := newTestPRService(sessionRepo, auditRepo, conflictDetector, branchService)
 	session := newTestSessionForPR(valueobject.StagePullRequest, false, true)
@@ -519,10 +330,10 @@ func TestPRService_BuildPRTitle(t *testing.T) {
 }
 
 func TestPRService_BuildPRBody(t *testing.T) {
-	sessionRepo := new(LocalMockSessionRepoForPR)
-	auditRepo := new(LocalMockAuditRepoForPR)
-	conflictDetector := new(LocalMockConflictDetector)
-	branchService := new(LocalMockBranchServiceForPR)
+	sessionRepo := repository.NewMockWorkSessionRepository(t)
+	auditRepo := repository.NewMockAuditLogRepository(t)
+	conflictDetector := git.NewMockConflictDetector(t)
+	branchService := git.NewMockBranchService(t)
 
 	svc := newTestPRService(sessionRepo, auditRepo, conflictDetector, branchService)
 	session := newTestSessionForPR(valueobject.StagePullRequest, false, true)
@@ -561,8 +372,8 @@ func TestPRService_ImplementsInterfaces(t *testing.T) {
 	var _ *PRService = &PRService{}
 
 	// Ensure git interfaces are satisfied
-	var _ git.ConflictDetector = new(LocalMockConflictDetector)
-	var _ git.BranchService = new(LocalMockBranchServiceForPR)
+	var _ git.ConflictDetector = git.NewMockConflictDetector(t)
+	var _ git.BranchService = git.NewMockBranchService(t)
 }
 
 // --- Additional mock tests for PRStatus ---
@@ -597,10 +408,10 @@ func TestPRService_PRStatus_StructFields(t *testing.T) {
 // --- Tests for error handling in helper methods ---
 
 func TestPRService_BuildPRTitle_NilIssue(t *testing.T) {
-	sessionRepo := new(LocalMockSessionRepoForPR)
-	auditRepo := new(LocalMockAuditRepoForPR)
-	conflictDetector := new(LocalMockConflictDetector)
-	branchService := new(LocalMockBranchServiceForPR)
+	sessionRepo := repository.NewMockWorkSessionRepository(t)
+	auditRepo := repository.NewMockAuditLogRepository(t)
+	conflictDetector := git.NewMockConflictDetector(t)
+	branchService := git.NewMockBranchService(t)
 
 	svc := newTestPRService(sessionRepo, auditRepo, conflictDetector, branchService)
 
@@ -617,10 +428,10 @@ func TestPRService_BuildPRTitle_NilIssue(t *testing.T) {
 }
 
 func TestPRService_CheckMergeConflicts_NilExecution(t *testing.T) {
-	sessionRepo := new(LocalMockSessionRepoForPR)
-	auditRepo := new(LocalMockAuditRepoForPR)
-	conflictDetector := new(LocalMockConflictDetector)
-	branchService := new(LocalMockBranchServiceForPR)
+	sessionRepo := repository.NewMockWorkSessionRepository(t)
+	auditRepo := repository.NewMockAuditLogRepository(t)
+	conflictDetector := git.NewMockConflictDetector(t)
+	branchService := git.NewMockBranchService(t)
 
 	svc := newTestPRService(sessionRepo, auditRepo, conflictDetector, branchService)
 
@@ -638,10 +449,10 @@ func TestPRService_CheckMergeConflicts_NilExecution(t *testing.T) {
 }
 
 func TestPRService_CheckMergeConflicts_EmptyWorktreePath(t *testing.T) {
-	sessionRepo := new(LocalMockSessionRepoForPR)
-	auditRepo := new(LocalMockAuditRepoForPR)
-	conflictDetector := new(LocalMockConflictDetector)
-	branchService := new(LocalMockBranchServiceForPR)
+	sessionRepo := repository.NewMockWorkSessionRepository(t)
+	auditRepo := repository.NewMockAuditLogRepository(t)
+	conflictDetector := git.NewMockConflictDetector(t)
+	branchService := git.NewMockBranchService(t)
 
 	svc := newTestPRService(sessionRepo, auditRepo, conflictDetector, branchService)
 
@@ -668,21 +479,20 @@ func TestPRService_CreatePR_InactiveSession(t *testing.T) {
 	session := newTestSessionForPR(valueobject.StagePullRequest, false, true)
 	session.SessionStatus = aggregate.SessionStatusPaused
 
-	sessionRepo := new(LocalMockSessionRepoForPR)
-	auditRepo := new(LocalMockAuditRepoForPR)
-	conflictDetector := new(LocalMockConflictDetector)
-	branchService := new(LocalMockBranchServiceForPR)
+	sessionRepo := repository.NewMockWorkSessionRepository(t)
+	auditRepo := repository.NewMockAuditLogRepository(t)
+	conflictDetector := git.NewMockConflictDetector(t)
+	branchService := git.NewMockBranchService(t)
 
 	svc := newTestPRService(sessionRepo, auditRepo, conflictDetector, branchService)
 
-	sessionRepo.On("FindByID", ctx, session.ID).Return(session, nil)
+	sessionRepo.EXPECT().FindByID(ctx, session.ID).Return(session, nil)
 
 	_, err := svc.CreatePR(ctx, session.ID)
 
 	assert.Error(t, err)
 	assert.True(t, litchierrors.Is(err, litchierrors.ErrValidationFailed))
 	assert.Contains(t, err.Error(), "not active")
-	sessionRepo.AssertExpectations(t)
 }
 
 func TestPRService_UpdatePR_InactiveSession(t *testing.T) {
@@ -690,21 +500,20 @@ func TestPRService_UpdatePR_InactiveSession(t *testing.T) {
 	session := newTestSessionForPR(valueobject.StagePullRequest, true, true)
 	session.SessionStatus = aggregate.SessionStatusPaused
 
-	sessionRepo := new(LocalMockSessionRepoForPR)
-	auditRepo := new(LocalMockAuditRepoForPR)
-	conflictDetector := new(LocalMockConflictDetector)
-	branchService := new(LocalMockBranchServiceForPR)
+	sessionRepo := repository.NewMockWorkSessionRepository(t)
+	auditRepo := repository.NewMockAuditLogRepository(t)
+	conflictDetector := git.NewMockConflictDetector(t)
+	branchService := git.NewMockBranchService(t)
 
 	svc := newTestPRService(sessionRepo, auditRepo, conflictDetector, branchService)
 
-	sessionRepo.On("FindByID", ctx, session.ID).Return(session, nil)
+	sessionRepo.EXPECT().FindByID(ctx, session.ID).Return(session, nil)
 
 	err := svc.UpdatePR(ctx, session.ID, "test")
 
 	assert.Error(t, err)
 	assert.True(t, litchierrors.Is(err, litchierrors.ErrValidationFailed))
 	assert.Contains(t, err.Error(), "not active")
-	sessionRepo.AssertExpectations(t)
 }
 
 // --- Tests for nil execution context ---
@@ -714,21 +523,20 @@ func TestPRService_CreatePR_NilExecution(t *testing.T) {
 	session := newTestSessionForPR(valueobject.StagePullRequest, false, true)
 	session.Execution = nil
 
-	sessionRepo := new(LocalMockSessionRepoForPR)
-	auditRepo := new(LocalMockAuditRepoForPR)
-	conflictDetector := new(LocalMockConflictDetector)
-	branchService := new(LocalMockBranchServiceForPR)
+	sessionRepo := repository.NewMockWorkSessionRepository(t)
+	auditRepo := repository.NewMockAuditLogRepository(t)
+	conflictDetector := git.NewMockConflictDetector(t)
+	branchService := git.NewMockBranchService(t)
 
 	svc := newTestPRService(sessionRepo, auditRepo, conflictDetector, branchService)
 
-	sessionRepo.On("FindByID", ctx, session.ID).Return(session, nil)
+	sessionRepo.EXPECT().FindByID(ctx, session.ID).Return(session, nil)
 
 	_, err := svc.CreatePR(ctx, session.ID)
 
 	assert.Error(t, err)
 	assert.True(t, litchierrors.Is(err, litchierrors.ErrValidationFailed))
 	assert.Contains(t, err.Error(), "execution context not found")
-	sessionRepo.AssertExpectations(t)
 }
 
 func TestPRService_CheckConflicts_NilExecution(t *testing.T) {
@@ -736,21 +544,20 @@ func TestPRService_CheckConflicts_NilExecution(t *testing.T) {
 	session := newTestSessionForPR(valueobject.StageExecution, false, true)
 	session.Execution = nil
 
-	sessionRepo := new(LocalMockSessionRepoForPR)
-	auditRepo := new(LocalMockAuditRepoForPR)
-	conflictDetector := new(LocalMockConflictDetector)
-	branchService := new(LocalMockBranchServiceForPR)
+	sessionRepo := repository.NewMockWorkSessionRepository(t)
+	auditRepo := repository.NewMockAuditLogRepository(t)
+	conflictDetector := git.NewMockConflictDetector(t)
+	branchService := git.NewMockBranchService(t)
 
 	svc := newTestPRService(sessionRepo, auditRepo, conflictDetector, branchService)
 
-	sessionRepo.On("FindByID", ctx, session.ID).Return(session, nil)
+	sessionRepo.EXPECT().FindByID(ctx, session.ID).Return(session, nil)
 
 	_, err := svc.CheckConflicts(ctx, session.ID)
 
 	assert.Error(t, err)
 	assert.True(t, litchierrors.Is(err, litchierrors.ErrValidationFailed))
 	assert.Contains(t, err.Error(), "execution context not found")
-	sessionRepo.AssertExpectations(t)
 }
 
 // --- Verify github types are correct ---

@@ -12,7 +12,7 @@ import (
 	"github.com/ryuyb/litchi/internal/domain/entity"
 	"github.com/ryuyb/litchi/internal/domain/event"
 	"github.com/ryuyb/litchi/internal/domain/repository"
-	"github.com/ryuyb/litchi/internal/domain/service"
+	domainService "github.com/ryuyb/litchi/internal/domain/service"
 	"github.com/ryuyb/litchi/internal/domain/valueobject"
 	"github.com/ryuyb/litchi/internal/infrastructure/config"
 	"github.com/stretchr/testify/assert"
@@ -20,225 +20,12 @@ import (
 	"go.uber.org/zap"
 )
 
-// --- Local Mocks for Testing ---
-
-// LocalMockSessionRepoForTask is a local mock for WorkSessionRepository.
-type LocalMockSessionRepoForTask struct {
-	mock.Mock
-}
-
-func (m *LocalMockSessionRepoForTask) FindByID(ctx context.Context, id uuid.UUID) (*aggregate.WorkSession, error) {
-	args := m.Called(ctx, id)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*aggregate.WorkSession), args.Error(1)
-}
-
-func (m *LocalMockSessionRepoForTask) FindByGitHubIssue(ctx context.Context, repoName string, issueNumber int) (*aggregate.WorkSession, error) {
-	args := m.Called(ctx, repoName, issueNumber)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*aggregate.WorkSession), args.Error(1)
-}
-
-func (m *LocalMockSessionRepoForTask) FindByIssueID(ctx context.Context, issueID uuid.UUID) (*aggregate.WorkSession, error) {
-	args := m.Called(ctx, issueID)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*aggregate.WorkSession), args.Error(1)
-}
-
-func (m *LocalMockSessionRepoForTask) FindByStatus(ctx context.Context, status aggregate.SessionStatus) ([]*aggregate.WorkSession, error) {
-	args := m.Called(ctx, status)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).([]*aggregate.WorkSession), args.Error(1)
-}
-
-func (m *LocalMockSessionRepoForTask) FindByStage(ctx context.Context, stage valueobject.Stage) ([]*aggregate.WorkSession, error) {
-	args := m.Called(ctx, stage)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).([]*aggregate.WorkSession), args.Error(1)
-}
-
-func (m *LocalMockSessionRepoForTask) Create(ctx context.Context, session *aggregate.WorkSession) error {
-	args := m.Called(ctx, session)
-	return args.Error(0)
-}
-
-func (m *LocalMockSessionRepoForTask) Update(ctx context.Context, session *aggregate.WorkSession) error {
-	args := m.Called(ctx, session)
-	return args.Error(0)
-}
-
-func (m *LocalMockSessionRepoForTask) Delete(ctx context.Context, id uuid.UUID) error {
-	args := m.Called(ctx, id)
-	return args.Error(0)
-}
-
-func (m *LocalMockSessionRepoForTask) ExistsByGitHubIssue(ctx context.Context, repoName string, issueNumber int) (bool, error) {
-	args := m.Called(ctx, repoName, issueNumber)
-	return args.Bool(0), args.Error(1)
-}
-
-func (m *LocalMockSessionRepoForTask) FindActiveByRepository(ctx context.Context, repository string) ([]*aggregate.WorkSession, error) {
-	args := m.Called(ctx, repository)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).([]*aggregate.WorkSession), args.Error(1)
-}
-
-func (m *LocalMockSessionRepoForTask) ListWithPagination(ctx context.Context, params repository.PaginationParams, filter *repository.WorkSessionFilter) ([]*aggregate.WorkSession, *repository.PaginationResult, error) {
-	args := m.Called(ctx, params, filter)
-	if args.Get(0) == nil {
-		return nil, nil, args.Error(2)
-	}
-	return args.Get(0).([]*aggregate.WorkSession), args.Get(1).(*repository.PaginationResult), args.Error(2)
-}
-
-// LocalMockAuditRepoForTask is a local mock for AuditLogRepository.
-type LocalMockAuditRepoForTask struct {
-	mock.Mock
-}
-
-func (m *LocalMockAuditRepoForTask) Save(ctx context.Context, log *entity.AuditLog) error {
-	args := m.Called(ctx, log)
-	return args.Error(0)
-}
-
-func (m *LocalMockAuditRepoForTask) FindByID(ctx context.Context, id uuid.UUID) (*entity.AuditLog, error) {
-	args := m.Called(ctx, id)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*entity.AuditLog), args.Error(1)
-}
-
-func (m *LocalMockAuditRepoForTask) List(ctx context.Context, opts repository.AuditLogListOptions) ([]*entity.AuditLog, int64, error) {
-	args := m.Called(ctx, opts)
-	if args.Get(0) == nil {
-		return nil, 0, args.Error(2)
-	}
-	return args.Get(0).([]*entity.AuditLog), args.Get(1).(int64), args.Error(2)
-}
-
-func (m *LocalMockAuditRepoForTask) ListBySessionID(ctx context.Context, sessionID uuid.UUID, offset, limit int) ([]*entity.AuditLog, int64, error) {
-	args := m.Called(ctx, sessionID, offset, limit)
-	if args.Get(0) == nil {
-		return nil, 0, args.Error(2)
-	}
-	return args.Get(0).([]*entity.AuditLog), args.Get(1).(int64), args.Error(2)
-}
-
-func (m *LocalMockAuditRepoForTask) ListByRepository(ctx context.Context, repoName string, offset, limit int) ([]*entity.AuditLog, int64, error) {
-	args := m.Called(ctx, repoName, offset, limit)
-	if args.Get(0) == nil {
-		return nil, 0, args.Error(2)
-	}
-	return args.Get(0).([]*entity.AuditLog), args.Get(1).(int64), args.Error(2)
-}
-
-func (m *LocalMockAuditRepoForTask) ListByActor(ctx context.Context, actor string, offset, limit int) ([]*entity.AuditLog, int64, error) {
-	args := m.Called(ctx, actor, offset, limit)
-	if args.Get(0) == nil {
-		return nil, 0, args.Error(2)
-	}
-	return args.Get(0).([]*entity.AuditLog), args.Get(1).(int64), args.Error(2)
-}
-
-func (m *LocalMockAuditRepoForTask) ListByTimeRange(ctx context.Context, startTime, endTime time.Time, offset, limit int) ([]*entity.AuditLog, int64, error) {
-	args := m.Called(ctx, startTime, endTime, offset, limit)
-	if args.Get(0) == nil {
-		return nil, 0, args.Error(2)
-	}
-	return args.Get(0).([]*entity.AuditLog), args.Get(1).(int64), args.Error(2)
-}
-
-func (m *LocalMockAuditRepoForTask) CountBySession(ctx context.Context, sessionID uuid.UUID) (int64, error) {
-	args := m.Called(ctx, sessionID)
-	return args.Get(0).(int64), args.Error(1)
-}
-
-func (m *LocalMockAuditRepoForTask) DeleteBeforeTime(ctx context.Context, before time.Time) (int64, error) {
-	args := m.Called(ctx, before)
-	return args.Get(0).(int64), args.Error(1)
-}
-
-// LocalMockAgentRunnerForTask is a mock implementation of AgentRunner.
-type LocalMockAgentRunnerForTask struct {
-	mock.Mock
-}
-
-func (m *LocalMockAgentRunnerForTask) Execute(ctx context.Context, req *service.AgentRequest) (*service.AgentResponse, error) {
-	args := m.Called(ctx, req)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*service.AgentResponse), args.Error(1)
-}
-
-func (m *LocalMockAgentRunnerForTask) ExecuteWithRetry(ctx context.Context, req *service.AgentRequest, policy valueobject.RetryPolicy) (*service.AgentResponse, error) {
-	args := m.Called(ctx, req, policy)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*service.AgentResponse), args.Error(1)
-}
-
-func (m *LocalMockAgentRunnerForTask) ValidateRequest(req *service.AgentRequest) error {
-	args := m.Called(req)
-	return args.Error(0)
-}
-
-func (m *LocalMockAgentRunnerForTask) PrepareContext(ctx context.Context, sessionID uuid.UUID, worktreePath string) (*service.AgentContext, error) {
-	args := m.Called(ctx, sessionID, worktreePath)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*service.AgentContext), args.Error(1)
-}
-
-func (m *LocalMockAgentRunnerForTask) SaveContext(ctx context.Context, worktreePath string, cache *service.AgentContextCache) error {
-	args := m.Called(ctx, worktreePath, cache)
-	return args.Error(0)
-}
-
-func (m *LocalMockAgentRunnerForTask) Cancel(sessionID uuid.UUID) error {
-	args := m.Called(sessionID)
-	return args.Error(0)
-}
-
-func (m *LocalMockAgentRunnerForTask) GetStatus(sessionID uuid.UUID) (*service.AgentStatus, error) {
-	args := m.Called(sessionID)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*service.AgentStatus), args.Error(1)
-}
-
-func (m *LocalMockAgentRunnerForTask) IsRunning(sessionID uuid.UUID) bool {
-	args := m.Called(sessionID)
-	return args.Bool(0)
-}
-
-func (m *LocalMockAgentRunnerForTask) Shutdown(ctx context.Context) error {
-	args := m.Called(ctx)
-	return args.Error(0)
-}
-
 // --- Test Fixtures ---
 
 func newTestTaskService(
 	sessionRepo repository.WorkSessionRepository,
 	auditRepo repository.AuditLogRepository,
-	agentRunner service.AgentRunner,
+	agentRunner domainService.AgentRunner,
 ) *TaskService {
 	logger := zap.NewNop()
 	dispatcher := event.NewDispatcher()
@@ -248,8 +35,8 @@ func newTestTaskService(
 		},
 		Failure: config.FailureConfig{
 			Timeout: config.TimeoutConfig{
-				TaskBreakdown:  "10m",
-				TaskExecution:  "15m",
+				TaskBreakdown: "10m",
+				TaskExecution: "15m",
 			},
 		},
 	}
@@ -322,21 +109,19 @@ func TestTaskService_StartTaskBreakdown_SessionNotFound(t *testing.T) {
 	ctx := context.Background()
 	sessionID := uuid.New()
 
-	sessionRepo := new(LocalMockSessionRepoForTask)
-	auditRepo := new(LocalMockAuditRepoForTask)
-	agentRunner := new(LocalMockAgentRunnerForTask)
+	sessionRepo := repository.NewMockWorkSessionRepository(t)
+	auditRepo := repository.NewMockAuditLogRepository(t)
+	agentRunner := domainService.NewMockAgentRunner(t)
 
 	svc := newTestTaskService(sessionRepo, auditRepo, agentRunner)
 
-	sessionRepo.On("FindByID", ctx, sessionID).Return(nil, nil)
+	sessionRepo.EXPECT().FindByID(ctx, sessionID).Return(nil, nil)
 
 	// Execute
 	_, err := svc.StartTaskBreakdown(ctx, sessionID)
 
 	// Assert
 	assert.Error(t, err)
-
-	sessionRepo.AssertExpectations(t)
 }
 
 func TestTaskService_StartTaskBreakdown_WrongStage(t *testing.T) {
@@ -345,13 +130,13 @@ func TestTaskService_StartTaskBreakdown_WrongStage(t *testing.T) {
 	// Roll back to Design stage
 	_ = session.RollbackTo(valueobject.StageDesign, "test", false)
 
-	sessionRepo := new(LocalMockSessionRepoForTask)
-	auditRepo := new(LocalMockAuditRepoForTask)
-	agentRunner := new(LocalMockAgentRunnerForTask)
+	sessionRepo := repository.NewMockWorkSessionRepository(t)
+	auditRepo := repository.NewMockAuditLogRepository(t)
+	agentRunner := domainService.NewMockAgentRunner(t)
 
 	svc := newTestTaskService(sessionRepo, auditRepo, agentRunner)
 
-	sessionRepo.On("FindByID", ctx, session.ID).Return(session, nil)
+	sessionRepo.EXPECT().FindByID(ctx, session.ID).Return(session, nil)
 
 	// Execute
 	_, err := svc.StartTaskBreakdown(ctx, session.ID)
@@ -359,8 +144,6 @@ func TestTaskService_StartTaskBreakdown_WrongStage(t *testing.T) {
 	// Assert
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "expected TaskBreakdown")
-
-	sessionRepo.AssertExpectations(t)
 }
 
 func TestTaskService_ParseTaskBreakdown_Success(t *testing.T) {
@@ -368,10 +151,10 @@ func TestTaskService_ParseTaskBreakdown_Success(t *testing.T) {
 
 	// Test JSON parsing
 	jsonOutput := `[
-		{"description": "Create database schema", "dependencies": [], "order": 0},
-		{"description": "Implement repository", "dependencies": [0], "order": 1},
-		{"description": "Add service layer", "dependencies": [1], "order": 2}
-	]`
+			{"description": "Create database schema", "dependencies": [], "order": 0},
+			{"description": "Implement repository", "dependencies": [0], "order": 1},
+			{"description": "Add service layer", "dependencies": [1], "order": 2}
+		]`
 
 	tasks, err := svc.parseTaskBreakdown(jsonOutput)
 
@@ -425,9 +208,9 @@ func TestTaskService_ParseTaskBreakdown_InvalidDependency(t *testing.T) {
 
 	// Task 1 depends on task index 99 which doesn't exist
 	jsonOutput := `[
-		{"description": "First task", "dependencies": [], "order": 0},
-		{"description": "Second task", "dependencies": [99], "order": 1}
-	]`
+			{"description": "First task", "dependencies": [], "order": 0},
+			{"description": "Second task", "dependencies": [99], "order": 1}
+		]`
 
 	_, err := svc.parseTaskBreakdown(jsonOutput)
 	assert.Error(t, err)
@@ -438,13 +221,13 @@ func TestTaskService_GetNextExecutableTask_Success(t *testing.T) {
 	ctx := context.Background()
 	session := newTestSessionForExecution()
 
-	sessionRepo := new(LocalMockSessionRepoForTask)
-	auditRepo := new(LocalMockAuditRepoForTask)
-	agentRunner := new(LocalMockAgentRunnerForTask)
+	sessionRepo := repository.NewMockWorkSessionRepository(t)
+	auditRepo := repository.NewMockAuditLogRepository(t)
+	agentRunner := domainService.NewMockAgentRunner(t)
 
 	svc := newTestTaskService(sessionRepo, auditRepo, agentRunner)
 
-	sessionRepo.On("FindByID", ctx, session.ID).Return(session, nil)
+	sessionRepo.EXPECT().FindByID(ctx, session.ID).Return(session, nil)
 
 	// Execute
 	taskInfo, err := svc.GetNextExecutableTask(ctx, session.ID)
@@ -455,8 +238,6 @@ func TestTaskService_GetNextExecutableTask_Success(t *testing.T) {
 	assert.Equal(t, "Task 1: Setup database schema", taskInfo.Description)
 	assert.Equal(t, "pending", taskInfo.Status)
 	assert.True(t, taskInfo.DependenciesSatisfied)
-
-	sessionRepo.AssertExpectations(t)
 }
 
 func TestTaskTaskService_GetNextExecutableTask_AllCompleted(t *testing.T) {
@@ -469,13 +250,13 @@ func TestTaskTaskService_GetNextExecutableTask_AllCompleted(t *testing.T) {
 		_ = session.CompleteTask(task.ID, valueobject.NewExecutionResult("done", true, 100))
 	}
 
-	sessionRepo := new(LocalMockSessionRepoForTask)
-	auditRepo := new(LocalMockAuditRepoForTask)
-	agentRunner := new(LocalMockAgentRunnerForTask)
+	sessionRepo := repository.NewMockWorkSessionRepository(t)
+	auditRepo := repository.NewMockAuditLogRepository(t)
+	agentRunner := domainService.NewMockAgentRunner(t)
 
 	svc := newTestTaskService(sessionRepo, auditRepo, agentRunner)
 
-	sessionRepo.On("FindByID", ctx, session.ID).Return(session, nil)
+	sessionRepo.EXPECT().FindByID(ctx, session.ID).Return(session, nil)
 
 	// Execute
 	taskInfo, err := svc.GetNextExecutableTask(ctx, session.ID)
@@ -483,21 +264,19 @@ func TestTaskTaskService_GetNextExecutableTask_AllCompleted(t *testing.T) {
 	// Assert
 	assert.NoError(t, err)
 	assert.Nil(t, taskInfo) // No executable task when all completed
-
-	sessionRepo.AssertExpectations(t)
 }
 
 func TestTaskService_GetTaskList_Success(t *testing.T) {
 	ctx := context.Background()
 	session := newTestSessionForExecution()
 
-	sessionRepo := new(LocalMockSessionRepoForTask)
-	auditRepo := new(LocalMockAuditRepoForTask)
-	agentRunner := new(LocalMockAgentRunnerForTask)
+	sessionRepo := repository.NewMockWorkSessionRepository(t)
+	auditRepo := repository.NewMockAuditLogRepository(t)
+	agentRunner := domainService.NewMockAgentRunner(t)
 
 	svc := newTestTaskService(sessionRepo, auditRepo, agentRunner)
 
-	sessionRepo.On("FindByID", ctx, session.ID).Return(session, nil)
+	sessionRepo.EXPECT().FindByID(ctx, session.ID).Return(session, nil)
 
 	// Execute (no filter, page 1, pageSize 20)
 	listStatus, err := svc.GetTaskList(ctx, session.ID, 1, 20, nil)
@@ -519,8 +298,6 @@ func TestTaskService_GetTaskList_Success(t *testing.T) {
 	// Check second task cannot execute (depends on first)
 	assert.False(t, listStatus.Tasks[1].CanExecute)
 	assert.False(t, listStatus.Tasks[1].DependenciesSatisfied)
-
-	sessionRepo.AssertExpectations(t)
 }
 
 func TestTaskService_GetTaskStatus_Success(t *testing.T) {
@@ -528,13 +305,13 @@ func TestTaskService_GetTaskStatus_Success(t *testing.T) {
 	session := newTestSessionForExecution()
 	taskID := session.Tasks[0].ID
 
-	sessionRepo := new(LocalMockSessionRepoForTask)
-	auditRepo := new(LocalMockAuditRepoForTask)
-	agentRunner := new(LocalMockAgentRunnerForTask)
+	sessionRepo := repository.NewMockWorkSessionRepository(t)
+	auditRepo := repository.NewMockAuditLogRepository(t)
+	agentRunner := domainService.NewMockAgentRunner(t)
 
 	svc := newTestTaskService(sessionRepo, auditRepo, agentRunner)
 
-	sessionRepo.On("FindByID", ctx, session.ID).Return(session, nil)
+	sessionRepo.EXPECT().FindByID(ctx, session.ID).Return(session, nil)
 
 	// Execute
 	status, err := svc.GetTaskStatus(ctx, session.ID, taskID)
@@ -547,8 +324,6 @@ func TestTaskService_GetTaskStatus_Success(t *testing.T) {
 	assert.Equal(t, "pending", status.Status)
 	assert.Equal(t, "待执行", status.StatusDisplayName)
 	assert.Equal(t, 0, status.Order)
-
-	sessionRepo.AssertExpectations(t)
 }
 
 func TestTaskService_GetTaskStatus_TaskNotFound(t *testing.T) {
@@ -556,13 +331,13 @@ func TestTaskService_GetTaskStatus_TaskNotFound(t *testing.T) {
 	session := newTestSessionForExecution()
 	nonExistentTaskID := uuid.New()
 
-	sessionRepo := new(LocalMockSessionRepoForTask)
-	auditRepo := new(LocalMockAuditRepoForTask)
-	agentRunner := new(LocalMockAgentRunnerForTask)
+	sessionRepo := repository.NewMockWorkSessionRepository(t)
+	auditRepo := repository.NewMockAuditLogRepository(t)
+	agentRunner := domainService.NewMockAgentRunner(t)
 
 	svc := newTestTaskService(sessionRepo, auditRepo, agentRunner)
 
-	sessionRepo.On("FindByID", ctx, session.ID).Return(session, nil)
+	sessionRepo.EXPECT().FindByID(ctx, session.ID).Return(session, nil)
 
 	// Execute
 	_, err := svc.GetTaskStatus(ctx, session.ID, nonExistentTaskID)
@@ -570,29 +345,25 @@ func TestTaskService_GetTaskStatus_TaskNotFound(t *testing.T) {
 	// Assert
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "not found")
-
-	sessionRepo.AssertExpectations(t)
 }
 
 func TestTaskService_ExecuteNextTask_SessionNotFound(t *testing.T) {
 	ctx := context.Background()
 	sessionID := uuid.New()
 
-	sessionRepo := new(LocalMockSessionRepoForTask)
-	auditRepo := new(LocalMockAuditRepoForTask)
-	agentRunner := new(LocalMockAgentRunnerForTask)
+	sessionRepo := repository.NewMockWorkSessionRepository(t)
+	auditRepo := repository.NewMockAuditLogRepository(t)
+	agentRunner := domainService.NewMockAgentRunner(t)
 
 	svc := newTestTaskService(sessionRepo, auditRepo, agentRunner)
 
-	sessionRepo.On("FindByID", ctx, sessionID).Return(nil, nil)
+	sessionRepo.EXPECT().FindByID(ctx, sessionID).Return(nil, nil)
 
 	// Execute
 	_, _, err := svc.ExecuteNextTask(ctx, sessionID)
 
 	// Assert
 	assert.Error(t, err)
-
-	sessionRepo.AssertExpectations(t)
 }
 
 func TestTaskService_ExecuteNextTask_WrongStage(t *testing.T) {
@@ -600,13 +371,13 @@ func TestTaskService_ExecuteNextTask_WrongStage(t *testing.T) {
 	session := newTestSessionForTaskBreakdown()
 	// Session is in TaskBreakdown, not Execution stage
 
-	sessionRepo := new(LocalMockSessionRepoForTask)
-	auditRepo := new(LocalMockAuditRepoForTask)
-	agentRunner := new(LocalMockAgentRunnerForTask)
+	sessionRepo := repository.NewMockWorkSessionRepository(t)
+	auditRepo := repository.NewMockAuditLogRepository(t)
+	agentRunner := domainService.NewMockAgentRunner(t)
 
 	svc := newTestTaskService(sessionRepo, auditRepo, agentRunner)
 
-	sessionRepo.On("FindByID", ctx, session.ID).Return(session, nil)
+	sessionRepo.EXPECT().FindByID(ctx, session.ID).Return(session, nil)
 
 	// Execute
 	_, _, err := svc.ExecuteNextTask(ctx, session.ID)
@@ -614,8 +385,6 @@ func TestTaskService_ExecuteNextTask_WrongStage(t *testing.T) {
 	// Assert
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "expected Execution")
-
-	sessionRepo.AssertExpectations(t)
 }
 
 func TestTaskService_CompleteTask_Success(t *testing.T) {
@@ -626,17 +395,17 @@ func TestTaskService_CompleteTask_Success(t *testing.T) {
 	// Start the task first
 	_ = session.StartTask(taskID)
 
-	sessionRepo := new(LocalMockSessionRepoForTask)
-	auditRepo := new(LocalMockAuditRepoForTask)
-	agentRunner := new(LocalMockAgentRunnerForTask)
+	sessionRepo := repository.NewMockWorkSessionRepository(t)
+	auditRepo := repository.NewMockAuditLogRepository(t)
+	agentRunner := domainService.NewMockAgentRunner(t)
 
 	svc := newTestTaskService(sessionRepo, auditRepo, agentRunner)
 
 	result := valueobject.NewExecutionResult("completed successfully", true, 500)
 
-	sessionRepo.On("FindByID", ctx, session.ID).Return(session, nil)
-	sessionRepo.On("Update", ctx, session).Return(nil)
-	auditRepo.On("Save", ctx, mock.AnythingOfType("*entity.AuditLog")).Return(nil)
+	sessionRepo.EXPECT().FindByID(ctx, session.ID).Return(session, nil)
+	sessionRepo.EXPECT().Update(ctx, session).Return(nil)
+	auditRepo.EXPECT().Save(ctx, mock.AnythingOfType("*entity.AuditLog")).Return(nil)
 
 	// Execute
 	err := svc.CompleteTask(ctx, session.ID, taskID, result)
@@ -647,9 +416,6 @@ func TestTaskService_CompleteTask_Success(t *testing.T) {
 	// Verify task is completed
 	task := session.GetTask(taskID)
 	assert.True(t, task.IsCompleted())
-
-	sessionRepo.AssertExpectations(t)
-	auditRepo.AssertExpectations(t)
 }
 
 func TestTaskService_FailTask_Success(t *testing.T) {
@@ -660,15 +426,15 @@ func TestTaskService_FailTask_Success(t *testing.T) {
 	// Start the task first
 	_ = session.StartTask(taskID)
 
-	sessionRepo := new(LocalMockSessionRepoForTask)
-	auditRepo := new(LocalMockAuditRepoForTask)
-	agentRunner := new(LocalMockAgentRunnerForTask)
+	sessionRepo := repository.NewMockWorkSessionRepository(t)
+	auditRepo := repository.NewMockAuditLogRepository(t)
+	agentRunner := domainService.NewMockAgentRunner(t)
 
 	svc := newTestTaskService(sessionRepo, auditRepo, agentRunner)
 
-	sessionRepo.On("FindByID", ctx, session.ID).Return(session, nil)
-	sessionRepo.On("Update", ctx, session).Return(nil)
-	auditRepo.On("Save", ctx, mock.AnythingOfType("*entity.AuditLog")).Return(nil)
+	sessionRepo.EXPECT().FindByID(ctx, session.ID).Return(session, nil)
+	sessionRepo.EXPECT().Update(ctx, session).Return(nil)
+	auditRepo.EXPECT().Save(ctx, mock.AnythingOfType("*entity.AuditLog")).Return(nil)
 
 	// Execute
 	err := svc.FailTask(ctx, session.ID, taskID, "Test failure", "Try again")
@@ -681,9 +447,6 @@ func TestTaskService_FailTask_Success(t *testing.T) {
 	assert.True(t, task.IsFailed())
 	assert.Equal(t, "Test failure", task.FailureReason)
 	assert.Equal(t, "Try again", task.Suggestion)
-
-	sessionRepo.AssertExpectations(t)
-	auditRepo.AssertExpectations(t)
 }
 
 func TestTaskService_RetryTask_Success(t *testing.T) {
@@ -695,15 +458,15 @@ func TestTaskService_RetryTask_Success(t *testing.T) {
 	_ = session.StartTask(taskID)
 	_ = session.FailTask(taskID, "Initial failure", "Suggestion")
 
-	sessionRepo := new(LocalMockSessionRepoForTask)
-	auditRepo := new(LocalMockAuditRepoForTask)
-	agentRunner := new(LocalMockAgentRunnerForTask)
+	sessionRepo := repository.NewMockWorkSessionRepository(t)
+	auditRepo := repository.NewMockAuditLogRepository(t)
+	agentRunner := domainService.NewMockAgentRunner(t)
 
 	svc := newTestTaskService(sessionRepo, auditRepo, agentRunner)
 
-	sessionRepo.On("FindByID", ctx, session.ID).Return(session, nil)
-	sessionRepo.On("Update", ctx, session).Return(nil)
-	auditRepo.On("Save", ctx, mock.AnythingOfType("*entity.AuditLog")).Return(nil)
+	sessionRepo.EXPECT().FindByID(ctx, session.ID).Return(session, nil)
+	sessionRepo.EXPECT().Update(ctx, session).Return(nil)
+	auditRepo.EXPECT().Save(ctx, mock.AnythingOfType("*entity.AuditLog")).Return(nil)
 
 	// Execute
 	err := svc.RetryTask(ctx, session.ID, taskID)
@@ -715,9 +478,6 @@ func TestTaskService_RetryTask_Success(t *testing.T) {
 	task := session.GetTask(taskID)
 	assert.True(t, task.IsInProgress())
 	assert.Equal(t, 1, task.RetryCount)
-
-	sessionRepo.AssertExpectations(t)
-	auditRepo.AssertExpectations(t)
 }
 
 func TestTaskService_RetryTask_MaxRetryLimit(t *testing.T) {
@@ -735,13 +495,13 @@ func TestTaskService_RetryTask_MaxRetryLimit(t *testing.T) {
 	_ = session.RetryTask(taskID, 3)
 	_ = session.FailTask(taskID, "Failure 4", "")
 
-	sessionRepo := new(LocalMockSessionRepoForTask)
-	auditRepo := new(LocalMockAuditRepoForTask)
-	agentRunner := new(LocalMockAgentRunnerForTask)
+	sessionRepo := repository.NewMockWorkSessionRepository(t)
+	auditRepo := repository.NewMockAuditLogRepository(t)
+	agentRunner := domainService.NewMockAgentRunner(t)
 
 	svc := newTestTaskService(sessionRepo, auditRepo, agentRunner)
 
-	sessionRepo.On("FindByID", ctx, session.ID).Return(session, nil)
+	sessionRepo.EXPECT().FindByID(ctx, session.ID).Return(session, nil)
 
 	// Execute - should fail because retry limit reached
 	err := svc.RetryTask(ctx, session.ID, taskID)
@@ -749,8 +509,6 @@ func TestTaskService_RetryTask_MaxRetryLimit(t *testing.T) {
 	// Assert
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "maximum retry limit")
-
-	sessionRepo.AssertExpectations(t)
 }
 
 func TestTaskService_SkipTask_Success(t *testing.T) {
@@ -758,15 +516,15 @@ func TestTaskService_SkipTask_Success(t *testing.T) {
 	session := newTestSessionForExecution()
 	taskID := session.Tasks[0].ID
 
-	sessionRepo := new(LocalMockSessionRepoForTask)
-	auditRepo := new(LocalMockAuditRepoForTask)
-	agentRunner := new(LocalMockAgentRunnerForTask)
+	sessionRepo := repository.NewMockWorkSessionRepository(t)
+	auditRepo := repository.NewMockAuditLogRepository(t)
+	agentRunner := domainService.NewMockAgentRunner(t)
 
 	svc := newTestTaskService(sessionRepo, auditRepo, agentRunner)
 
-	sessionRepo.On("FindByID", ctx, session.ID).Return(session, nil)
-	sessionRepo.On("Update", ctx, session).Return(nil)
-	auditRepo.On("Save", ctx, mock.AnythingOfType("*entity.AuditLog")).Return(nil)
+	sessionRepo.EXPECT().FindByID(ctx, session.ID).Return(session, nil)
+	sessionRepo.EXPECT().Update(ctx, session).Return(nil)
+	auditRepo.EXPECT().Save(ctx, mock.AnythingOfType("*entity.AuditLog")).Return(nil)
 
 	// Execute
 	err := svc.SkipTask(ctx, session.ID, taskID, "Not needed for this implementation")
@@ -778,9 +536,6 @@ func TestTaskService_SkipTask_Success(t *testing.T) {
 	task := session.GetTask(taskID)
 	assert.True(t, task.IsSkipped())
 	assert.Equal(t, "Not needed for this implementation", task.FailureReason)
-
-	sessionRepo.AssertExpectations(t)
-	auditRepo.AssertExpectations(t)
 }
 
 func TestTaskService_DependencyResolution(t *testing.T) {
@@ -879,12 +634,12 @@ func TestTaskService_TaskBreakdownJSONWithExtraText(t *testing.T) {
 	// Output with text before and after JSON
 	output := `Here is the task breakdown based on the design:
 
-[
-  {"description": "First task", "dependencies": [], "order": 0},
-  {"description": "Second task", "dependencies": [0], "order": 1}
-]
+	[
+	  {"description": "First task", "dependencies": [], "order": 0},
+	  {"description": "Second task", "dependencies": [0], "order": 1}
+	]
 
-Let me know if you need any modifications.`
+	Let me know if you need any modifications.`
 
 	tasks, err := svc.parseTaskBreakdown(output)
 

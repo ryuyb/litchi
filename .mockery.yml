@@ -40,3 +40,10 @@ packages:
       ComplexityEvaluator: {}
       EventDispatcher: {}
       SessionControlService: {}
+      AgentRunner: {}
+  github.com/ryuyb/litchi/internal/infrastructure/git:
+    config:
+      all: false
+    interfaces:
+      ConflictDetector: {}
+      BranchService: {}
