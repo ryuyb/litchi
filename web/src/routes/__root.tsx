@@ -6,7 +6,7 @@ import {
 	Scripts,
 } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
-import { MainLayout } from "../components/layout";
+import { MainLayout } from "#/components/layout";
 import TanStackQueryDevtools from "../integrations/tanstack-query/devtools";
 import StoreDevtools from "../lib/store-devtools";
 import { AppToaster } from "../lib/toaster";
