@@ -4,15 +4,18 @@ package service
 import (
 	"context"
 	"fmt"
-	"strings"
+	"os"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/ryuyb/litchi/internal/domain/entity"
 	"github.com/ryuyb/litchi/internal/domain/event"
 	"github.com/ryuyb/litchi/internal/domain/repository"
+	domainservice "github.com/ryuyb/litchi/internal/domain/service"
 	"github.com/ryuyb/litchi/internal/domain/valueobject"
 	"github.com/ryuyb/litchi/internal/infrastructure/config"
+	"github.com/ryuyb/litchi/internal/infrastructure/git"
+	"github.com/ryuyb/litchi/internal/infrastructure/github"
 	litchierrors "github.com/ryuyb/litchi/internal/pkg/errors"
 	"go.uber.org/zap"
 )
@@ -26,11 +29,15 @@ import (
 // 2. Enable/disable - manage repository processing status
 // 3. Config merging - merge repository config with global config
 // 4. Config validation - validate repository configuration
+// 5. Project detection - detect project type and tools via file analysis
 type RepositoryService struct {
 	repoRepo        repository.RepositoryRepository
 	auditRepo       repository.AuditLogRepository
 	eventDispatcher *event.Dispatcher
 	config          *config.Config
+	detector        domainservice.CompositeProjectDetector
+	gitClient       git.GitClient
+	githubClient    *github.ClientManager
 	logger          *zap.Logger
 }
 
@@ -40,6 +47,9 @@ func NewRepositoryService(
 	auditRepo repository.AuditLogRepository,
 	eventDispatcher *event.Dispatcher,
 	config *config.Config,
+	detector domainservice.CompositeProjectDetector,
+	gitClient git.GitClient,
+	githubClient *github.ClientManager,
 	logger *zap.Logger,
 ) *RepositoryService {
 	return &RepositoryService{
@@ -47,6 +57,9 @@ func NewRepositoryService(
 		auditRepo:       auditRepo,
 		eventDispatcher: eventDispatcher,
 		config:          config,
+		detector:        detector,
+		gitClient:       gitClient,
+		githubClient:    githubClient,
 		logger:          logger.Named("repository_service"),
 	}
 }
@@ -719,16 +732,25 @@ func (s *RepositoryService) GetDetectionResult(
 }
 
 // RunDetection triggers project detection for a repository.
-// This performs automatic detection of project type, language, and tools.
-// Note: This is a placeholder implementation that returns mock data.
-// The actual detection logic requires cloning the repository and analyzing files.
+// This performs automatic detection of project type, language, and tools
+// by cloning the repository to a temporary location and analyzing configuration files.
 func (s *RepositoryService) RunDetection(
 	ctx context.Context,
 	name string,
 ) (*valueobject.DetectedProject, error) {
 	startTime := time.Now()
 
-	// 1. Find repository
+	// 1. Validate required dependencies
+	if s.gitClient == nil {
+		return nil, litchierrors.New(litchierrors.ErrValidationFailed).
+			WithDetail("git client not configured for detection")
+	}
+	if s.detector == nil {
+		return nil, litchierrors.New(litchierrors.ErrValidationFailed).
+			WithDetail("project detector not configured for detection")
+	}
+
+	// 2. Find repository
 	repo, err := s.repoRepo.FindByName(ctx, name)
 	if err != nil {
 		s.logger.Error("failed to find repository",
@@ -742,14 +764,76 @@ func (s *RepositoryService) RunDetection(
 			WithDetail("repository not found: " + name)
 	}
 
-	// 2. Run detection (placeholder - returns mock data for now)
-	// TODO: Implement actual project detection using ProjectDetector service
-	detectedProject := s.performMockDetection(name)
+	// 3. Get authentication token for clone
+	authToken, err := s.getCloneAuthToken(ctx, name)
+	if err != nil {
+		return nil, litchierrors.Wrap(litchierrors.ErrGitCloneFailed, err).
+			WithDetail("failed to get authentication token for clone")
+	}
 
-	// 3. Save detection result to repository
+	// 4. Create temporary directory for clone
+	tempPath, err := os.MkdirTemp("", "litchi-detection-*")
+	if err != nil {
+		s.logger.Error("failed to create temp directory",
+			zap.Error(err),
+		)
+		return nil, litchierrors.Wrap(litchierrors.ErrGitCloneFailed, err).
+			WithDetail("failed to create temporary directory for detection")
+	}
+
+	// Track cleanup state - cleanup on all exit paths
+	cleanupDone := false
+	defer func() {
+		if !cleanupDone {
+			s.cleanupTempDir(tempPath)
+		}
+	}()
+
+	// 5. Build clone URL with authentication
+	cloneURL := s.buildCloneURL(name, authToken)
+
+	// 6. Clone repository with shallow clone (depth=1)
+	cloneOpts := git.CloneOptions{
+		Depth:        1,
+		SingleBranch: true,
+	}
+	if err := s.gitClient.CloneRepository(ctx, cloneURL, tempPath, cloneOpts); err != nil {
+		s.logger.Error("failed to clone repository",
+			zap.String("name", name),
+			zap.String("tempPath", tempPath),
+			zap.Error(err),
+		)
+		return nil, err // GitClient already wraps error appropriately
+	}
+
+	s.logger.Debug("repository cloned for detection",
+		zap.String("name", name),
+		zap.String("tempPath", tempPath),
+	)
+
+	// 7. Run project detection
+	detectedProject, err := s.detector.DetectWithAll(ctx, tempPath)
+	if err != nil {
+		s.logger.Warn("detection failed",
+			zap.String("name", name),
+			zap.Error(err),
+		)
+		// Detection failure is not critical - return unknown project
+		detectedProject = valueobject.NewDetectedProject(
+			valueobject.ProjectTypeUnknown,
+			"Unknown",
+			30,
+		)
+	}
+
+	// 8. Cleanup temp directory (done before save to free resources early)
+	s.cleanupTempDir(tempPath)
+	cleanupDone = true
+
+	// 9. Save detection result to repository entity
 	repo.SetDetectedProject(detectedProject)
 
-	// 4. Save repository
+	// 10. Save repository
 	if err := s.repoRepo.Save(ctx, repo); err != nil {
 		s.logger.Error("failed to save detection result",
 			zap.String("name", name),
@@ -762,126 +846,116 @@ func (s *RepositoryService) RunDetection(
 		zap.String("repo_id", repo.ID.String()),
 		zap.String("name", name),
 		zap.String("type", string(detectedProject.Type)),
+		zap.String("language", detectedProject.PrimaryLanguage),
 		zap.Int("confidence", detectedProject.Confidence),
+		zap.Int("tools", len(detectedProject.DetectedTools)),
 		zap.Duration("duration", time.Since(startTime)),
 	)
 
 	return detectedProject, nil
 }
 
-// performMockDetection returns a mock detection result.
-// TODO: This is a PLACEHOLDER implementation for development/testing purposes only.
-// It uses simple heuristics based on repository name patterns and should NOT be used
-// in production. The actual ProjectDetector service should be implemented to:
-// 1. Clone the repository to a temporary location
-// 2. Analyze configuration files (go.mod, package.json, pyproject.toml, etc.)
-// 3. Detect language, framework, and tool configurations
-// 4. Return accurate detection results with high confidence
-func (s *RepositoryService) performMockDetection(name string) *valueobject.DetectedProject {
-	// Detect project type based on repository name pattern
-	projectType := valueobject.ProjectTypeUnknown
-	primaryLanguage := "Unknown"
-	confidence := 50
-
-	// Simple heuristics based on common patterns
-	if len(name) > 0 {
-		switch {
-		case containsAny(name, []string{"go", "golang"}):
-			projectType = valueobject.ProjectTypeGo
-			primaryLanguage = "Go"
-			confidence = 85
-		case containsAny(name, []string{"node", "js", "ts", "react", "vue", "next"}):
-			projectType = valueobject.ProjectTypeNodeJS
-			primaryLanguage = "TypeScript"
-			confidence = 80
-		case containsAny(name, []string{"py", "python", "django", "flask"}):
-			projectType = valueobject.ProjectTypePython
-			primaryLanguage = "Python"
-			confidence = 80
-		case containsAny(name, []string{"rs", "rust", "cargo"}):
-			projectType = valueobject.ProjectTypeRust
-			primaryLanguage = "Rust"
-			confidence = 85
-		case containsAny(name, []string{"java", "spring", "kotlin"}):
-			projectType = valueobject.ProjectTypeJava
-			primaryLanguage = "Java"
-			confidence = 80
+// getCloneAuthToken returns an authentication token for cloning the repository.
+// For PAT mode: returns the PAT token directly.
+// For GitHub App mode: returns the installation token for the repository.
+func (s *RepositoryService) getCloneAuthToken(ctx context.Context, repoName string) (string, error) {
+	// Check if detector/gitClient are available (may be nil in tests)
+	if s.githubClient == nil {
+		// Fallback: try to use PAT from config directly
+		if s.config.GitHub.Token != "" && !config.IsEnvPlaceholder(s.config.GitHub.Token) {
+			return s.config.GitHub.Token, nil
 		}
+		return "", litchierrors.New(litchierrors.ErrGitHubAuthFailed).
+			WithDetail("no GitHub client available and no PAT configured")
 	}
 
-	project := valueobject.NewDetectedProject(projectType, primaryLanguage, confidence)
-
-	// Add detected tools based on project type
-	switch projectType {
-	case valueobject.ProjectTypeGo:
-		project.AddTool(valueobject.NewDetectedTool(
-			valueobject.ToolTypeFormatter,
-			"gofmt",
-			"Go standard formatter",
-			valueobject.NewToolCommand("gofmt", "gofmt", []string{"-s", "-w"}, 30),
-		))
-		project.AddTool(valueobject.NewDetectedTool(
-			valueobject.ToolTypeLinter,
-			"golangci-lint",
-			"Common Go linter",
-			valueobject.NewToolCommand("golangci-lint", "golangci-lint", []string{"run"}, 60),
-		).WithConfigFile(".golangci.yml"))
-		project.AddTool(valueobject.NewDetectedTool(
-			valueobject.ToolTypeTester,
-			"go test",
-			"Go test",
-			valueobject.NewToolCommand("go test", "go", []string{"test", "./..."}, 120),
-		))
-	case valueobject.ProjectTypeNodeJS:
-		project.AddTool(valueobject.NewDetectedTool(
-			valueobject.ToolTypeFormatter,
-			"prettier",
-			"Common JS/TS formatter",
-			valueobject.NewToolCommand("prettier", "npx", []string{"prettier", "--write", "."}, 60),
-		).WithConfigFile(".prettierrc"))
-		project.AddTool(valueobject.NewDetectedTool(
-			valueobject.ToolTypeLinter,
-			"eslint",
-			"Common JS/TS linter",
-			valueobject.NewToolCommand("eslint", "npx", []string{"eslint", "."}, 60),
-		).WithConfigFile(".eslintrc"))
-		project.AddTool(valueobject.NewDetectedTool(
-			valueobject.ToolTypeTester,
-			"jest",
-			"Common JS/TS test runner",
-			valueobject.NewToolCommand("jest", "npx", []string{"jest"}, 120),
-		))
-	case valueobject.ProjectTypePython:
-		project.AddTool(valueobject.NewDetectedTool(
-			valueobject.ToolTypeFormatter,
-			"black",
-			"Common Python formatter",
-			valueobject.NewToolCommand("black", "black", []string{"."}, 60),
-		))
-		project.AddTool(valueobject.NewDetectedTool(
-			valueobject.ToolTypeLinter,
-			"ruff",
-			"Modern Python linter",
-			valueobject.NewToolCommand("ruff", "ruff", []string{"check", "."}, 60),
-		))
-		project.AddTool(valueobject.NewDetectedTool(
-			valueobject.ToolTypeTester,
-			"pytest",
-			"Common Python test runner",
-			valueobject.NewToolCommand("pytest", "pytest", []string{}, 120),
-		))
+	// Get client for this repository (handles both PAT and App modes)
+	client, err := s.githubClient.GetClient(ctx, repoName)
+	if err != nil {
+		return "", err
 	}
 
-	return project
+	// For PAT mode, the token is stored in the PATAuthStrategy
+	if s.githubClient.GetAuthType() == github.AuthTypePAT {
+		// Get token from config (PAT is stored there)
+		return s.config.GitHub.Token, nil
+	}
+
+	// For GitHub App mode, we need to get the installation token
+	// The client is already authenticated with the installation token
+	// We need to extract it from the token cache
+	if client == nil {
+		return "", litchierrors.New(litchierrors.ErrGitHubAuthFailed).
+			WithDetail("failed to get GitHub client for repository")
+	}
+
+	// Use the installation token from the cache
+	// For App mode, ClientManager caches tokens - we can fetch a fresh one
+	installationID, err := s.findInstallationID(ctx, repoName)
+	if err != nil {
+		return "", err
+	}
+
+	// Create fresh installation token for clone
+	appStrategy, ok := s.githubClient.GetAuthStrategy().(*github.GitHubAppAuthStrategy)
+	if !ok {
+		return "", litchierrors.New(litchierrors.ErrGitHubAuthFailed).
+			WithDetail("expected GitHubAppAuthStrategy for App mode")
+	}
+
+	// Check cache first
+	cachedToken := appStrategy.GetTokenCache().Get(installationID)
+	if cachedToken != nil {
+		return cachedToken.Token, nil
+	}
+
+	// Fetch new token
+	return s.fetchInstallationToken(ctx, installationID, appStrategy)
 }
 
-// containsAny checks if s contains any of the substrings (case-insensitive).
-func containsAny(s string, substrings []string) bool {
-	sLower := strings.ToLower(s)
-	for _, sub := range substrings {
-		if strings.Contains(sLower, strings.ToLower(sub)) {
-			return true
-		}
+// findInstallationID finds the installation ID for a repository.
+func (s *RepositoryService) findInstallationID(ctx context.Context, repoName string) (int64, error) {
+	// Check if repository already has installation ID stored
+	repo, err := s.repoRepo.FindByName(ctx, repoName)
+	if err == nil && repo != nil && repo.HasInstallation() {
+		return repo.InstallationID, nil
 	}
-	return false
+
+	// Find via GitHub API (ClientManager handles this)
+	return 0, litchierrors.New(litchierrors.ErrGitHubAuthFailed).
+		WithDetail("installation ID not found for repository: " + repoName)
+}
+
+// fetchInstallationToken fetches a fresh installation token.
+func (s *RepositoryService) fetchInstallationToken(
+	ctx context.Context,
+	installationID int64,
+	appStrategy *github.GitHubAppAuthStrategy,
+) (string, error) {
+	// Use ClientManager's method to fetch token
+	if s.githubClient == nil {
+		return "", litchierrors.New(litchierrors.ErrGitHubAuthFailed).
+			WithDetail("GitHub client manager not available")
+	}
+	return s.githubClient.FetchInstallationToken(ctx, installationID, appStrategy)
+}
+
+// buildCloneURL builds a GitHub clone URL with authentication token embedded.
+// Format: https://<token>@github.com/<owner>/<repo>.git
+func (s *RepositoryService) buildCloneURL(repoName, token string) string {
+	return fmt.Sprintf("https://%s@github.com/%s.git", token, repoName)
+}
+
+// cleanupTempDir removes the temporary directory and logs warning on failure.
+func (s *RepositoryService) cleanupTempDir(tempPath string) {
+	if err := os.RemoveAll(tempPath); err != nil {
+		s.logger.Warn("failed to cleanup temp directory",
+			zap.String("path", tempPath),
+			zap.Error(err),
+		)
+	} else {
+		s.logger.Debug("temp directory cleaned up",
+			zap.String("path", tempPath),
+		)
+	}
 }

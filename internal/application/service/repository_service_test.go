@@ -36,11 +36,15 @@ func newTestRepositoryService(
 
 	dispatcher := event.NewDispatcher()
 
+	// Pass nil for detector, gitClient, githubClient - these are only needed for RunDetection tests
 	return NewRepositoryService(
 		repoRepo,
 		auditRepo,
 		dispatcher,
 		cfg,
+		nil, // detector - not needed for most tests
+		nil, // gitClient - not needed for most tests
+		nil, // githubClient - not needed for most tests
 		zap.NewNop(),
 	)
 }

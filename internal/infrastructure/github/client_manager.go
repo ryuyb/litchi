@@ -396,3 +396,18 @@ func (cm *ClientManager) ClearInstallationTokens(installationID int64) {
 func (cm *ClientManager) RateLimiter() *RateLimiter {
 	return cm.rateLimiter
 }
+
+// GetAuthStrategy returns the authentication strategy.
+func (cm *ClientManager) GetAuthStrategy() AuthStrategy {
+	return cm.strategy
+}
+
+// FetchInstallationToken fetches a new installation token for the given installation ID.
+// This is exposed for external callers who need a token for Git clone operations.
+func (cm *ClientManager) FetchInstallationToken(
+	ctx context.Context,
+	installationID int64,
+	appStrategy *GitHubAppAuthStrategy,
+) (string, error) {
+	return cm.fetchInstallationToken(ctx, installationID, appStrategy)
+}
