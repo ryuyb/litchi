@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SettingsIndexRouteImport } from './routes/settings/index'
 import { Route as RepositoriesIndexRouteImport } from './routes/repositories/index'
@@ -18,6 +19,11 @@ import { Route as RepositoriesNameRouteImport } from './routes/repositories/$nam
 import { Route as IssuesIdRouteImport } from './routes/issues/$id'
 import { Route as AuditLogsIdRouteImport } from './routes/audit-logs/$id'
 
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -61,6 +67,7 @@ const AuditLogsIdRoute = AuditLogsIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
   '/audit-logs/$id': typeof AuditLogsIdRoute
   '/issues/$id': typeof IssuesIdRoute
   '/repositories/$name': typeof RepositoriesNameRoute
@@ -71,6 +78,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
   '/audit-logs/$id': typeof AuditLogsIdRoute
   '/issues/$id': typeof IssuesIdRoute
   '/repositories/$name': typeof RepositoriesNameRoute
@@ -82,6 +90,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
   '/audit-logs/$id': typeof AuditLogsIdRoute
   '/issues/$id': typeof IssuesIdRoute
   '/repositories/$name': typeof RepositoriesNameRoute
@@ -94,6 +103,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/login'
     | '/audit-logs/$id'
     | '/issues/$id'
     | '/repositories/$name'
@@ -104,6 +114,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/login'
     | '/audit-logs/$id'
     | '/issues/$id'
     | '/repositories/$name'
@@ -114,6 +125,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/login'
     | '/audit-logs/$id'
     | '/issues/$id'
     | '/repositories/$name'
@@ -125,6 +137,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  LoginRoute: typeof LoginRoute
   AuditLogsIdRoute: typeof AuditLogsIdRoute
   IssuesIdRoute: typeof IssuesIdRoute
   RepositoriesNameRoute: typeof RepositoriesNameRoute
@@ -136,6 +149,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -197,6 +217,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  LoginRoute: LoginRoute,
   AuditLogsIdRoute: AuditLogsIdRoute,
   IssuesIdRoute: IssuesIdRoute,
   RepositoriesNameRoute: RepositoriesNameRoute,

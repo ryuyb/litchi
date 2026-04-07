@@ -1,3 +1,4 @@
+import { useLocation } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { SidebarInset, SidebarProvider } from "#/components/ui/sidebar";
 import { AppHeader } from "./AppHeader";
@@ -8,6 +9,13 @@ interface MainLayoutProps {
 }
 
 export function MainLayout({ children }: MainLayoutProps) {
+	const location = useLocation();
+	const isAuthRoute = location.pathname === "/login";
+
+	if (isAuthRoute) {
+		return <div className="min-h-screen w-full flex flex-col">{children}</div>;
+	}
+
 	return (
 		<SidebarProvider defaultOpen>
 			<AppSidebar />
