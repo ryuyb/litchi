@@ -37,6 +37,7 @@ type RecoveryService struct {
 	consistencyService    *ConsistencyService
 	sessionControlService service.SessionControlService
 	taskService           *TaskService
+	authService           *AuthService
 	eventDispatcher       EventDispatcher
 	logger                *zap.Logger
 	config                *config.Config
@@ -51,6 +52,7 @@ type RecoveryServiceParams struct {
 	ConsistencyService    *ConsistencyService
 	SessionControlService service.SessionControlService
 	TaskService           *TaskService
+	AuthService           *AuthService
 	EventDispatcher       EventDispatcher `name:"event_dispatcher"`
 	Config                *config.Config
 	Logger                *zap.Logger
@@ -64,6 +66,7 @@ func NewRecoveryService(p RecoveryServiceParams) *RecoveryService {
 		consistencyService:    p.ConsistencyService,
 		sessionControlService: p.SessionControlService,
 		taskService:           p.TaskService,
+		authService:           p.AuthService,
 		eventDispatcher:       p.EventDispatcher,
 		config:                p.Config,
 		logger:                p.Logger.Named("recovery_service"),
@@ -331,7 +334,7 @@ func (s *RecoveryService) HandleUserResumeCommand(
 	}
 
 	// Step 3: Validate permission
-	if err := s.validateResumePermission(session, actor, action); err != nil {
+	if err := s.validateResumePermission(ctx, session, repository, actor, action); err != nil {
 		return nil, err
 	}
 
@@ -393,12 +396,10 @@ func (s *RecoveryService) HandleUserResumeCommand(
 //   - Checks if action is valid for the pause reason
 //   - Issue author can use most actions except admin_force (requires repo admin)
 //   - admin_force action requires repository admin permission
-//
-// TODO: Integrate with AuthService.CheckRepoPermission when implementing HTTP API layer.
-// This will require GitHub API calls to verify repository admin/maintain permission.
-// For now, admin_force is blocked for non-admin users.
 func (s *RecoveryService) validateResumePermission(
+	ctx context.Context,
 	session *aggregate.WorkSession,
+	repoName string,
 	actor string,
 	action string,
 ) error {
@@ -430,23 +431,35 @@ func (s *RecoveryService) validateResumePermission(
 		// admin_force is a privileged action that requires repository admin permission.
 		// Per architecture.md section 12.1, only users with admin/maintain permission
 		// can execute this action. Issue authors cannot use admin_force.
-		//
-		// TODO: When HTTP API layer is implemented, integrate with AuthService:
-		//   hasAdminPermission, err := s.authService.CheckRepoPermission(ctx, repo, actor)
-		//   if err != nil { return err }
-		//   if !hasAdminPermission { return ErrPermissionDenied }
-		//
-		// For now, we block admin_force for all users until AuthService is available.
-		// This ensures security by default rather than allowing potential misuse.
-		s.logger.Warn("admin_force action requires repository admin permission - AuthService integration pending",
-			zap.String("session_id", session.ID.String()),
-			zap.String("actor", actor),
-			zap.Bool("is_issue_author", isIssueAuthor),
-		)
+		hasAdminPermission, err := s.authService.CheckRepoPermission(ctx, repoName, actor)
+		if err != nil {
+			s.logger.Error("failed to check repository permission",
+				zap.String("repo", repoName),
+				zap.String("actor", actor),
+				zap.Error(err),
+			)
+			return litchierrors.Wrap(litchierrors.ErrPermissionDenied, err).
+				WithDetail("failed to verify repository permission")
+		}
 
-		return litchierrors.New(litchierrors.ErrPermissionDenied).WithDetail(
-			"admin_force action requires repository admin or maintain permission. " +
-				"Please contact a repository administrator or use a different action.",
+		if !hasAdminPermission {
+			s.logger.Warn("admin_force action denied - user lacks repository admin permission",
+				zap.String("session_id", session.ID.String()),
+				zap.String("repo", repoName),
+				zap.String("actor", actor),
+				zap.Bool("is_issue_author", isIssueAuthor),
+			)
+
+			return litchierrors.New(litchierrors.ErrPermissionDenied).WithDetail(
+				"admin_force action requires repository admin or maintain permission. " +
+					"Please contact a repository administrator or use a different action.",
+			)
+		}
+
+		s.logger.Info("admin_force action authorized",
+			zap.String("session_id", session.ID.String()),
+			zap.String("repo", repoName),
+			zap.String("actor", actor),
 		)
 	}
 

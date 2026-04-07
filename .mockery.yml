@@ -47,3 +47,8 @@ packages:
     interfaces:
       ConflictDetector: {}
       BranchService: {}
+  github.com/ryuyb/litchi/internal/application/service:
+    config:
+      all: false
+    interfaces:
+      PermissionAPI: {}

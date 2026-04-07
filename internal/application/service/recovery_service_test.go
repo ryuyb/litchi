@@ -3,6 +3,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -50,15 +51,17 @@ func createTestRecoveryService(
 	consistencyService *ConsistencyService,
 	sessionControlService *domainService.MockSessionControlService,
 	taskService *TaskService,
+	authService *AuthService,
 ) *RecoveryService {
 	return &RecoveryService{
-		sessionRepo:          sessionRepo,
-		cacheRepo:            cacheRepo,
-		consistencyService:   consistencyService,
+		sessionRepo:           sessionRepo,
+		cacheRepo:             cacheRepo,
+		consistencyService:    consistencyService,
 		sessionControlService: sessionControlService,
-		taskService:          taskService,
-		logger:               zap.NewNop(),
-		config:               &config.Config{},
+		taskService:           taskService,
+		authService:           authService,
+		logger:                zap.NewNop(),
+		config:                &config.Config{},
 	}
 }
 
@@ -75,7 +78,7 @@ func TestRecoveryService_RecoverOnStartup(t *testing.T) {
 			Return([]*aggregate.WorkSession{}, nil)
 
 		consistencyService := NewConsistencyService(nil, nil, zap.NewNop())
-		recoveryService := createTestRecoveryService(sessionRepo, cacheRepo, consistencyService, sessionControlService, nil)
+		recoveryService := createTestRecoveryService(sessionRepo, cacheRepo, consistencyService, sessionControlService, nil, nil)
 
 		err := recoveryService.RecoverOnStartup(context.Background())
 		assert.NoError(t, err)
@@ -106,7 +109,7 @@ func TestRecoveryService_RecoverOnStartup(t *testing.T) {
 			Return(nil)
 
 		consistencyService := NewConsistencyService(nil, nil, zap.NewNop())
-		recoveryService := createTestRecoveryService(sessionRepo, cacheRepo, consistencyService, sessionControlService, nil)
+		recoveryService := createTestRecoveryService(sessionRepo, cacheRepo, consistencyService, sessionControlService, nil, nil)
 
 		err := recoveryService.RecoverOnStartup(context.Background())
 		assert.NoError(t, err)
@@ -125,7 +128,7 @@ func TestRecoveryService_RecoverOnStartup(t *testing.T) {
 			Return([]*aggregate.WorkSession{session}, nil)
 
 		consistencyService := NewConsistencyService(nil, nil, zap.NewNop())
-		recoveryService := createTestRecoveryService(sessionRepo, cacheRepo, consistencyService, sessionControlService, nil)
+		recoveryService := createTestRecoveryService(sessionRepo, cacheRepo, consistencyService, sessionControlService, nil, nil)
 
 		err := recoveryService.RecoverOnStartup(context.Background())
 		assert.NoError(t, err)
@@ -161,7 +164,7 @@ func TestRecoveryService_HandleUserResumeCommand(t *testing.T) {
 			Return(nil)
 
 		consistencyService := NewConsistencyService(nil, nil, zap.NewNop())
-		recoveryService := createTestRecoveryService(sessionRepo, cacheRepo, consistencyService, sessionControlService, nil)
+		recoveryService := createTestRecoveryService(sessionRepo, cacheRepo, consistencyService, sessionControlService, nil, nil)
 
 		status, err := recoveryService.HandleUserResumeCommand(
 			context.Background(),
@@ -186,7 +189,7 @@ func TestRecoveryService_HandleUserResumeCommand(t *testing.T) {
 			Return(nil, nil)
 
 		consistencyService := NewConsistencyService(nil, nil, zap.NewNop())
-		recoveryService := createTestRecoveryService(sessionRepo, cacheRepo, consistencyService, sessionControlService, nil)
+		recoveryService := createTestRecoveryService(sessionRepo, cacheRepo, consistencyService, sessionControlService, nil, nil)
 
 		status, err := recoveryService.HandleUserResumeCommand(
 			context.Background(),
@@ -215,7 +218,7 @@ func TestRecoveryService_HandleUserResumeCommand(t *testing.T) {
 			Return(session, nil)
 
 		consistencyService := NewConsistencyService(nil, nil, zap.NewNop())
-		recoveryService := createTestRecoveryService(sessionRepo, cacheRepo, consistencyService, sessionControlService, nil)
+		recoveryService := createTestRecoveryService(sessionRepo, cacheRepo, consistencyService, sessionControlService, nil, nil)
 
 		status, err := recoveryService.HandleUserResumeCommand(
 			context.Background(),
@@ -245,7 +248,7 @@ func TestRecoveryService_HandleUserResumeCommand(t *testing.T) {
 			Return([]string{"admin_continue", "admin_skip", "admin_rollback"})
 
 		consistencyService := NewConsistencyService(nil, nil, zap.NewNop())
-		recoveryService := createTestRecoveryService(sessionRepo, cacheRepo, consistencyService, sessionControlService, nil)
+		recoveryService := createTestRecoveryService(sessionRepo, cacheRepo, consistencyService, sessionControlService, nil, nil)
 
 		status, err := recoveryService.HandleUserResumeCommand(
 			context.Background(),
@@ -253,6 +256,167 @@ func TestRecoveryService_HandleUserResumeCommand(t *testing.T) {
 			123,
 			"testuser",
 			"invalid_action", // Not in valid actions
+		)
+
+		assert.Nil(t, status)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "L4API0001")
+	})
+
+	t.Run("admin_force denied for non-admin user", func(t *testing.T) {
+		sessionRepo := repository.NewMockWorkSessionRepository(t)
+		cacheRepo := repository.NewMockCacheRepository(t)
+		sessionControlService := domainService.NewMockSessionControlService(t)
+
+		session := createTestSessionForRecovery(t, valueobject.PauseReasonTaskFailed)
+
+		sessionRepo.On("FindByGitHubIssue", mock.Anything, "owner/repo", 123).
+			Return(session, nil)
+
+		sessionControlService.On("GetValidResumeActions", session).
+			Return([]string{"admin_continue", "admin_skip", "admin_rollback", "admin_force"})
+
+		// Mock AuthService - user has write permission (not admin/maintain)
+		mockAPI := NewMockPermissionAPI(t)
+		mockAPI.EXPECT().GetPermissionLevel(mock.Anything, "owner", "repo", "nonadmin").
+			Return(&PermissionResult{Permission: "write"}, nil)
+		authService := newTestAuthService(mockAPI)
+
+		consistencyService := NewConsistencyService(nil, nil, zap.NewNop())
+		recoveryService := createTestRecoveryService(sessionRepo, cacheRepo, consistencyService, sessionControlService, nil, authService)
+
+		status, err := recoveryService.HandleUserResumeCommand(
+			context.Background(),
+			"owner/repo",
+			123,
+			"nonadmin", // Not issue author, no admin permission
+			"admin_force",
+		)
+
+		assert.Nil(t, status)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "L4API0001")
+		assert.Contains(t, err.Error(), "admin or maintain permission")
+	})
+
+	t.Run("admin_force allowed for admin user", func(t *testing.T) {
+		sessionRepo := repository.NewMockWorkSessionRepository(t)
+		cacheRepo := repository.NewMockCacheRepository(t)
+		sessionControlService := domainService.NewMockSessionControlService(t)
+
+		session := createTestSessionForRecovery(t, valueobject.PauseReasonTaskFailed)
+
+		sessionRepo.On("FindByGitHubIssue", mock.Anything, "owner/repo", 123).
+			Return(session, nil)
+
+		sessionControlService.On("GetValidResumeActions", session).
+			Return([]string{"admin_continue", "admin_skip", "admin_rollback", "admin_force"})
+
+		// Mock AuthService - user has admin permission
+		mockAPI := NewMockPermissionAPI(t)
+		mockAPI.EXPECT().GetPermissionLevel(mock.Anything, "owner", "repo", "adminuser").
+			Return(&PermissionResult{Permission: "admin"}, nil)
+		authService := newTestAuthService(mockAPI)
+
+		sessionControlService.On("ResumeSession", session, "admin_force").
+			Return(nil).Run(func(args mock.Arguments) {
+				s := args.Get(0).(*aggregate.WorkSession)
+				s.SessionStatus = aggregate.SessionStatusActive
+				s.PauseContext = nil
+			})
+
+		sessionRepo.On("Update", mock.Anything, session).
+			Return(nil)
+
+		consistencyService := NewConsistencyService(nil, nil, zap.NewNop())
+		recoveryService := createTestRecoveryService(sessionRepo, cacheRepo, consistencyService, sessionControlService, nil, authService)
+
+		status, err := recoveryService.HandleUserResumeCommand(
+			context.Background(),
+			"owner/repo",
+			123,
+			"adminuser",
+			"admin_force",
+		)
+
+		assert.NoError(t, err)
+		assert.NotNil(t, status)
+		assert.Equal(t, "active", status.Status)
+	})
+
+	t.Run("admin_force allowed for maintain user", func(t *testing.T) {
+		sessionRepo := repository.NewMockWorkSessionRepository(t)
+		cacheRepo := repository.NewMockCacheRepository(t)
+		sessionControlService := domainService.NewMockSessionControlService(t)
+
+		session := createTestSessionForRecovery(t, valueobject.PauseReasonTaskFailed)
+
+		sessionRepo.On("FindByGitHubIssue", mock.Anything, "owner/repo", 123).
+			Return(session, nil)
+
+		sessionControlService.On("GetValidResumeActions", session).
+			Return([]string{"admin_continue", "admin_skip", "admin_rollback", "admin_force"})
+
+		// Mock AuthService - user has maintain permission
+		mockAPI := NewMockPermissionAPI(t)
+		mockAPI.EXPECT().GetPermissionLevel(mock.Anything, "owner", "repo", "maintainuser").
+			Return(&PermissionResult{Permission: "maintain"}, nil)
+		authService := newTestAuthService(mockAPI)
+
+		sessionControlService.On("ResumeSession", session, "admin_force").
+			Return(nil).Run(func(args mock.Arguments) {
+				s := args.Get(0).(*aggregate.WorkSession)
+				s.SessionStatus = aggregate.SessionStatusActive
+				s.PauseContext = nil
+			})
+
+		sessionRepo.On("Update", mock.Anything, session).
+			Return(nil)
+
+		consistencyService := NewConsistencyService(nil, nil, zap.NewNop())
+		recoveryService := createTestRecoveryService(sessionRepo, cacheRepo, consistencyService, sessionControlService, nil, authService)
+
+		status, err := recoveryService.HandleUserResumeCommand(
+			context.Background(),
+			"owner/repo",
+			123,
+			"maintainuser",
+			"admin_force",
+		)
+
+		assert.NoError(t, err)
+		assert.NotNil(t, status)
+		assert.Equal(t, "active", status.Status)
+	})
+
+	t.Run("admin_force denied on permission API error", func(t *testing.T) {
+		sessionRepo := repository.NewMockWorkSessionRepository(t)
+		cacheRepo := repository.NewMockCacheRepository(t)
+		sessionControlService := domainService.NewMockSessionControlService(t)
+
+		session := createTestSessionForRecovery(t, valueobject.PauseReasonTaskFailed)
+
+		sessionRepo.On("FindByGitHubIssue", mock.Anything, "owner/repo", 123).
+			Return(session, nil)
+
+		sessionControlService.On("GetValidResumeActions", session).
+			Return([]string{"admin_continue", "admin_skip", "admin_rollback", "admin_force"})
+
+		// Mock AuthService - API error
+		mockAPI := NewMockPermissionAPI(t)
+		mockAPI.EXPECT().GetPermissionLevel(mock.Anything, "owner", "repo", "someuser").
+			Return(nil, errors.New("GitHub API error"))
+		authService := newTestAuthService(mockAPI)
+
+		consistencyService := NewConsistencyService(nil, nil, zap.NewNop())
+		recoveryService := createTestRecoveryService(sessionRepo, cacheRepo, consistencyService, sessionControlService, nil, authService)
+
+		status, err := recoveryService.HandleUserResumeCommand(
+			context.Background(),
+			"owner/repo",
+			123,
+			"someuser",
+			"admin_force",
 		)
 
 		assert.Nil(t, status)
@@ -276,7 +440,7 @@ func TestRecoveryService_GetRecoveryStatus(t *testing.T) {
 			Return([]string{"admin_continue", "admin_skip", "admin_rollback"})
 
 		consistencyService := NewConsistencyService(nil, nil, zap.NewNop())
-		recoveryService := createTestRecoveryService(sessionRepo, cacheRepo, consistencyService, sessionControlService, nil)
+		recoveryService := createTestRecoveryService(sessionRepo, cacheRepo, consistencyService, sessionControlService, nil, nil)
 
 		status, err := recoveryService.GetRecoveryStatus(context.Background(), session.ID)
 
@@ -299,7 +463,7 @@ func TestRecoveryService_GetRecoveryStatus(t *testing.T) {
 			Return(nil, nil)
 
 		consistencyService := NewConsistencyService(nil, nil, zap.NewNop())
-		recoveryService := createTestRecoveryService(sessionRepo, cacheRepo, consistencyService, sessionControlService, nil)
+		recoveryService := createTestRecoveryService(sessionRepo, cacheRepo, consistencyService, sessionControlService, nil, nil)
 
 		status, err := recoveryService.GetRecoveryStatus(context.Background(), sessionID)
 
@@ -322,7 +486,7 @@ func TestRecoveryService_ListRecoverableSessions(t *testing.T) {
 			Return([]*aggregate.WorkSession{session1, session2}, nil)
 
 		consistencyService := NewConsistencyService(nil, nil, zap.NewNop())
-		recoveryService := createTestRecoveryService(sessionRepo, cacheRepo, consistencyService, sessionControlService, nil)
+		recoveryService := createTestRecoveryService(sessionRepo, cacheRepo, consistencyService, sessionControlService, nil, nil)
 
 		infos, err := recoveryService.ListRecoverableSessions(context.Background())
 
@@ -341,7 +505,7 @@ func TestRecoveryService_ListRecoverableSessions(t *testing.T) {
 			Return([]*aggregate.WorkSession{}, nil)
 
 		consistencyService := NewConsistencyService(nil, nil, zap.NewNop())
-		recoveryService := createTestRecoveryService(sessionRepo, cacheRepo, consistencyService, sessionControlService, nil)
+		recoveryService := createTestRecoveryService(sessionRepo, cacheRepo, consistencyService, sessionControlService, nil, nil)
 
 		infos, err := recoveryService.ListRecoverableSessions(context.Background())
 
@@ -431,7 +595,7 @@ func TestRecoveryService_BuildRecoveryStatus(t *testing.T) {
 			Return([]string{"admin_continue", "admin_skip", "admin_rollback"})
 
 		consistencyService := NewConsistencyService(nil, nil, zap.NewNop())
-		recoveryService := createTestRecoveryService(sessionRepo, cacheRepo, consistencyService, sessionControlService, nil)
+		recoveryService := createTestRecoveryService(sessionRepo, cacheRepo, consistencyService, sessionControlService, nil, nil)
 
 		status := recoveryService.buildRecoveryStatus(session)
 

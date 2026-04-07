@@ -20,6 +20,7 @@ var Module = fx.Module("application-service",
 	fx.Provide(NewPRService),
 	fx.Provide(NewRepositoryService),
 	fx.Provide(NewAuditService),
+	fx.Provide(NewAuthService),
 	fx.Provide(NewRecoveryService),
 	// Domain services
 	fx.Provide(
