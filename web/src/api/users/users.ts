@@ -21,7 +21,9 @@ import type {
 	UseQueryResult,
 } from "@tanstack/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import type { ErrorType } from "../../lib/custom-fetch";
 
+import { customFetch } from "../../lib/custom-fetch";
 import type {
 	ApiError,
 	GetApiV1UsersParams,
@@ -30,6 +32,8 @@ import type {
 	PostApiV1UsersBody,
 	PutApiV1UsersIdBody,
 } from "../schemas";
+
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 /**
  * Retrieves a paginated list of users (admin only)
@@ -90,19 +94,10 @@ export const getApiV1Users = async (
 	params?: GetApiV1UsersParams,
 	options?: RequestInit,
 ): Promise<getApiV1UsersResponse> => {
-	const res = await fetch(getGetApiV1UsersUrl(params), {
+	return customFetch<getApiV1UsersResponse>(getGetApiV1UsersUrl(params), {
 		...options,
 		method: "GET",
 	});
-
-	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-	const data: getApiV1UsersResponse["data"] = body ? JSON.parse(body) : {};
-	return {
-		data,
-		status: res.status,
-		headers: res.headers,
-	} as getApiV1UsersResponse;
 };
 
 export const getGetApiV1UsersQueryKey = (params?: GetApiV1UsersParams) => {
@@ -111,23 +106,23 @@ export const getGetApiV1UsersQueryKey = (params?: GetApiV1UsersParams) => {
 
 export const getGetApiV1UsersQueryOptions = <
 	TData = Awaited<ReturnType<typeof getApiV1Users>>,
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 >(
 	params?: GetApiV1UsersParams,
 	options?: {
 		query?: Partial<
 			UseQueryOptions<Awaited<ReturnType<typeof getApiV1Users>>, TError, TData>
 		>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 ) => {
-	const { query: queryOptions, fetch: fetchOptions } = options ?? {};
+	const { query: queryOptions, request: requestOptions } = options ?? {};
 
 	const queryKey = queryOptions?.queryKey ?? getGetApiV1UsersQueryKey(params);
 
 	const queryFn: QueryFunction<Awaited<ReturnType<typeof getApiV1Users>>> = ({
 		signal,
-	}) => getApiV1Users(params, { signal, ...fetchOptions });
+	}) => getApiV1Users(params, { signal, ...requestOptions });
 
 	return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
 		Awaited<ReturnType<typeof getApiV1Users>>,
@@ -139,11 +134,11 @@ export const getGetApiV1UsersQueryOptions = <
 export type GetApiV1UsersQueryResult = NonNullable<
 	Awaited<ReturnType<typeof getApiV1Users>>
 >;
-export type GetApiV1UsersQueryError = ApiError;
+export type GetApiV1UsersQueryError = ErrorType<ApiError>;
 
 export function useGetApiV1Users<
 	TData = Awaited<ReturnType<typeof getApiV1Users>>,
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 >(
 	params: undefined | GetApiV1UsersParams,
 	options: {
@@ -158,7 +153,7 @@ export function useGetApiV1Users<
 				>,
 				"initialData"
 			>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): DefinedUseQueryResult<TData, TError> & {
@@ -166,7 +161,7 @@ export function useGetApiV1Users<
 };
 export function useGetApiV1Users<
 	TData = Awaited<ReturnType<typeof getApiV1Users>>,
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 >(
 	params?: GetApiV1UsersParams,
 	options?: {
@@ -181,7 +176,7 @@ export function useGetApiV1Users<
 				>,
 				"initialData"
 			>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & {
@@ -189,14 +184,14 @@ export function useGetApiV1Users<
 };
 export function useGetApiV1Users<
 	TData = Awaited<ReturnType<typeof getApiV1Users>>,
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 >(
 	params?: GetApiV1UsersParams,
 	options?: {
 		query?: Partial<
 			UseQueryOptions<Awaited<ReturnType<typeof getApiV1Users>>, TError, TData>
 		>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & {
@@ -208,14 +203,14 @@ export function useGetApiV1Users<
 
 export function useGetApiV1Users<
 	TData = Awaited<ReturnType<typeof getApiV1Users>>,
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 >(
 	params?: GetApiV1UsersParams,
 	options?: {
 		query?: Partial<
 			UseQueryOptions<Awaited<ReturnType<typeof getApiV1Users>>, TError, TData>
 		>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & {
@@ -290,25 +285,16 @@ export const postApiV1Users = async (
 	postApiV1UsersBody: PostApiV1UsersBody,
 	options?: RequestInit,
 ): Promise<postApiV1UsersResponse> => {
-	const res = await fetch(getPostApiV1UsersUrl(), {
+	return customFetch<postApiV1UsersResponse>(getPostApiV1UsersUrl(), {
 		...options,
 		method: "POST",
 		headers: { "Content-Type": "application/json", ...options?.headers },
 		body: JSON.stringify(postApiV1UsersBody),
 	});
-
-	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-	const data: postApiV1UsersResponse["data"] = body ? JSON.parse(body) : {};
-	return {
-		data,
-		status: res.status,
-		headers: res.headers,
-	} as postApiV1UsersResponse;
 };
 
 export const getPostApiV1UsersMutationOptions = <
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
@@ -317,7 +303,7 @@ export const getPostApiV1UsersMutationOptions = <
 		{ data: PostApiV1UsersBody },
 		TContext
 	>;
-	fetch?: RequestInit;
+	request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof postApiV1Users>>,
 	TError,
@@ -325,13 +311,13 @@ export const getPostApiV1UsersMutationOptions = <
 	TContext
 > => {
 	const mutationKey = ["postApiV1Users"];
-	const { mutation: mutationOptions, fetch: fetchOptions } = options
+	const { mutation: mutationOptions, request: requestOptions } = options
 		? options.mutation &&
 			"mutationKey" in options.mutation &&
 			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
-		: { mutation: { mutationKey }, fetch: undefined };
+		: { mutation: { mutationKey }, request: undefined };
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof postApiV1Users>>,
@@ -339,7 +325,7 @@ export const getPostApiV1UsersMutationOptions = <
 	> = (props) => {
 		const { data } = props ?? {};
 
-		return postApiV1Users(data, fetchOptions);
+		return postApiV1Users(data, requestOptions);
 	};
 
 	return { mutationFn, ...mutationOptions };
@@ -349,12 +335,15 @@ export type PostApiV1UsersMutationResult = NonNullable<
 	Awaited<ReturnType<typeof postApiV1Users>>
 >;
 export type PostApiV1UsersMutationBody = PostApiV1UsersBody;
-export type PostApiV1UsersMutationError = ApiError;
+export type PostApiV1UsersMutationError = ErrorType<ApiError>;
 
 /**
  * @summary Create user
  */
-export const usePostApiV1Users = <TError = ApiError, TContext = unknown>(
+export const usePostApiV1Users = <
+	TError = ErrorType<ApiError>,
+	TContext = unknown,
+>(
 	options?: {
 		mutation?: UseMutationOptions<
 			Awaited<ReturnType<typeof postApiV1Users>>,
@@ -362,7 +351,7 @@ export const usePostApiV1Users = <TError = ApiError, TContext = unknown>(
 			{ data: PostApiV1UsersBody },
 			TContext
 		>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): UseMutationResult<
@@ -433,23 +422,14 @@ export const deleteApiV1UsersId = async (
 	id: string,
 	options?: RequestInit,
 ): Promise<deleteApiV1UsersIdResponse> => {
-	const res = await fetch(getDeleteApiV1UsersIdUrl(id), {
+	return customFetch<deleteApiV1UsersIdResponse>(getDeleteApiV1UsersIdUrl(id), {
 		...options,
 		method: "DELETE",
 	});
-
-	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-	const data: deleteApiV1UsersIdResponse["data"] = body ? JSON.parse(body) : {};
-	return {
-		data,
-		status: res.status,
-		headers: res.headers,
-	} as deleteApiV1UsersIdResponse;
 };
 
 export const getDeleteApiV1UsersIdMutationOptions = <
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
@@ -458,7 +438,7 @@ export const getDeleteApiV1UsersIdMutationOptions = <
 		{ id: string },
 		TContext
 	>;
-	fetch?: RequestInit;
+	request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof deleteApiV1UsersId>>,
 	TError,
@@ -466,13 +446,13 @@ export const getDeleteApiV1UsersIdMutationOptions = <
 	TContext
 > => {
 	const mutationKey = ["deleteApiV1UsersId"];
-	const { mutation: mutationOptions, fetch: fetchOptions } = options
+	const { mutation: mutationOptions, request: requestOptions } = options
 		? options.mutation &&
 			"mutationKey" in options.mutation &&
 			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
-		: { mutation: { mutationKey }, fetch: undefined };
+		: { mutation: { mutationKey }, request: undefined };
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof deleteApiV1UsersId>>,
@@ -480,7 +460,7 @@ export const getDeleteApiV1UsersIdMutationOptions = <
 	> = (props) => {
 		const { id } = props ?? {};
 
-		return deleteApiV1UsersId(id, fetchOptions);
+		return deleteApiV1UsersId(id, requestOptions);
 	};
 
 	return { mutationFn, ...mutationOptions };
@@ -490,12 +470,15 @@ export type DeleteApiV1UsersIdMutationResult = NonNullable<
 	Awaited<ReturnType<typeof deleteApiV1UsersId>>
 >;
 
-export type DeleteApiV1UsersIdMutationError = ApiError;
+export type DeleteApiV1UsersIdMutationError = ErrorType<ApiError>;
 
 /**
  * @summary Delete user
  */
-export const useDeleteApiV1UsersId = <TError = ApiError, TContext = unknown>(
+export const useDeleteApiV1UsersId = <
+	TError = ErrorType<ApiError>,
+	TContext = unknown,
+>(
 	options?: {
 		mutation?: UseMutationOptions<
 			Awaited<ReturnType<typeof deleteApiV1UsersId>>,
@@ -503,7 +486,7 @@ export const useDeleteApiV1UsersId = <TError = ApiError, TContext = unknown>(
 			{ id: string },
 			TContext
 		>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): UseMutationResult<
@@ -583,25 +566,16 @@ export const putApiV1UsersId = async (
 	putApiV1UsersIdBody: PutApiV1UsersIdBody,
 	options?: RequestInit,
 ): Promise<putApiV1UsersIdResponse> => {
-	const res = await fetch(getPutApiV1UsersIdUrl(id), {
+	return customFetch<putApiV1UsersIdResponse>(getPutApiV1UsersIdUrl(id), {
 		...options,
 		method: "PUT",
 		headers: { "Content-Type": "application/json", ...options?.headers },
 		body: JSON.stringify(putApiV1UsersIdBody),
 	});
-
-	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-	const data: putApiV1UsersIdResponse["data"] = body ? JSON.parse(body) : {};
-	return {
-		data,
-		status: res.status,
-		headers: res.headers,
-	} as putApiV1UsersIdResponse;
 };
 
 export const getPutApiV1UsersIdMutationOptions = <
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
@@ -610,7 +584,7 @@ export const getPutApiV1UsersIdMutationOptions = <
 		{ id: string; data: PutApiV1UsersIdBody },
 		TContext
 	>;
-	fetch?: RequestInit;
+	request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof putApiV1UsersId>>,
 	TError,
@@ -618,13 +592,13 @@ export const getPutApiV1UsersIdMutationOptions = <
 	TContext
 > => {
 	const mutationKey = ["putApiV1UsersId"];
-	const { mutation: mutationOptions, fetch: fetchOptions } = options
+	const { mutation: mutationOptions, request: requestOptions } = options
 		? options.mutation &&
 			"mutationKey" in options.mutation &&
 			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
-		: { mutation: { mutationKey }, fetch: undefined };
+		: { mutation: { mutationKey }, request: undefined };
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof putApiV1UsersId>>,
@@ -632,7 +606,7 @@ export const getPutApiV1UsersIdMutationOptions = <
 	> = (props) => {
 		const { id, data } = props ?? {};
 
-		return putApiV1UsersId(id, data, fetchOptions);
+		return putApiV1UsersId(id, data, requestOptions);
 	};
 
 	return { mutationFn, ...mutationOptions };
@@ -642,12 +616,15 @@ export type PutApiV1UsersIdMutationResult = NonNullable<
 	Awaited<ReturnType<typeof putApiV1UsersId>>
 >;
 export type PutApiV1UsersIdMutationBody = PutApiV1UsersIdBody;
-export type PutApiV1UsersIdMutationError = ApiError;
+export type PutApiV1UsersIdMutationError = ErrorType<ApiError>;
 
 /**
  * @summary Update user
  */
-export const usePutApiV1UsersId = <TError = ApiError, TContext = unknown>(
+export const usePutApiV1UsersId = <
+	TError = ErrorType<ApiError>,
+	TContext = unknown,
+>(
 	options?: {
 		mutation?: UseMutationOptions<
 			Awaited<ReturnType<typeof putApiV1UsersId>>,
@@ -655,7 +632,7 @@ export const usePutApiV1UsersId = <TError = ApiError, TContext = unknown>(
 			{ id: string; data: PutApiV1UsersIdBody },
 			TContext
 		>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): UseMutationResult<

@@ -21,7 +21,9 @@ import type {
 	UseQueryResult,
 } from "@tanstack/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import type { ErrorType } from "../../lib/custom-fetch";
 
+import { customFetch } from "../../lib/custom-fetch";
 import type {
 	ApiError,
 	GetApiV1SessionsSessionIdTasksParams,
@@ -31,6 +33,8 @@ import type {
 	TaskList,
 	TaskStatus,
 } from "../schemas";
+
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 /**
  * Retrieve all tasks for a work session with status statistics and execution progress
@@ -96,24 +100,13 @@ export const getApiV1SessionsSessionIdTasks = async (
 	params?: GetApiV1SessionsSessionIdTasksParams,
 	options?: RequestInit,
 ): Promise<getApiV1SessionsSessionIdTasksResponse> => {
-	const res = await fetch(
+	return customFetch<getApiV1SessionsSessionIdTasksResponse>(
 		getGetApiV1SessionsSessionIdTasksUrl(sessionId, params),
 		{
 			...options,
 			method: "GET",
 		},
 	);
-
-	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-	const data: getApiV1SessionsSessionIdTasksResponse["data"] = body
-		? JSON.parse(body)
-		: {};
-	return {
-		data,
-		status: res.status,
-		headers: res.headers,
-	} as getApiV1SessionsSessionIdTasksResponse;
 };
 
 export const getGetApiV1SessionsSessionIdTasksQueryKey = (
@@ -128,7 +121,7 @@ export const getGetApiV1SessionsSessionIdTasksQueryKey = (
 
 export const getGetApiV1SessionsSessionIdTasksQueryOptions = <
 	TData = Awaited<ReturnType<typeof getApiV1SessionsSessionIdTasks>>,
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 >(
 	sessionId: string,
 	params?: GetApiV1SessionsSessionIdTasksParams,
@@ -140,10 +133,10 @@ export const getGetApiV1SessionsSessionIdTasksQueryOptions = <
 				TData
 			>
 		>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 ) => {
-	const { query: queryOptions, fetch: fetchOptions } = options ?? {};
+	const { query: queryOptions, request: requestOptions } = options ?? {};
 
 	const queryKey =
 		queryOptions?.queryKey ??
@@ -154,7 +147,7 @@ export const getGetApiV1SessionsSessionIdTasksQueryOptions = <
 	> = ({ signal }) =>
 		getApiV1SessionsSessionIdTasks(sessionId, params, {
 			signal,
-			...fetchOptions,
+			...requestOptions,
 		});
 
 	return {
@@ -172,11 +165,11 @@ export const getGetApiV1SessionsSessionIdTasksQueryOptions = <
 export type GetApiV1SessionsSessionIdTasksQueryResult = NonNullable<
 	Awaited<ReturnType<typeof getApiV1SessionsSessionIdTasks>>
 >;
-export type GetApiV1SessionsSessionIdTasksQueryError = ApiError;
+export type GetApiV1SessionsSessionIdTasksQueryError = ErrorType<ApiError>;
 
 export function useGetApiV1SessionsSessionIdTasks<
 	TData = Awaited<ReturnType<typeof getApiV1SessionsSessionIdTasks>>,
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 >(
 	sessionId: string,
 	params: undefined | GetApiV1SessionsSessionIdTasksParams,
@@ -196,7 +189,7 @@ export function useGetApiV1SessionsSessionIdTasks<
 				>,
 				"initialData"
 			>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): DefinedUseQueryResult<TData, TError> & {
@@ -204,7 +197,7 @@ export function useGetApiV1SessionsSessionIdTasks<
 };
 export function useGetApiV1SessionsSessionIdTasks<
 	TData = Awaited<ReturnType<typeof getApiV1SessionsSessionIdTasks>>,
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 >(
 	sessionId: string,
 	params?: GetApiV1SessionsSessionIdTasksParams,
@@ -224,7 +217,7 @@ export function useGetApiV1SessionsSessionIdTasks<
 				>,
 				"initialData"
 			>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & {
@@ -232,7 +225,7 @@ export function useGetApiV1SessionsSessionIdTasks<
 };
 export function useGetApiV1SessionsSessionIdTasks<
 	TData = Awaited<ReturnType<typeof getApiV1SessionsSessionIdTasks>>,
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 >(
 	sessionId: string,
 	params?: GetApiV1SessionsSessionIdTasksParams,
@@ -244,7 +237,7 @@ export function useGetApiV1SessionsSessionIdTasks<
 				TData
 			>
 		>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & {
@@ -256,7 +249,7 @@ export function useGetApiV1SessionsSessionIdTasks<
 
 export function useGetApiV1SessionsSessionIdTasks<
 	TData = Awaited<ReturnType<typeof getApiV1SessionsSessionIdTasks>>,
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 >(
 	sessionId: string,
 	params?: GetApiV1SessionsSessionIdTasksParams,
@@ -268,7 +261,7 @@ export function useGetApiV1SessionsSessionIdTasks<
 				TData
 			>
 		>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & {
@@ -340,24 +333,13 @@ export const getApiV1SessionsSessionIdTasksTaskId = async (
 	taskId: string,
 	options?: RequestInit,
 ): Promise<getApiV1SessionsSessionIdTasksTaskIdResponse> => {
-	const res = await fetch(
+	return customFetch<getApiV1SessionsSessionIdTasksTaskIdResponse>(
 		getGetApiV1SessionsSessionIdTasksTaskIdUrl(sessionId, taskId),
 		{
 			...options,
 			method: "GET",
 		},
 	);
-
-	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-	const data: getApiV1SessionsSessionIdTasksTaskIdResponse["data"] = body
-		? JSON.parse(body)
-		: {};
-	return {
-		data,
-		status: res.status,
-		headers: res.headers,
-	} as getApiV1SessionsSessionIdTasksTaskIdResponse;
 };
 
 export const getGetApiV1SessionsSessionIdTasksTaskIdQueryKey = (
@@ -369,7 +351,7 @@ export const getGetApiV1SessionsSessionIdTasksTaskIdQueryKey = (
 
 export const getGetApiV1SessionsSessionIdTasksTaskIdQueryOptions = <
 	TData = Awaited<ReturnType<typeof getApiV1SessionsSessionIdTasksTaskId>>,
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 >(
 	sessionId: string,
 	taskId: string,
@@ -381,10 +363,10 @@ export const getGetApiV1SessionsSessionIdTasksTaskIdQueryOptions = <
 				TData
 			>
 		>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 ) => {
-	const { query: queryOptions, fetch: fetchOptions } = options ?? {};
+	const { query: queryOptions, request: requestOptions } = options ?? {};
 
 	const queryKey =
 		queryOptions?.queryKey ??
@@ -395,7 +377,7 @@ export const getGetApiV1SessionsSessionIdTasksTaskIdQueryOptions = <
 	> = ({ signal }) =>
 		getApiV1SessionsSessionIdTasksTaskId(sessionId, taskId, {
 			signal,
-			...fetchOptions,
+			...requestOptions,
 		});
 
 	return {
@@ -413,11 +395,12 @@ export const getGetApiV1SessionsSessionIdTasksTaskIdQueryOptions = <
 export type GetApiV1SessionsSessionIdTasksTaskIdQueryResult = NonNullable<
 	Awaited<ReturnType<typeof getApiV1SessionsSessionIdTasksTaskId>>
 >;
-export type GetApiV1SessionsSessionIdTasksTaskIdQueryError = ApiError;
+export type GetApiV1SessionsSessionIdTasksTaskIdQueryError =
+	ErrorType<ApiError>;
 
 export function useGetApiV1SessionsSessionIdTasksTaskId<
 	TData = Awaited<ReturnType<typeof getApiV1SessionsSessionIdTasksTaskId>>,
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 >(
 	sessionId: string,
 	taskId: string,
@@ -437,7 +420,7 @@ export function useGetApiV1SessionsSessionIdTasksTaskId<
 				>,
 				"initialData"
 			>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): DefinedUseQueryResult<TData, TError> & {
@@ -445,7 +428,7 @@ export function useGetApiV1SessionsSessionIdTasksTaskId<
 };
 export function useGetApiV1SessionsSessionIdTasksTaskId<
 	TData = Awaited<ReturnType<typeof getApiV1SessionsSessionIdTasksTaskId>>,
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 >(
 	sessionId: string,
 	taskId: string,
@@ -465,7 +448,7 @@ export function useGetApiV1SessionsSessionIdTasksTaskId<
 				>,
 				"initialData"
 			>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & {
@@ -473,7 +456,7 @@ export function useGetApiV1SessionsSessionIdTasksTaskId<
 };
 export function useGetApiV1SessionsSessionIdTasksTaskId<
 	TData = Awaited<ReturnType<typeof getApiV1SessionsSessionIdTasksTaskId>>,
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 >(
 	sessionId: string,
 	taskId: string,
@@ -485,7 +468,7 @@ export function useGetApiV1SessionsSessionIdTasksTaskId<
 				TData
 			>
 		>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & {
@@ -497,7 +480,7 @@ export function useGetApiV1SessionsSessionIdTasksTaskId<
 
 export function useGetApiV1SessionsSessionIdTasksTaskId<
 	TData = Awaited<ReturnType<typeof getApiV1SessionsSessionIdTasksTaskId>>,
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 >(
 	sessionId: string,
 	taskId: string,
@@ -509,7 +492,7 @@ export function useGetApiV1SessionsSessionIdTasksTaskId<
 				TData
 			>
 		>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & {
@@ -588,7 +571,7 @@ export const postApiV1SessionsSessionIdTasksTaskIdRetry = async (
 	postApiV1SessionsSessionIdTasksTaskIdRetryBody: PostApiV1SessionsSessionIdTasksTaskIdRetryBody,
 	options?: RequestInit,
 ): Promise<postApiV1SessionsSessionIdTasksTaskIdRetryResponse> => {
-	const res = await fetch(
+	return customFetch<postApiV1SessionsSessionIdTasksTaskIdRetryResponse>(
 		getPostApiV1SessionsSessionIdTasksTaskIdRetryUrl(sessionId, taskId),
 		{
 			...options,
@@ -597,21 +580,10 @@ export const postApiV1SessionsSessionIdTasksTaskIdRetry = async (
 			body: JSON.stringify(postApiV1SessionsSessionIdTasksTaskIdRetryBody),
 		},
 	);
-
-	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-	const data: postApiV1SessionsSessionIdTasksTaskIdRetryResponse["data"] = body
-		? JSON.parse(body)
-		: {};
-	return {
-		data,
-		status: res.status,
-		headers: res.headers,
-	} as postApiV1SessionsSessionIdTasksTaskIdRetryResponse;
 };
 
 export const getPostApiV1SessionsSessionIdTasksTaskIdRetryMutationOptions = <
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
@@ -624,7 +596,7 @@ export const getPostApiV1SessionsSessionIdTasksTaskIdRetryMutationOptions = <
 		},
 		TContext
 	>;
-	fetch?: RequestInit;
+	request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof postApiV1SessionsSessionIdTasksTaskIdRetry>>,
 	TError,
@@ -636,13 +608,13 @@ export const getPostApiV1SessionsSessionIdTasksTaskIdRetryMutationOptions = <
 	TContext
 > => {
 	const mutationKey = ["postApiV1SessionsSessionIdTasksTaskIdRetry"];
-	const { mutation: mutationOptions, fetch: fetchOptions } = options
+	const { mutation: mutationOptions, request: requestOptions } = options
 		? options.mutation &&
 			"mutationKey" in options.mutation &&
 			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
-		: { mutation: { mutationKey }, fetch: undefined };
+		: { mutation: { mutationKey }, request: undefined };
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof postApiV1SessionsSessionIdTasksTaskIdRetry>>,
@@ -658,7 +630,7 @@ export const getPostApiV1SessionsSessionIdTasksTaskIdRetryMutationOptions = <
 			sessionId,
 			taskId,
 			data,
-			fetchOptions,
+			requestOptions,
 		);
 	};
 
@@ -671,13 +643,14 @@ export type PostApiV1SessionsSessionIdTasksTaskIdRetryMutationResult =
 	>;
 export type PostApiV1SessionsSessionIdTasksTaskIdRetryMutationBody =
 	PostApiV1SessionsSessionIdTasksTaskIdRetryBody;
-export type PostApiV1SessionsSessionIdTasksTaskIdRetryMutationError = ApiError;
+export type PostApiV1SessionsSessionIdTasksTaskIdRetryMutationError =
+	ErrorType<ApiError>;
 
 /**
  * @summary Retry task
  */
 export const usePostApiV1SessionsSessionIdTasksTaskIdRetry = <
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 	TContext = unknown,
 >(
 	options?: {
@@ -691,7 +664,7 @@ export const usePostApiV1SessionsSessionIdTasksTaskIdRetry = <
 			},
 			TContext
 		>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): UseMutationResult<
@@ -768,7 +741,7 @@ export const postApiV1SessionsSessionIdTasksTaskIdSkip = async (
 	postApiV1SessionsSessionIdTasksTaskIdSkipBody: PostApiV1SessionsSessionIdTasksTaskIdSkipBody,
 	options?: RequestInit,
 ): Promise<postApiV1SessionsSessionIdTasksTaskIdSkipResponse> => {
-	const res = await fetch(
+	return customFetch<postApiV1SessionsSessionIdTasksTaskIdSkipResponse>(
 		getPostApiV1SessionsSessionIdTasksTaskIdSkipUrl(sessionId, taskId),
 		{
 			...options,
@@ -777,21 +750,10 @@ export const postApiV1SessionsSessionIdTasksTaskIdSkip = async (
 			body: JSON.stringify(postApiV1SessionsSessionIdTasksTaskIdSkipBody),
 		},
 	);
-
-	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-	const data: postApiV1SessionsSessionIdTasksTaskIdSkipResponse["data"] = body
-		? JSON.parse(body)
-		: {};
-	return {
-		data,
-		status: res.status,
-		headers: res.headers,
-	} as postApiV1SessionsSessionIdTasksTaskIdSkipResponse;
 };
 
 export const getPostApiV1SessionsSessionIdTasksTaskIdSkipMutationOptions = <
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
@@ -804,7 +766,7 @@ export const getPostApiV1SessionsSessionIdTasksTaskIdSkipMutationOptions = <
 		},
 		TContext
 	>;
-	fetch?: RequestInit;
+	request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof postApiV1SessionsSessionIdTasksTaskIdSkip>>,
 	TError,
@@ -816,13 +778,13 @@ export const getPostApiV1SessionsSessionIdTasksTaskIdSkipMutationOptions = <
 	TContext
 > => {
 	const mutationKey = ["postApiV1SessionsSessionIdTasksTaskIdSkip"];
-	const { mutation: mutationOptions, fetch: fetchOptions } = options
+	const { mutation: mutationOptions, request: requestOptions } = options
 		? options.mutation &&
 			"mutationKey" in options.mutation &&
 			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
-		: { mutation: { mutationKey }, fetch: undefined };
+		: { mutation: { mutationKey }, request: undefined };
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof postApiV1SessionsSessionIdTasksTaskIdSkip>>,
@@ -838,7 +800,7 @@ export const getPostApiV1SessionsSessionIdTasksTaskIdSkipMutationOptions = <
 			sessionId,
 			taskId,
 			data,
-			fetchOptions,
+			requestOptions,
 		);
 	};
 
@@ -851,13 +813,14 @@ export type PostApiV1SessionsSessionIdTasksTaskIdSkipMutationResult =
 	>;
 export type PostApiV1SessionsSessionIdTasksTaskIdSkipMutationBody =
 	PostApiV1SessionsSessionIdTasksTaskIdSkipBody;
-export type PostApiV1SessionsSessionIdTasksTaskIdSkipMutationError = ApiError;
+export type PostApiV1SessionsSessionIdTasksTaskIdSkipMutationError =
+	ErrorType<ApiError>;
 
 /**
  * @summary Skip task
  */
 export const usePostApiV1SessionsSessionIdTasksTaskIdSkip = <
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 	TContext = unknown,
 >(
 	options?: {
@@ -871,7 +834,7 @@ export const usePostApiV1SessionsSessionIdTasksTaskIdSkip = <
 			},
 			TContext
 		>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): UseMutationResult<

@@ -46,7 +46,24 @@ export function AppToaster(props?: ToasterProps) {
 		return () => observer.disconnect();
 	}, []);
 
-	return <Toaster theme={theme} {...props} />;
+	return (
+		<Toaster
+			theme={theme}
+			position="top-right"
+			toastOptions={{
+				classNames: {
+					error:
+						"!bg-destructive !text-destructive-foreground !border-destructive/50",
+					success:
+						"!bg-emerald-500/10 !text-emerald-600 dark:!text-emerald-400 !border-emerald-500/30",
+					warning:
+						"!bg-amber-500/10 !text-amber-600 dark:!text-amber-400 !border-amber-500/30",
+					info: "!bg-primary/10 !text-primary !border-primary/30",
+				},
+			}}
+			{...props}
+		/>
+	);
 }
 
 export { toast } from "sonner";

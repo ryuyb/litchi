@@ -21,8 +21,12 @@ import type {
 	UseQueryResult,
 } from "@tanstack/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import type { ErrorType } from "../../lib/custom-fetch";
 
+import { customFetch } from "../../lib/custom-fetch";
 import type { ApiError, Config, PutApiV1ConfigBody } from "../schemas";
+
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 /**
  * Returns the current application configuration (sensitive fields excluded)
@@ -56,19 +60,10 @@ export const getGetApiV1ConfigUrl = () => {
 export const getApiV1Config = async (
 	options?: RequestInit,
 ): Promise<getApiV1ConfigResponse> => {
-	const res = await fetch(getGetApiV1ConfigUrl(), {
+	return customFetch<getApiV1ConfigResponse>(getGetApiV1ConfigUrl(), {
 		...options,
 		method: "GET",
 	});
-
-	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-	const data: getApiV1ConfigResponse["data"] = body ? JSON.parse(body) : {};
-	return {
-		data,
-		status: res.status,
-		headers: res.headers,
-	} as getApiV1ConfigResponse;
 };
 
 export const getGetApiV1ConfigQueryKey = () => {
@@ -77,20 +72,20 @@ export const getGetApiV1ConfigQueryKey = () => {
 
 export const getGetApiV1ConfigQueryOptions = <
 	TData = Awaited<ReturnType<typeof getApiV1Config>>,
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 >(options?: {
 	query?: Partial<
 		UseQueryOptions<Awaited<ReturnType<typeof getApiV1Config>>, TError, TData>
 	>;
-	fetch?: RequestInit;
+	request?: SecondParameter<typeof customFetch>;
 }) => {
-	const { query: queryOptions, fetch: fetchOptions } = options ?? {};
+	const { query: queryOptions, request: requestOptions } = options ?? {};
 
 	const queryKey = queryOptions?.queryKey ?? getGetApiV1ConfigQueryKey();
 
 	const queryFn: QueryFunction<Awaited<ReturnType<typeof getApiV1Config>>> = ({
 		signal,
-	}) => getApiV1Config({ signal, ...fetchOptions });
+	}) => getApiV1Config({ signal, ...requestOptions });
 
 	return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
 		Awaited<ReturnType<typeof getApiV1Config>>,
@@ -102,11 +97,11 @@ export const getGetApiV1ConfigQueryOptions = <
 export type GetApiV1ConfigQueryResult = NonNullable<
 	Awaited<ReturnType<typeof getApiV1Config>>
 >;
-export type GetApiV1ConfigQueryError = ApiError;
+export type GetApiV1ConfigQueryError = ErrorType<ApiError>;
 
 export function useGetApiV1Config<
 	TData = Awaited<ReturnType<typeof getApiV1Config>>,
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 >(
 	options: {
 		query: Partial<
@@ -120,7 +115,7 @@ export function useGetApiV1Config<
 				>,
 				"initialData"
 			>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): DefinedUseQueryResult<TData, TError> & {
@@ -128,7 +123,7 @@ export function useGetApiV1Config<
 };
 export function useGetApiV1Config<
 	TData = Awaited<ReturnType<typeof getApiV1Config>>,
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 >(
 	options?: {
 		query?: Partial<
@@ -142,7 +137,7 @@ export function useGetApiV1Config<
 				>,
 				"initialData"
 			>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & {
@@ -150,13 +145,13 @@ export function useGetApiV1Config<
 };
 export function useGetApiV1Config<
 	TData = Awaited<ReturnType<typeof getApiV1Config>>,
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 >(
 	options?: {
 		query?: Partial<
 			UseQueryOptions<Awaited<ReturnType<typeof getApiV1Config>>, TError, TData>
 		>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & {
@@ -168,13 +163,13 @@ export function useGetApiV1Config<
 
 export function useGetApiV1Config<
 	TData = Awaited<ReturnType<typeof getApiV1Config>>,
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 >(
 	options?: {
 		query?: Partial<
 			UseQueryOptions<Awaited<ReturnType<typeof getApiV1Config>>, TError, TData>
 		>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & {
@@ -231,25 +226,16 @@ export const putApiV1Config = async (
 	putApiV1ConfigBody: PutApiV1ConfigBody,
 	options?: RequestInit,
 ): Promise<putApiV1ConfigResponse> => {
-	const res = await fetch(getPutApiV1ConfigUrl(), {
+	return customFetch<putApiV1ConfigResponse>(getPutApiV1ConfigUrl(), {
 		...options,
 		method: "PUT",
 		headers: { "Content-Type": "application/json", ...options?.headers },
 		body: JSON.stringify(putApiV1ConfigBody),
 	});
-
-	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-	const data: putApiV1ConfigResponse["data"] = body ? JSON.parse(body) : {};
-	return {
-		data,
-		status: res.status,
-		headers: res.headers,
-	} as putApiV1ConfigResponse;
 };
 
 export const getPutApiV1ConfigMutationOptions = <
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
@@ -258,7 +244,7 @@ export const getPutApiV1ConfigMutationOptions = <
 		{ data: PutApiV1ConfigBody },
 		TContext
 	>;
-	fetch?: RequestInit;
+	request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof putApiV1Config>>,
 	TError,
@@ -266,13 +252,13 @@ export const getPutApiV1ConfigMutationOptions = <
 	TContext
 > => {
 	const mutationKey = ["putApiV1Config"];
-	const { mutation: mutationOptions, fetch: fetchOptions } = options
+	const { mutation: mutationOptions, request: requestOptions } = options
 		? options.mutation &&
 			"mutationKey" in options.mutation &&
 			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
-		: { mutation: { mutationKey }, fetch: undefined };
+		: { mutation: { mutationKey }, request: undefined };
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof putApiV1Config>>,
@@ -280,7 +266,7 @@ export const getPutApiV1ConfigMutationOptions = <
 	> = (props) => {
 		const { data } = props ?? {};
 
-		return putApiV1Config(data, fetchOptions);
+		return putApiV1Config(data, requestOptions);
 	};
 
 	return { mutationFn, ...mutationOptions };
@@ -290,12 +276,15 @@ export type PutApiV1ConfigMutationResult = NonNullable<
 	Awaited<ReturnType<typeof putApiV1Config>>
 >;
 export type PutApiV1ConfigMutationBody = PutApiV1ConfigBody;
-export type PutApiV1ConfigMutationError = ApiError;
+export type PutApiV1ConfigMutationError = ErrorType<ApiError>;
 
 /**
  * @summary Update configuration
  */
-export const usePutApiV1Config = <TError = ApiError, TContext = unknown>(
+export const usePutApiV1Config = <
+	TError = ErrorType<ApiError>,
+	TContext = unknown,
+>(
 	options?: {
 		mutation?: UseMutationOptions<
 			Awaited<ReturnType<typeof putApiV1Config>>,
@@ -303,7 +292,7 @@ export const usePutApiV1Config = <TError = ApiError, TContext = unknown>(
 			{ data: PutApiV1ConfigBody },
 			TContext
 		>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): UseMutationResult<

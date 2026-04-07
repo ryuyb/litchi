@@ -21,7 +21,9 @@ import type {
 	UseQueryResult,
 } from "@tanstack/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import type { ErrorType } from "../../lib/custom-fetch";
 
+import { customFetch } from "../../lib/custom-fetch";
 import type {
 	ApiError,
 	PostApiV1WebhooksGithubBodyOne,
@@ -29,6 +31,8 @@ import type {
 	WebhookHealth,
 	WebhookResp,
 } from "../schemas";
+
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 /**
  * Receives and processes GitHub webhook events with signature verification
@@ -80,26 +84,18 @@ export const postApiV1WebhooksGithub = async (
 		| PostApiV1WebhooksGithubBodyTwo,
 	options?: RequestInit,
 ): Promise<postApiV1WebhooksGithubResponse> => {
-	const res = await fetch(getPostApiV1WebhooksGithubUrl(), {
-		...options,
-		method: "POST",
-		body: JSON.stringify(postApiV1WebhooksGithubBody),
-	});
-
-	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-	const data: postApiV1WebhooksGithubResponse["data"] = body
-		? JSON.parse(body)
-		: {};
-	return {
-		data,
-		status: res.status,
-		headers: res.headers,
-	} as postApiV1WebhooksGithubResponse;
+	return customFetch<postApiV1WebhooksGithubResponse>(
+		getPostApiV1WebhooksGithubUrl(),
+		{
+			...options,
+			method: "POST",
+			body: JSON.stringify(postApiV1WebhooksGithubBody),
+		},
+	);
 };
 
 export const getPostApiV1WebhooksGithubMutationOptions = <
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
@@ -108,7 +104,7 @@ export const getPostApiV1WebhooksGithubMutationOptions = <
 		{ data: PostApiV1WebhooksGithubBodyOne | PostApiV1WebhooksGithubBodyTwo },
 		TContext
 	>;
-	fetch?: RequestInit;
+	request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof postApiV1WebhooksGithub>>,
 	TError,
@@ -116,13 +112,13 @@ export const getPostApiV1WebhooksGithubMutationOptions = <
 	TContext
 > => {
 	const mutationKey = ["postApiV1WebhooksGithub"];
-	const { mutation: mutationOptions, fetch: fetchOptions } = options
+	const { mutation: mutationOptions, request: requestOptions } = options
 		? options.mutation &&
 			"mutationKey" in options.mutation &&
 			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
-		: { mutation: { mutationKey }, fetch: undefined };
+		: { mutation: { mutationKey }, request: undefined };
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof postApiV1WebhooksGithub>>,
@@ -130,7 +126,7 @@ export const getPostApiV1WebhooksGithubMutationOptions = <
 	> = (props) => {
 		const { data } = props ?? {};
 
-		return postApiV1WebhooksGithub(data, fetchOptions);
+		return postApiV1WebhooksGithub(data, requestOptions);
 	};
 
 	return { mutationFn, ...mutationOptions };
@@ -142,13 +138,13 @@ export type PostApiV1WebhooksGithubMutationResult = NonNullable<
 export type PostApiV1WebhooksGithubMutationBody =
 	| PostApiV1WebhooksGithubBodyOne
 	| PostApiV1WebhooksGithubBodyTwo;
-export type PostApiV1WebhooksGithubMutationError = ApiError;
+export type PostApiV1WebhooksGithubMutationError = ErrorType<ApiError>;
 
 /**
  * @summary Process GitHub webhook
  */
 export const usePostApiV1WebhooksGithub = <
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 	TContext = unknown,
 >(
 	options?: {
@@ -158,7 +154,7 @@ export const usePostApiV1WebhooksGithub = <
 			{ data: PostApiV1WebhooksGithubBodyOne | PostApiV1WebhooksGithubBodyTwo },
 			TContext
 		>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): UseMutationResult<
@@ -196,21 +192,13 @@ export const getGetApiV1WebhooksHealthUrl = () => {
 export const getApiV1WebhooksHealth = async (
 	options?: RequestInit,
 ): Promise<getApiV1WebhooksHealthResponse> => {
-	const res = await fetch(getGetApiV1WebhooksHealthUrl(), {
-		...options,
-		method: "GET",
-	});
-
-	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-	const data: getApiV1WebhooksHealthResponse["data"] = body
-		? JSON.parse(body)
-		: {};
-	return {
-		data,
-		status: res.status,
-		headers: res.headers,
-	} as getApiV1WebhooksHealthResponse;
+	return customFetch<getApiV1WebhooksHealthResponse>(
+		getGetApiV1WebhooksHealthUrl(),
+		{
+			...options,
+			method: "GET",
+		},
+	);
 };
 
 export const getGetApiV1WebhooksHealthQueryKey = () => {
@@ -219,7 +207,7 @@ export const getGetApiV1WebhooksHealthQueryKey = () => {
 
 export const getGetApiV1WebhooksHealthQueryOptions = <
 	TData = Awaited<ReturnType<typeof getApiV1WebhooksHealth>>,
-	TError = unknown,
+	TError = ErrorType<unknown>,
 >(options?: {
 	query?: Partial<
 		UseQueryOptions<
@@ -228,16 +216,16 @@ export const getGetApiV1WebhooksHealthQueryOptions = <
 			TData
 		>
 	>;
-	fetch?: RequestInit;
+	request?: SecondParameter<typeof customFetch>;
 }) => {
-	const { query: queryOptions, fetch: fetchOptions } = options ?? {};
+	const { query: queryOptions, request: requestOptions } = options ?? {};
 
 	const queryKey =
 		queryOptions?.queryKey ?? getGetApiV1WebhooksHealthQueryKey();
 
 	const queryFn: QueryFunction<
 		Awaited<ReturnType<typeof getApiV1WebhooksHealth>>
-	> = ({ signal }) => getApiV1WebhooksHealth({ signal, ...fetchOptions });
+	> = ({ signal }) => getApiV1WebhooksHealth({ signal, ...requestOptions });
 
 	return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
 		Awaited<ReturnType<typeof getApiV1WebhooksHealth>>,
@@ -249,11 +237,11 @@ export const getGetApiV1WebhooksHealthQueryOptions = <
 export type GetApiV1WebhooksHealthQueryResult = NonNullable<
 	Awaited<ReturnType<typeof getApiV1WebhooksHealth>>
 >;
-export type GetApiV1WebhooksHealthQueryError = unknown;
+export type GetApiV1WebhooksHealthQueryError = ErrorType<unknown>;
 
 export function useGetApiV1WebhooksHealth<
 	TData = Awaited<ReturnType<typeof getApiV1WebhooksHealth>>,
-	TError = unknown,
+	TError = ErrorType<unknown>,
 >(
 	options: {
 		query: Partial<
@@ -271,7 +259,7 @@ export function useGetApiV1WebhooksHealth<
 				>,
 				"initialData"
 			>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): DefinedUseQueryResult<TData, TError> & {
@@ -279,7 +267,7 @@ export function useGetApiV1WebhooksHealth<
 };
 export function useGetApiV1WebhooksHealth<
 	TData = Awaited<ReturnType<typeof getApiV1WebhooksHealth>>,
-	TError = unknown,
+	TError = ErrorType<unknown>,
 >(
 	options?: {
 		query?: Partial<
@@ -297,7 +285,7 @@ export function useGetApiV1WebhooksHealth<
 				>,
 				"initialData"
 			>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & {
@@ -305,7 +293,7 @@ export function useGetApiV1WebhooksHealth<
 };
 export function useGetApiV1WebhooksHealth<
 	TData = Awaited<ReturnType<typeof getApiV1WebhooksHealth>>,
-	TError = unknown,
+	TError = ErrorType<unknown>,
 >(
 	options?: {
 		query?: Partial<
@@ -315,7 +303,7 @@ export function useGetApiV1WebhooksHealth<
 				TData
 			>
 		>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & {
@@ -327,7 +315,7 @@ export function useGetApiV1WebhooksHealth<
 
 export function useGetApiV1WebhooksHealth<
 	TData = Awaited<ReturnType<typeof getApiV1WebhooksHealth>>,
-	TError = unknown,
+	TError = ErrorType<unknown>,
 >(
 	options?: {
 		query?: Partial<
@@ -337,7 +325,7 @@ export function useGetApiV1WebhooksHealth<
 				TData
 			>
 		>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & {

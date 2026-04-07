@@ -21,7 +21,9 @@ import type {
 	UseQueryResult,
 } from "@tanstack/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import type { ErrorType } from "../../lib/custom-fetch";
 
+import { customFetch } from "../../lib/custom-fetch";
 import type {
 	ApiError,
 	DeleteApiV1RepositoriesNameBody,
@@ -38,6 +40,8 @@ import type {
 	Success,
 	ValidationConfig,
 } from "../schemas";
+
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 /**
  * Get all repository configurations with optional pagination and filtering
@@ -88,21 +92,13 @@ export const getApiV1Repositories = async (
 	params?: GetApiV1RepositoriesParams,
 	options?: RequestInit,
 ): Promise<getApiV1RepositoriesResponse> => {
-	const res = await fetch(getGetApiV1RepositoriesUrl(params), {
-		...options,
-		method: "GET",
-	});
-
-	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-	const data: getApiV1RepositoriesResponse["data"] = body
-		? JSON.parse(body)
-		: {};
-	return {
-		data,
-		status: res.status,
-		headers: res.headers,
-	} as getApiV1RepositoriesResponse;
+	return customFetch<getApiV1RepositoriesResponse>(
+		getGetApiV1RepositoriesUrl(params),
+		{
+			...options,
+			method: "GET",
+		},
+	);
 };
 
 export const getGetApiV1RepositoriesQueryKey = (
@@ -113,7 +109,7 @@ export const getGetApiV1RepositoriesQueryKey = (
 
 export const getGetApiV1RepositoriesQueryOptions = <
 	TData = Awaited<ReturnType<typeof getApiV1Repositories>>,
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 >(
 	params?: GetApiV1RepositoriesParams,
 	options?: {
@@ -124,17 +120,18 @@ export const getGetApiV1RepositoriesQueryOptions = <
 				TData
 			>
 		>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 ) => {
-	const { query: queryOptions, fetch: fetchOptions } = options ?? {};
+	const { query: queryOptions, request: requestOptions } = options ?? {};
 
 	const queryKey =
 		queryOptions?.queryKey ?? getGetApiV1RepositoriesQueryKey(params);
 
 	const queryFn: QueryFunction<
 		Awaited<ReturnType<typeof getApiV1Repositories>>
-	> = ({ signal }) => getApiV1Repositories(params, { signal, ...fetchOptions });
+	> = ({ signal }) =>
+		getApiV1Repositories(params, { signal, ...requestOptions });
 
 	return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
 		Awaited<ReturnType<typeof getApiV1Repositories>>,
@@ -146,11 +143,11 @@ export const getGetApiV1RepositoriesQueryOptions = <
 export type GetApiV1RepositoriesQueryResult = NonNullable<
 	Awaited<ReturnType<typeof getApiV1Repositories>>
 >;
-export type GetApiV1RepositoriesQueryError = ApiError;
+export type GetApiV1RepositoriesQueryError = ErrorType<ApiError>;
 
 export function useGetApiV1Repositories<
 	TData = Awaited<ReturnType<typeof getApiV1Repositories>>,
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 >(
 	params: undefined | GetApiV1RepositoriesParams,
 	options: {
@@ -169,7 +166,7 @@ export function useGetApiV1Repositories<
 				>,
 				"initialData"
 			>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): DefinedUseQueryResult<TData, TError> & {
@@ -177,7 +174,7 @@ export function useGetApiV1Repositories<
 };
 export function useGetApiV1Repositories<
 	TData = Awaited<ReturnType<typeof getApiV1Repositories>>,
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 >(
 	params?: GetApiV1RepositoriesParams,
 	options?: {
@@ -196,7 +193,7 @@ export function useGetApiV1Repositories<
 				>,
 				"initialData"
 			>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & {
@@ -204,7 +201,7 @@ export function useGetApiV1Repositories<
 };
 export function useGetApiV1Repositories<
 	TData = Awaited<ReturnType<typeof getApiV1Repositories>>,
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 >(
 	params?: GetApiV1RepositoriesParams,
 	options?: {
@@ -215,7 +212,7 @@ export function useGetApiV1Repositories<
 				TData
 			>
 		>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & {
@@ -227,7 +224,7 @@ export function useGetApiV1Repositories<
 
 export function useGetApiV1Repositories<
 	TData = Awaited<ReturnType<typeof getApiV1Repositories>>,
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 >(
 	params?: GetApiV1RepositoriesParams,
 	options?: {
@@ -238,7 +235,7 @@ export function useGetApiV1Repositories<
 				TData
 			>
 		>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & {
@@ -302,27 +299,19 @@ export const postApiV1Repositories = async (
 	postApiV1RepositoriesBody: PostApiV1RepositoriesBody,
 	options?: RequestInit,
 ): Promise<postApiV1RepositoriesResponse> => {
-	const res = await fetch(getPostApiV1RepositoriesUrl(), {
-		...options,
-		method: "POST",
-		headers: { "Content-Type": "application/json", ...options?.headers },
-		body: JSON.stringify(postApiV1RepositoriesBody),
-	});
-
-	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-	const data: postApiV1RepositoriesResponse["data"] = body
-		? JSON.parse(body)
-		: {};
-	return {
-		data,
-		status: res.status,
-		headers: res.headers,
-	} as postApiV1RepositoriesResponse;
+	return customFetch<postApiV1RepositoriesResponse>(
+		getPostApiV1RepositoriesUrl(),
+		{
+			...options,
+			method: "POST",
+			headers: { "Content-Type": "application/json", ...options?.headers },
+			body: JSON.stringify(postApiV1RepositoriesBody),
+		},
+	);
 };
 
 export const getPostApiV1RepositoriesMutationOptions = <
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
@@ -331,7 +320,7 @@ export const getPostApiV1RepositoriesMutationOptions = <
 		{ data: PostApiV1RepositoriesBody },
 		TContext
 	>;
-	fetch?: RequestInit;
+	request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof postApiV1Repositories>>,
 	TError,
@@ -339,13 +328,13 @@ export const getPostApiV1RepositoriesMutationOptions = <
 	TContext
 > => {
 	const mutationKey = ["postApiV1Repositories"];
-	const { mutation: mutationOptions, fetch: fetchOptions } = options
+	const { mutation: mutationOptions, request: requestOptions } = options
 		? options.mutation &&
 			"mutationKey" in options.mutation &&
 			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
-		: { mutation: { mutationKey }, fetch: undefined };
+		: { mutation: { mutationKey }, request: undefined };
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof postApiV1Repositories>>,
@@ -353,7 +342,7 @@ export const getPostApiV1RepositoriesMutationOptions = <
 	> = (props) => {
 		const { data } = props ?? {};
 
-		return postApiV1Repositories(data, fetchOptions);
+		return postApiV1Repositories(data, requestOptions);
 	};
 
 	return { mutationFn, ...mutationOptions };
@@ -363,12 +352,15 @@ export type PostApiV1RepositoriesMutationResult = NonNullable<
 	Awaited<ReturnType<typeof postApiV1Repositories>>
 >;
 export type PostApiV1RepositoriesMutationBody = PostApiV1RepositoriesBody;
-export type PostApiV1RepositoriesMutationError = ApiError;
+export type PostApiV1RepositoriesMutationError = ErrorType<ApiError>;
 
 /**
  * @summary Create repository
  */
-export const usePostApiV1Repositories = <TError = ApiError, TContext = unknown>(
+export const usePostApiV1Repositories = <
+	TError = ErrorType<ApiError>,
+	TContext = unknown,
+>(
 	options?: {
 		mutation?: UseMutationOptions<
 			Awaited<ReturnType<typeof postApiV1Repositories>>,
@@ -376,7 +368,7 @@ export const usePostApiV1Repositories = <TError = ApiError, TContext = unknown>(
 			{ data: PostApiV1RepositoriesBody },
 			TContext
 		>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): UseMutationResult<
@@ -433,27 +425,19 @@ export const deleteApiV1RepositoriesName = async (
 	deleteApiV1RepositoriesNameBody: DeleteApiV1RepositoriesNameBody,
 	options?: RequestInit,
 ): Promise<deleteApiV1RepositoriesNameResponse> => {
-	const res = await fetch(getDeleteApiV1RepositoriesNameUrl(name), {
-		...options,
-		method: "DELETE",
-		headers: { "Content-Type": "application/json", ...options?.headers },
-		body: JSON.stringify(deleteApiV1RepositoriesNameBody),
-	});
-
-	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-	const data: deleteApiV1RepositoriesNameResponse["data"] = body
-		? JSON.parse(body)
-		: {};
-	return {
-		data,
-		status: res.status,
-		headers: res.headers,
-	} as deleteApiV1RepositoriesNameResponse;
+	return customFetch<deleteApiV1RepositoriesNameResponse>(
+		getDeleteApiV1RepositoriesNameUrl(name),
+		{
+			...options,
+			method: "DELETE",
+			headers: { "Content-Type": "application/json", ...options?.headers },
+			body: JSON.stringify(deleteApiV1RepositoriesNameBody),
+		},
+	);
 };
 
 export const getDeleteApiV1RepositoriesNameMutationOptions = <
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
@@ -462,7 +446,7 @@ export const getDeleteApiV1RepositoriesNameMutationOptions = <
 		{ name: string; data: DeleteApiV1RepositoriesNameBody },
 		TContext
 	>;
-	fetch?: RequestInit;
+	request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof deleteApiV1RepositoriesName>>,
 	TError,
@@ -470,13 +454,13 @@ export const getDeleteApiV1RepositoriesNameMutationOptions = <
 	TContext
 > => {
 	const mutationKey = ["deleteApiV1RepositoriesName"];
-	const { mutation: mutationOptions, fetch: fetchOptions } = options
+	const { mutation: mutationOptions, request: requestOptions } = options
 		? options.mutation &&
 			"mutationKey" in options.mutation &&
 			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
-		: { mutation: { mutationKey }, fetch: undefined };
+		: { mutation: { mutationKey }, request: undefined };
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof deleteApiV1RepositoriesName>>,
@@ -484,7 +468,7 @@ export const getDeleteApiV1RepositoriesNameMutationOptions = <
 	> = (props) => {
 		const { name, data } = props ?? {};
 
-		return deleteApiV1RepositoriesName(name, data, fetchOptions);
+		return deleteApiV1RepositoriesName(name, data, requestOptions);
 	};
 
 	return { mutationFn, ...mutationOptions };
@@ -495,13 +479,13 @@ export type DeleteApiV1RepositoriesNameMutationResult = NonNullable<
 >;
 export type DeleteApiV1RepositoriesNameMutationBody =
 	DeleteApiV1RepositoriesNameBody;
-export type DeleteApiV1RepositoriesNameMutationError = ApiError;
+export type DeleteApiV1RepositoriesNameMutationError = ErrorType<ApiError>;
 
 /**
  * @summary Delete repository
  */
 export const useDeleteApiV1RepositoriesName = <
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 	TContext = unknown,
 >(
 	options?: {
@@ -511,7 +495,7 @@ export const useDeleteApiV1RepositoriesName = <
 			{ name: string; data: DeleteApiV1RepositoriesNameBody },
 			TContext
 		>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): UseMutationResult<
@@ -567,21 +551,13 @@ export const getApiV1RepositoriesName = async (
 	name: string,
 	options?: RequestInit,
 ): Promise<getApiV1RepositoriesNameResponse> => {
-	const res = await fetch(getGetApiV1RepositoriesNameUrl(name), {
-		...options,
-		method: "GET",
-	});
-
-	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-	const data: getApiV1RepositoriesNameResponse["data"] = body
-		? JSON.parse(body)
-		: {};
-	return {
-		data,
-		status: res.status,
-		headers: res.headers,
-	} as getApiV1RepositoriesNameResponse;
+	return customFetch<getApiV1RepositoriesNameResponse>(
+		getGetApiV1RepositoriesNameUrl(name),
+		{
+			...options,
+			method: "GET",
+		},
+	);
 };
 
 export const getGetApiV1RepositoriesNameQueryKey = (name: string) => {
@@ -590,7 +566,7 @@ export const getGetApiV1RepositoriesNameQueryKey = (name: string) => {
 
 export const getGetApiV1RepositoriesNameQueryOptions = <
 	TData = Awaited<ReturnType<typeof getApiV1RepositoriesName>>,
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 >(
 	name: string,
 	options?: {
@@ -601,10 +577,10 @@ export const getGetApiV1RepositoriesNameQueryOptions = <
 				TData
 			>
 		>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 ) => {
-	const { query: queryOptions, fetch: fetchOptions } = options ?? {};
+	const { query: queryOptions, request: requestOptions } = options ?? {};
 
 	const queryKey =
 		queryOptions?.queryKey ?? getGetApiV1RepositoriesNameQueryKey(name);
@@ -612,7 +588,7 @@ export const getGetApiV1RepositoriesNameQueryOptions = <
 	const queryFn: QueryFunction<
 		Awaited<ReturnType<typeof getApiV1RepositoriesName>>
 	> = ({ signal }) =>
-		getApiV1RepositoriesName(name, { signal, ...fetchOptions });
+		getApiV1RepositoriesName(name, { signal, ...requestOptions });
 
 	return {
 		queryKey,
@@ -629,11 +605,11 @@ export const getGetApiV1RepositoriesNameQueryOptions = <
 export type GetApiV1RepositoriesNameQueryResult = NonNullable<
 	Awaited<ReturnType<typeof getApiV1RepositoriesName>>
 >;
-export type GetApiV1RepositoriesNameQueryError = ApiError;
+export type GetApiV1RepositoriesNameQueryError = ErrorType<ApiError>;
 
 export function useGetApiV1RepositoriesName<
 	TData = Awaited<ReturnType<typeof getApiV1RepositoriesName>>,
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 >(
 	name: string,
 	options: {
@@ -652,7 +628,7 @@ export function useGetApiV1RepositoriesName<
 				>,
 				"initialData"
 			>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): DefinedUseQueryResult<TData, TError> & {
@@ -660,7 +636,7 @@ export function useGetApiV1RepositoriesName<
 };
 export function useGetApiV1RepositoriesName<
 	TData = Awaited<ReturnType<typeof getApiV1RepositoriesName>>,
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 >(
 	name: string,
 	options?: {
@@ -679,7 +655,7 @@ export function useGetApiV1RepositoriesName<
 				>,
 				"initialData"
 			>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & {
@@ -687,7 +663,7 @@ export function useGetApiV1RepositoriesName<
 };
 export function useGetApiV1RepositoriesName<
 	TData = Awaited<ReturnType<typeof getApiV1RepositoriesName>>,
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 >(
 	name: string,
 	options?: {
@@ -698,7 +674,7 @@ export function useGetApiV1RepositoriesName<
 				TData
 			>
 		>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & {
@@ -710,7 +686,7 @@ export function useGetApiV1RepositoriesName<
 
 export function useGetApiV1RepositoriesName<
 	TData = Awaited<ReturnType<typeof getApiV1RepositoriesName>>,
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 >(
 	name: string,
 	options?: {
@@ -721,7 +697,7 @@ export function useGetApiV1RepositoriesName<
 				TData
 			>
 		>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & {
@@ -786,27 +762,19 @@ export const putApiV1RepositoriesName = async (
 	putApiV1RepositoriesNameBody: PutApiV1RepositoriesNameBody,
 	options?: RequestInit,
 ): Promise<putApiV1RepositoriesNameResponse> => {
-	const res = await fetch(getPutApiV1RepositoriesNameUrl(name), {
-		...options,
-		method: "PUT",
-		headers: { "Content-Type": "application/json", ...options?.headers },
-		body: JSON.stringify(putApiV1RepositoriesNameBody),
-	});
-
-	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-	const data: putApiV1RepositoriesNameResponse["data"] = body
-		? JSON.parse(body)
-		: {};
-	return {
-		data,
-		status: res.status,
-		headers: res.headers,
-	} as putApiV1RepositoriesNameResponse;
+	return customFetch<putApiV1RepositoriesNameResponse>(
+		getPutApiV1RepositoriesNameUrl(name),
+		{
+			...options,
+			method: "PUT",
+			headers: { "Content-Type": "application/json", ...options?.headers },
+			body: JSON.stringify(putApiV1RepositoriesNameBody),
+		},
+	);
 };
 
 export const getPutApiV1RepositoriesNameMutationOptions = <
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
@@ -815,7 +783,7 @@ export const getPutApiV1RepositoriesNameMutationOptions = <
 		{ name: string; data: PutApiV1RepositoriesNameBody },
 		TContext
 	>;
-	fetch?: RequestInit;
+	request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof putApiV1RepositoriesName>>,
 	TError,
@@ -823,13 +791,13 @@ export const getPutApiV1RepositoriesNameMutationOptions = <
 	TContext
 > => {
 	const mutationKey = ["putApiV1RepositoriesName"];
-	const { mutation: mutationOptions, fetch: fetchOptions } = options
+	const { mutation: mutationOptions, request: requestOptions } = options
 		? options.mutation &&
 			"mutationKey" in options.mutation &&
 			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
-		: { mutation: { mutationKey }, fetch: undefined };
+		: { mutation: { mutationKey }, request: undefined };
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof putApiV1RepositoriesName>>,
@@ -837,7 +805,7 @@ export const getPutApiV1RepositoriesNameMutationOptions = <
 	> = (props) => {
 		const { name, data } = props ?? {};
 
-		return putApiV1RepositoriesName(name, data, fetchOptions);
+		return putApiV1RepositoriesName(name, data, requestOptions);
 	};
 
 	return { mutationFn, ...mutationOptions };
@@ -847,13 +815,13 @@ export type PutApiV1RepositoriesNameMutationResult = NonNullable<
 	Awaited<ReturnType<typeof putApiV1RepositoriesName>>
 >;
 export type PutApiV1RepositoriesNameMutationBody = PutApiV1RepositoriesNameBody;
-export type PutApiV1RepositoriesNameMutationError = ApiError;
+export type PutApiV1RepositoriesNameMutationError = ErrorType<ApiError>;
 
 /**
  * @summary Update repository
  */
 export const usePutApiV1RepositoriesName = <
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 	TContext = unknown,
 >(
 	options?: {
@@ -863,7 +831,7 @@ export const usePutApiV1RepositoriesName = <
 			{ name: string; data: PutApiV1RepositoriesNameBody },
 			TContext
 		>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): UseMutationResult<
@@ -919,21 +887,13 @@ export const getApiV1RepositoriesNameDetection = async (
 	name: string,
 	options?: RequestInit,
 ): Promise<getApiV1RepositoriesNameDetectionResponse> => {
-	const res = await fetch(getGetApiV1RepositoriesNameDetectionUrl(name), {
-		...options,
-		method: "GET",
-	});
-
-	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-	const data: getApiV1RepositoriesNameDetectionResponse["data"] = body
-		? JSON.parse(body)
-		: {};
-	return {
-		data,
-		status: res.status,
-		headers: res.headers,
-	} as getApiV1RepositoriesNameDetectionResponse;
+	return customFetch<getApiV1RepositoriesNameDetectionResponse>(
+		getGetApiV1RepositoriesNameDetectionUrl(name),
+		{
+			...options,
+			method: "GET",
+		},
+	);
 };
 
 export const getGetApiV1RepositoriesNameDetectionQueryKey = (name: string) => {
@@ -942,7 +902,7 @@ export const getGetApiV1RepositoriesNameDetectionQueryKey = (name: string) => {
 
 export const getGetApiV1RepositoriesNameDetectionQueryOptions = <
 	TData = Awaited<ReturnType<typeof getApiV1RepositoriesNameDetection>>,
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 >(
 	name: string,
 	options?: {
@@ -953,10 +913,10 @@ export const getGetApiV1RepositoriesNameDetectionQueryOptions = <
 				TData
 			>
 		>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 ) => {
-	const { query: queryOptions, fetch: fetchOptions } = options ?? {};
+	const { query: queryOptions, request: requestOptions } = options ?? {};
 
 	const queryKey =
 		queryOptions?.queryKey ??
@@ -965,7 +925,7 @@ export const getGetApiV1RepositoriesNameDetectionQueryOptions = <
 	const queryFn: QueryFunction<
 		Awaited<ReturnType<typeof getApiV1RepositoriesNameDetection>>
 	> = ({ signal }) =>
-		getApiV1RepositoriesNameDetection(name, { signal, ...fetchOptions });
+		getApiV1RepositoriesNameDetection(name, { signal, ...requestOptions });
 
 	return {
 		queryKey,
@@ -982,11 +942,11 @@ export const getGetApiV1RepositoriesNameDetectionQueryOptions = <
 export type GetApiV1RepositoriesNameDetectionQueryResult = NonNullable<
 	Awaited<ReturnType<typeof getApiV1RepositoriesNameDetection>>
 >;
-export type GetApiV1RepositoriesNameDetectionQueryError = ApiError;
+export type GetApiV1RepositoriesNameDetectionQueryError = ErrorType<ApiError>;
 
 export function useGetApiV1RepositoriesNameDetection<
 	TData = Awaited<ReturnType<typeof getApiV1RepositoriesNameDetection>>,
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 >(
 	name: string,
 	options: {
@@ -1005,7 +965,7 @@ export function useGetApiV1RepositoriesNameDetection<
 				>,
 				"initialData"
 			>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): DefinedUseQueryResult<TData, TError> & {
@@ -1013,7 +973,7 @@ export function useGetApiV1RepositoriesNameDetection<
 };
 export function useGetApiV1RepositoriesNameDetection<
 	TData = Awaited<ReturnType<typeof getApiV1RepositoriesNameDetection>>,
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 >(
 	name: string,
 	options?: {
@@ -1032,7 +992,7 @@ export function useGetApiV1RepositoriesNameDetection<
 				>,
 				"initialData"
 			>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & {
@@ -1040,7 +1000,7 @@ export function useGetApiV1RepositoriesNameDetection<
 };
 export function useGetApiV1RepositoriesNameDetection<
 	TData = Awaited<ReturnType<typeof getApiV1RepositoriesNameDetection>>,
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 >(
 	name: string,
 	options?: {
@@ -1051,7 +1011,7 @@ export function useGetApiV1RepositoriesNameDetection<
 				TData
 			>
 		>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & {
@@ -1063,7 +1023,7 @@ export function useGetApiV1RepositoriesNameDetection<
 
 export function useGetApiV1RepositoriesNameDetection<
 	TData = Awaited<ReturnType<typeof getApiV1RepositoriesNameDetection>>,
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 >(
 	name: string,
 	options?: {
@@ -1074,7 +1034,7 @@ export function useGetApiV1RepositoriesNameDetection<
 				TData
 			>
 		>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & {
@@ -1135,25 +1095,17 @@ export const postApiV1RepositoriesNameDetection = async (
 	name: string,
 	options?: RequestInit,
 ): Promise<postApiV1RepositoriesNameDetectionResponse> => {
-	const res = await fetch(getPostApiV1RepositoriesNameDetectionUrl(name), {
-		...options,
-		method: "POST",
-	});
-
-	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-	const data: postApiV1RepositoriesNameDetectionResponse["data"] = body
-		? JSON.parse(body)
-		: {};
-	return {
-		data,
-		status: res.status,
-		headers: res.headers,
-	} as postApiV1RepositoriesNameDetectionResponse;
+	return customFetch<postApiV1RepositoriesNameDetectionResponse>(
+		getPostApiV1RepositoriesNameDetectionUrl(name),
+		{
+			...options,
+			method: "POST",
+		},
+	);
 };
 
 export const getPostApiV1RepositoriesNameDetectionMutationOptions = <
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
@@ -1162,7 +1114,7 @@ export const getPostApiV1RepositoriesNameDetectionMutationOptions = <
 		{ name: string },
 		TContext
 	>;
-	fetch?: RequestInit;
+	request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof postApiV1RepositoriesNameDetection>>,
 	TError,
@@ -1170,13 +1122,13 @@ export const getPostApiV1RepositoriesNameDetectionMutationOptions = <
 	TContext
 > => {
 	const mutationKey = ["postApiV1RepositoriesNameDetection"];
-	const { mutation: mutationOptions, fetch: fetchOptions } = options
+	const { mutation: mutationOptions, request: requestOptions } = options
 		? options.mutation &&
 			"mutationKey" in options.mutation &&
 			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
-		: { mutation: { mutationKey }, fetch: undefined };
+		: { mutation: { mutationKey }, request: undefined };
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof postApiV1RepositoriesNameDetection>>,
@@ -1184,7 +1136,7 @@ export const getPostApiV1RepositoriesNameDetectionMutationOptions = <
 	> = (props) => {
 		const { name } = props ?? {};
 
-		return postApiV1RepositoriesNameDetection(name, fetchOptions);
+		return postApiV1RepositoriesNameDetection(name, requestOptions);
 	};
 
 	return { mutationFn, ...mutationOptions };
@@ -1194,13 +1146,14 @@ export type PostApiV1RepositoriesNameDetectionMutationResult = NonNullable<
 	Awaited<ReturnType<typeof postApiV1RepositoriesNameDetection>>
 >;
 
-export type PostApiV1RepositoriesNameDetectionMutationError = ApiError;
+export type PostApiV1RepositoriesNameDetectionMutationError =
+	ErrorType<ApiError>;
 
 /**
  * @summary Run project detection
  */
 export const usePostApiV1RepositoriesNameDetection = <
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 	TContext = unknown,
 >(
 	options?: {
@@ -1210,7 +1163,7 @@ export const usePostApiV1RepositoriesNameDetection = <
 			{ name: string },
 			TContext
 		>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): UseMutationResult<
@@ -1267,27 +1220,19 @@ export const postApiV1RepositoriesNameDisable = async (
 	postApiV1RepositoriesNameDisableBody: PostApiV1RepositoriesNameDisableBody,
 	options?: RequestInit,
 ): Promise<postApiV1RepositoriesNameDisableResponse> => {
-	const res = await fetch(getPostApiV1RepositoriesNameDisableUrl(name), {
-		...options,
-		method: "POST",
-		headers: { "Content-Type": "application/json", ...options?.headers },
-		body: JSON.stringify(postApiV1RepositoriesNameDisableBody),
-	});
-
-	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-	const data: postApiV1RepositoriesNameDisableResponse["data"] = body
-		? JSON.parse(body)
-		: {};
-	return {
-		data,
-		status: res.status,
-		headers: res.headers,
-	} as postApiV1RepositoriesNameDisableResponse;
+	return customFetch<postApiV1RepositoriesNameDisableResponse>(
+		getPostApiV1RepositoriesNameDisableUrl(name),
+		{
+			...options,
+			method: "POST",
+			headers: { "Content-Type": "application/json", ...options?.headers },
+			body: JSON.stringify(postApiV1RepositoriesNameDisableBody),
+		},
+	);
 };
 
 export const getPostApiV1RepositoriesNameDisableMutationOptions = <
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
@@ -1296,7 +1241,7 @@ export const getPostApiV1RepositoriesNameDisableMutationOptions = <
 		{ name: string; data: PostApiV1RepositoriesNameDisableBody },
 		TContext
 	>;
-	fetch?: RequestInit;
+	request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof postApiV1RepositoriesNameDisable>>,
 	TError,
@@ -1304,13 +1249,13 @@ export const getPostApiV1RepositoriesNameDisableMutationOptions = <
 	TContext
 > => {
 	const mutationKey = ["postApiV1RepositoriesNameDisable"];
-	const { mutation: mutationOptions, fetch: fetchOptions } = options
+	const { mutation: mutationOptions, request: requestOptions } = options
 		? options.mutation &&
 			"mutationKey" in options.mutation &&
 			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
-		: { mutation: { mutationKey }, fetch: undefined };
+		: { mutation: { mutationKey }, request: undefined };
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof postApiV1RepositoriesNameDisable>>,
@@ -1318,7 +1263,7 @@ export const getPostApiV1RepositoriesNameDisableMutationOptions = <
 	> = (props) => {
 		const { name, data } = props ?? {};
 
-		return postApiV1RepositoriesNameDisable(name, data, fetchOptions);
+		return postApiV1RepositoriesNameDisable(name, data, requestOptions);
 	};
 
 	return { mutationFn, ...mutationOptions };
@@ -1329,13 +1274,13 @@ export type PostApiV1RepositoriesNameDisableMutationResult = NonNullable<
 >;
 export type PostApiV1RepositoriesNameDisableMutationBody =
 	PostApiV1RepositoriesNameDisableBody;
-export type PostApiV1RepositoriesNameDisableMutationError = ApiError;
+export type PostApiV1RepositoriesNameDisableMutationError = ErrorType<ApiError>;
 
 /**
  * @summary Disable repository
  */
 export const usePostApiV1RepositoriesNameDisable = <
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 	TContext = unknown,
 >(
 	options?: {
@@ -1345,7 +1290,7 @@ export const usePostApiV1RepositoriesNameDisable = <
 			{ name: string; data: PostApiV1RepositoriesNameDisableBody },
 			TContext
 		>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): UseMutationResult<
@@ -1394,21 +1339,13 @@ export const getApiV1RepositoriesNameEffectiveConfig = async (
 	name: string,
 	options?: RequestInit,
 ): Promise<getApiV1RepositoriesNameEffectiveConfigResponse> => {
-	const res = await fetch(getGetApiV1RepositoriesNameEffectiveConfigUrl(name), {
-		...options,
-		method: "GET",
-	});
-
-	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-	const data: getApiV1RepositoriesNameEffectiveConfigResponse["data"] = body
-		? JSON.parse(body)
-		: {};
-	return {
-		data,
-		status: res.status,
-		headers: res.headers,
-	} as getApiV1RepositoriesNameEffectiveConfigResponse;
+	return customFetch<getApiV1RepositoriesNameEffectiveConfigResponse>(
+		getGetApiV1RepositoriesNameEffectiveConfigUrl(name),
+		{
+			...options,
+			method: "GET",
+		},
+	);
 };
 
 export const getGetApiV1RepositoriesNameEffectiveConfigQueryKey = (
@@ -1419,7 +1356,7 @@ export const getGetApiV1RepositoriesNameEffectiveConfigQueryKey = (
 
 export const getGetApiV1RepositoriesNameEffectiveConfigQueryOptions = <
 	TData = Awaited<ReturnType<typeof getApiV1RepositoriesNameEffectiveConfig>>,
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 >(
 	name: string,
 	options?: {
@@ -1430,10 +1367,10 @@ export const getGetApiV1RepositoriesNameEffectiveConfigQueryOptions = <
 				TData
 			>
 		>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 ) => {
-	const { query: queryOptions, fetch: fetchOptions } = options ?? {};
+	const { query: queryOptions, request: requestOptions } = options ?? {};
 
 	const queryKey =
 		queryOptions?.queryKey ??
@@ -1442,7 +1379,10 @@ export const getGetApiV1RepositoriesNameEffectiveConfigQueryOptions = <
 	const queryFn: QueryFunction<
 		Awaited<ReturnType<typeof getApiV1RepositoriesNameEffectiveConfig>>
 	> = ({ signal }) =>
-		getApiV1RepositoriesNameEffectiveConfig(name, { signal, ...fetchOptions });
+		getApiV1RepositoriesNameEffectiveConfig(name, {
+			signal,
+			...requestOptions,
+		});
 
 	return {
 		queryKey,
@@ -1459,11 +1399,12 @@ export const getGetApiV1RepositoriesNameEffectiveConfigQueryOptions = <
 export type GetApiV1RepositoriesNameEffectiveConfigQueryResult = NonNullable<
 	Awaited<ReturnType<typeof getApiV1RepositoriesNameEffectiveConfig>>
 >;
-export type GetApiV1RepositoriesNameEffectiveConfigQueryError = ApiError;
+export type GetApiV1RepositoriesNameEffectiveConfigQueryError =
+	ErrorType<ApiError>;
 
 export function useGetApiV1RepositoriesNameEffectiveConfig<
 	TData = Awaited<ReturnType<typeof getApiV1RepositoriesNameEffectiveConfig>>,
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 >(
 	name: string,
 	options: {
@@ -1482,7 +1423,7 @@ export function useGetApiV1RepositoriesNameEffectiveConfig<
 				>,
 				"initialData"
 			>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): DefinedUseQueryResult<TData, TError> & {
@@ -1490,7 +1431,7 @@ export function useGetApiV1RepositoriesNameEffectiveConfig<
 };
 export function useGetApiV1RepositoriesNameEffectiveConfig<
 	TData = Awaited<ReturnType<typeof getApiV1RepositoriesNameEffectiveConfig>>,
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 >(
 	name: string,
 	options?: {
@@ -1509,7 +1450,7 @@ export function useGetApiV1RepositoriesNameEffectiveConfig<
 				>,
 				"initialData"
 			>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & {
@@ -1517,7 +1458,7 @@ export function useGetApiV1RepositoriesNameEffectiveConfig<
 };
 export function useGetApiV1RepositoriesNameEffectiveConfig<
 	TData = Awaited<ReturnType<typeof getApiV1RepositoriesNameEffectiveConfig>>,
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 >(
 	name: string,
 	options?: {
@@ -1528,7 +1469,7 @@ export function useGetApiV1RepositoriesNameEffectiveConfig<
 				TData
 			>
 		>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & {
@@ -1540,7 +1481,7 @@ export function useGetApiV1RepositoriesNameEffectiveConfig<
 
 export function useGetApiV1RepositoriesNameEffectiveConfig<
 	TData = Awaited<ReturnType<typeof getApiV1RepositoriesNameEffectiveConfig>>,
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 >(
 	name: string,
 	options?: {
@@ -1551,7 +1492,7 @@ export function useGetApiV1RepositoriesNameEffectiveConfig<
 				TData
 			>
 		>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & {
@@ -1613,27 +1554,19 @@ export const postApiV1RepositoriesNameEnable = async (
 	postApiV1RepositoriesNameEnableBody: PostApiV1RepositoriesNameEnableBody,
 	options?: RequestInit,
 ): Promise<postApiV1RepositoriesNameEnableResponse> => {
-	const res = await fetch(getPostApiV1RepositoriesNameEnableUrl(name), {
-		...options,
-		method: "POST",
-		headers: { "Content-Type": "application/json", ...options?.headers },
-		body: JSON.stringify(postApiV1RepositoriesNameEnableBody),
-	});
-
-	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-	const data: postApiV1RepositoriesNameEnableResponse["data"] = body
-		? JSON.parse(body)
-		: {};
-	return {
-		data,
-		status: res.status,
-		headers: res.headers,
-	} as postApiV1RepositoriesNameEnableResponse;
+	return customFetch<postApiV1RepositoriesNameEnableResponse>(
+		getPostApiV1RepositoriesNameEnableUrl(name),
+		{
+			...options,
+			method: "POST",
+			headers: { "Content-Type": "application/json", ...options?.headers },
+			body: JSON.stringify(postApiV1RepositoriesNameEnableBody),
+		},
+	);
 };
 
 export const getPostApiV1RepositoriesNameEnableMutationOptions = <
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
@@ -1642,7 +1575,7 @@ export const getPostApiV1RepositoriesNameEnableMutationOptions = <
 		{ name: string; data: PostApiV1RepositoriesNameEnableBody },
 		TContext
 	>;
-	fetch?: RequestInit;
+	request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof postApiV1RepositoriesNameEnable>>,
 	TError,
@@ -1650,13 +1583,13 @@ export const getPostApiV1RepositoriesNameEnableMutationOptions = <
 	TContext
 > => {
 	const mutationKey = ["postApiV1RepositoriesNameEnable"];
-	const { mutation: mutationOptions, fetch: fetchOptions } = options
+	const { mutation: mutationOptions, request: requestOptions } = options
 		? options.mutation &&
 			"mutationKey" in options.mutation &&
 			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
-		: { mutation: { mutationKey }, fetch: undefined };
+		: { mutation: { mutationKey }, request: undefined };
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof postApiV1RepositoriesNameEnable>>,
@@ -1664,7 +1597,7 @@ export const getPostApiV1RepositoriesNameEnableMutationOptions = <
 	> = (props) => {
 		const { name, data } = props ?? {};
 
-		return postApiV1RepositoriesNameEnable(name, data, fetchOptions);
+		return postApiV1RepositoriesNameEnable(name, data, requestOptions);
 	};
 
 	return { mutationFn, ...mutationOptions };
@@ -1675,13 +1608,13 @@ export type PostApiV1RepositoriesNameEnableMutationResult = NonNullable<
 >;
 export type PostApiV1RepositoriesNameEnableMutationBody =
 	PostApiV1RepositoriesNameEnableBody;
-export type PostApiV1RepositoriesNameEnableMutationError = ApiError;
+export type PostApiV1RepositoriesNameEnableMutationError = ErrorType<ApiError>;
 
 /**
  * @summary Enable repository
  */
 export const usePostApiV1RepositoriesNameEnable = <
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 	TContext = unknown,
 >(
 	options?: {
@@ -1691,7 +1624,7 @@ export const usePostApiV1RepositoriesNameEnable = <
 			{ name: string; data: PostApiV1RepositoriesNameEnableBody },
 			TContext
 		>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): UseMutationResult<
@@ -1749,24 +1682,13 @@ export const getApiV1RepositoriesNameValidationConfig = async (
 	name: string,
 	options?: RequestInit,
 ): Promise<getApiV1RepositoriesNameValidationConfigResponse> => {
-	const res = await fetch(
+	return customFetch<getApiV1RepositoriesNameValidationConfigResponse>(
 		getGetApiV1RepositoriesNameValidationConfigUrl(name),
 		{
 			...options,
 			method: "GET",
 		},
 	);
-
-	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-	const data: getApiV1RepositoriesNameValidationConfigResponse["data"] = body
-		? JSON.parse(body)
-		: {};
-	return {
-		data,
-		status: res.status,
-		headers: res.headers,
-	} as getApiV1RepositoriesNameValidationConfigResponse;
 };
 
 export const getGetApiV1RepositoriesNameValidationConfigQueryKey = (
@@ -1777,7 +1699,7 @@ export const getGetApiV1RepositoriesNameValidationConfigQueryKey = (
 
 export const getGetApiV1RepositoriesNameValidationConfigQueryOptions = <
 	TData = Awaited<ReturnType<typeof getApiV1RepositoriesNameValidationConfig>>,
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 >(
 	name: string,
 	options?: {
@@ -1788,10 +1710,10 @@ export const getGetApiV1RepositoriesNameValidationConfigQueryOptions = <
 				TData
 			>
 		>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 ) => {
-	const { query: queryOptions, fetch: fetchOptions } = options ?? {};
+	const { query: queryOptions, request: requestOptions } = options ?? {};
 
 	const queryKey =
 		queryOptions?.queryKey ??
@@ -1800,7 +1722,10 @@ export const getGetApiV1RepositoriesNameValidationConfigQueryOptions = <
 	const queryFn: QueryFunction<
 		Awaited<ReturnType<typeof getApiV1RepositoriesNameValidationConfig>>
 	> = ({ signal }) =>
-		getApiV1RepositoriesNameValidationConfig(name, { signal, ...fetchOptions });
+		getApiV1RepositoriesNameValidationConfig(name, {
+			signal,
+			...requestOptions,
+		});
 
 	return {
 		queryKey,
@@ -1817,11 +1742,12 @@ export const getGetApiV1RepositoriesNameValidationConfigQueryOptions = <
 export type GetApiV1RepositoriesNameValidationConfigQueryResult = NonNullable<
 	Awaited<ReturnType<typeof getApiV1RepositoriesNameValidationConfig>>
 >;
-export type GetApiV1RepositoriesNameValidationConfigQueryError = ApiError;
+export type GetApiV1RepositoriesNameValidationConfigQueryError =
+	ErrorType<ApiError>;
 
 export function useGetApiV1RepositoriesNameValidationConfig<
 	TData = Awaited<ReturnType<typeof getApiV1RepositoriesNameValidationConfig>>,
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 >(
 	name: string,
 	options: {
@@ -1840,7 +1766,7 @@ export function useGetApiV1RepositoriesNameValidationConfig<
 				>,
 				"initialData"
 			>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): DefinedUseQueryResult<TData, TError> & {
@@ -1848,7 +1774,7 @@ export function useGetApiV1RepositoriesNameValidationConfig<
 };
 export function useGetApiV1RepositoriesNameValidationConfig<
 	TData = Awaited<ReturnType<typeof getApiV1RepositoriesNameValidationConfig>>,
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 >(
 	name: string,
 	options?: {
@@ -1867,7 +1793,7 @@ export function useGetApiV1RepositoriesNameValidationConfig<
 				>,
 				"initialData"
 			>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & {
@@ -1875,7 +1801,7 @@ export function useGetApiV1RepositoriesNameValidationConfig<
 };
 export function useGetApiV1RepositoriesNameValidationConfig<
 	TData = Awaited<ReturnType<typeof getApiV1RepositoriesNameValidationConfig>>,
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 >(
 	name: string,
 	options?: {
@@ -1886,7 +1812,7 @@ export function useGetApiV1RepositoriesNameValidationConfig<
 				TData
 			>
 		>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & {
@@ -1898,7 +1824,7 @@ export function useGetApiV1RepositoriesNameValidationConfig<
 
 export function useGetApiV1RepositoriesNameValidationConfig<
 	TData = Awaited<ReturnType<typeof getApiV1RepositoriesNameValidationConfig>>,
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 >(
 	name: string,
 	options?: {
@@ -1909,7 +1835,7 @@ export function useGetApiV1RepositoriesNameValidationConfig<
 				TData
 			>
 		>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & {
@@ -1979,7 +1905,7 @@ export const putApiV1RepositoriesNameValidationConfig = async (
 	putApiV1RepositoriesNameValidationConfigBody: PutApiV1RepositoriesNameValidationConfigBody,
 	options?: RequestInit,
 ): Promise<putApiV1RepositoriesNameValidationConfigResponse> => {
-	const res = await fetch(
+	return customFetch<putApiV1RepositoriesNameValidationConfigResponse>(
 		getPutApiV1RepositoriesNameValidationConfigUrl(name),
 		{
 			...options,
@@ -1988,21 +1914,10 @@ export const putApiV1RepositoriesNameValidationConfig = async (
 			body: JSON.stringify(putApiV1RepositoriesNameValidationConfigBody),
 		},
 	);
-
-	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-	const data: putApiV1RepositoriesNameValidationConfigResponse["data"] = body
-		? JSON.parse(body)
-		: {};
-	return {
-		data,
-		status: res.status,
-		headers: res.headers,
-	} as putApiV1RepositoriesNameValidationConfigResponse;
 };
 
 export const getPutApiV1RepositoriesNameValidationConfigMutationOptions = <
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
@@ -2011,7 +1926,7 @@ export const getPutApiV1RepositoriesNameValidationConfigMutationOptions = <
 		{ name: string; data: PutApiV1RepositoriesNameValidationConfigBody },
 		TContext
 	>;
-	fetch?: RequestInit;
+	request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof putApiV1RepositoriesNameValidationConfig>>,
 	TError,
@@ -2019,13 +1934,13 @@ export const getPutApiV1RepositoriesNameValidationConfigMutationOptions = <
 	TContext
 > => {
 	const mutationKey = ["putApiV1RepositoriesNameValidationConfig"];
-	const { mutation: mutationOptions, fetch: fetchOptions } = options
+	const { mutation: mutationOptions, request: requestOptions } = options
 		? options.mutation &&
 			"mutationKey" in options.mutation &&
 			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
-		: { mutation: { mutationKey }, fetch: undefined };
+		: { mutation: { mutationKey }, request: undefined };
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof putApiV1RepositoriesNameValidationConfig>>,
@@ -2033,7 +1948,7 @@ export const getPutApiV1RepositoriesNameValidationConfigMutationOptions = <
 	> = (props) => {
 		const { name, data } = props ?? {};
 
-		return putApiV1RepositoriesNameValidationConfig(name, data, fetchOptions);
+		return putApiV1RepositoriesNameValidationConfig(name, data, requestOptions);
 	};
 
 	return { mutationFn, ...mutationOptions };
@@ -2045,13 +1960,14 @@ export type PutApiV1RepositoriesNameValidationConfigMutationResult =
 	>;
 export type PutApiV1RepositoriesNameValidationConfigMutationBody =
 	PutApiV1RepositoriesNameValidationConfigBody;
-export type PutApiV1RepositoriesNameValidationConfigMutationError = ApiError;
+export type PutApiV1RepositoriesNameValidationConfigMutationError =
+	ErrorType<ApiError>;
 
 /**
  * @summary Update validation config
  */
 export const usePutApiV1RepositoriesNameValidationConfig = <
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 	TContext = unknown,
 >(
 	options?: {
@@ -2061,7 +1977,7 @@ export const usePutApiV1RepositoriesNameValidationConfig = <
 			{ name: string; data: PutApiV1RepositoriesNameValidationConfigBody },
 			TContext
 		>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): UseMutationResult<

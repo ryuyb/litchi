@@ -21,7 +21,9 @@ import type {
 	UseQueryResult,
 } from "@tanstack/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import type { ErrorType } from "../../lib/custom-fetch";
 
+import { customFetch } from "../../lib/custom-fetch";
 import type {
 	ApiError,
 	GithubComRyuybLitchiInternalApplicationServerHandlerAuthLoginResponse,
@@ -29,6 +31,8 @@ import type {
 	PostApiV1AuthLoginBody,
 	PostApiV1AuthLogout200,
 } from "../schemas";
+
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 /**
  * Authenticates a user and creates a session
@@ -78,25 +82,16 @@ export const postApiV1AuthLogin = async (
 	postApiV1AuthLoginBody: PostApiV1AuthLoginBody,
 	options?: RequestInit,
 ): Promise<postApiV1AuthLoginResponse> => {
-	const res = await fetch(getPostApiV1AuthLoginUrl(), {
+	return customFetch<postApiV1AuthLoginResponse>(getPostApiV1AuthLoginUrl(), {
 		...options,
 		method: "POST",
 		headers: { "Content-Type": "application/json", ...options?.headers },
 		body: JSON.stringify(postApiV1AuthLoginBody),
 	});
-
-	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-	const data: postApiV1AuthLoginResponse["data"] = body ? JSON.parse(body) : {};
-	return {
-		data,
-		status: res.status,
-		headers: res.headers,
-	} as postApiV1AuthLoginResponse;
 };
 
 export const getPostApiV1AuthLoginMutationOptions = <
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
@@ -105,7 +100,7 @@ export const getPostApiV1AuthLoginMutationOptions = <
 		{ data: PostApiV1AuthLoginBody },
 		TContext
 	>;
-	fetch?: RequestInit;
+	request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof postApiV1AuthLogin>>,
 	TError,
@@ -113,13 +108,13 @@ export const getPostApiV1AuthLoginMutationOptions = <
 	TContext
 > => {
 	const mutationKey = ["postApiV1AuthLogin"];
-	const { mutation: mutationOptions, fetch: fetchOptions } = options
+	const { mutation: mutationOptions, request: requestOptions } = options
 		? options.mutation &&
 			"mutationKey" in options.mutation &&
 			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
-		: { mutation: { mutationKey }, fetch: undefined };
+		: { mutation: { mutationKey }, request: undefined };
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof postApiV1AuthLogin>>,
@@ -127,7 +122,7 @@ export const getPostApiV1AuthLoginMutationOptions = <
 	> = (props) => {
 		const { data } = props ?? {};
 
-		return postApiV1AuthLogin(data, fetchOptions);
+		return postApiV1AuthLogin(data, requestOptions);
 	};
 
 	return { mutationFn, ...mutationOptions };
@@ -137,12 +132,15 @@ export type PostApiV1AuthLoginMutationResult = NonNullable<
 	Awaited<ReturnType<typeof postApiV1AuthLogin>>
 >;
 export type PostApiV1AuthLoginMutationBody = PostApiV1AuthLoginBody;
-export type PostApiV1AuthLoginMutationError = ApiError;
+export type PostApiV1AuthLoginMutationError = ErrorType<ApiError>;
 
 /**
  * @summary User login
  */
-export const usePostApiV1AuthLogin = <TError = ApiError, TContext = unknown>(
+export const usePostApiV1AuthLogin = <
+	TError = ErrorType<ApiError>,
+	TContext = unknown,
+>(
 	options?: {
 		mutation?: UseMutationOptions<
 			Awaited<ReturnType<typeof postApiV1AuthLogin>>,
@@ -150,7 +148,7 @@ export const usePostApiV1AuthLogin = <TError = ApiError, TContext = unknown>(
 			{ data: PostApiV1AuthLoginBody },
 			TContext
 		>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): UseMutationResult<
@@ -198,25 +196,14 @@ export const getPostApiV1AuthLogoutUrl = () => {
 export const postApiV1AuthLogout = async (
 	options?: RequestInit,
 ): Promise<postApiV1AuthLogoutResponse> => {
-	const res = await fetch(getPostApiV1AuthLogoutUrl(), {
+	return customFetch<postApiV1AuthLogoutResponse>(getPostApiV1AuthLogoutUrl(), {
 		...options,
 		method: "POST",
 	});
-
-	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-	const data: postApiV1AuthLogoutResponse["data"] = body
-		? JSON.parse(body)
-		: {};
-	return {
-		data,
-		status: res.status,
-		headers: res.headers,
-	} as postApiV1AuthLogoutResponse;
 };
 
 export const getPostApiV1AuthLogoutMutationOptions = <
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
@@ -225,7 +212,7 @@ export const getPostApiV1AuthLogoutMutationOptions = <
 		void,
 		TContext
 	>;
-	fetch?: RequestInit;
+	request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof postApiV1AuthLogout>>,
 	TError,
@@ -233,19 +220,19 @@ export const getPostApiV1AuthLogoutMutationOptions = <
 	TContext
 > => {
 	const mutationKey = ["postApiV1AuthLogout"];
-	const { mutation: mutationOptions, fetch: fetchOptions } = options
+	const { mutation: mutationOptions, request: requestOptions } = options
 		? options.mutation &&
 			"mutationKey" in options.mutation &&
 			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
-		: { mutation: { mutationKey }, fetch: undefined };
+		: { mutation: { mutationKey }, request: undefined };
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof postApiV1AuthLogout>>,
 		void
 	> = () => {
-		return postApiV1AuthLogout(fetchOptions);
+		return postApiV1AuthLogout(requestOptions);
 	};
 
 	return { mutationFn, ...mutationOptions };
@@ -255,12 +242,15 @@ export type PostApiV1AuthLogoutMutationResult = NonNullable<
 	Awaited<ReturnType<typeof postApiV1AuthLogout>>
 >;
 
-export type PostApiV1AuthLogoutMutationError = ApiError;
+export type PostApiV1AuthLogoutMutationError = ErrorType<ApiError>;
 
 /**
  * @summary User logout
  */
-export const usePostApiV1AuthLogout = <TError = ApiError, TContext = unknown>(
+export const usePostApiV1AuthLogout = <
+	TError = ErrorType<ApiError>,
+	TContext = unknown,
+>(
 	options?: {
 		mutation?: UseMutationOptions<
 			Awaited<ReturnType<typeof postApiV1AuthLogout>>,
@@ -268,7 +258,7 @@ export const usePostApiV1AuthLogout = <TError = ApiError, TContext = unknown>(
 			void,
 			TContext
 		>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): UseMutationResult<
@@ -314,19 +304,10 @@ export const getGetApiV1AuthMeUrl = () => {
 export const getApiV1AuthMe = async (
 	options?: RequestInit,
 ): Promise<getApiV1AuthMeResponse> => {
-	const res = await fetch(getGetApiV1AuthMeUrl(), {
+	return customFetch<getApiV1AuthMeResponse>(getGetApiV1AuthMeUrl(), {
 		...options,
 		method: "GET",
 	});
-
-	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-	const data: getApiV1AuthMeResponse["data"] = body ? JSON.parse(body) : {};
-	return {
-		data,
-		status: res.status,
-		headers: res.headers,
-	} as getApiV1AuthMeResponse;
 };
 
 export const getGetApiV1AuthMeQueryKey = () => {
@@ -335,20 +316,20 @@ export const getGetApiV1AuthMeQueryKey = () => {
 
 export const getGetApiV1AuthMeQueryOptions = <
 	TData = Awaited<ReturnType<typeof getApiV1AuthMe>>,
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 >(options?: {
 	query?: Partial<
 		UseQueryOptions<Awaited<ReturnType<typeof getApiV1AuthMe>>, TError, TData>
 	>;
-	fetch?: RequestInit;
+	request?: SecondParameter<typeof customFetch>;
 }) => {
-	const { query: queryOptions, fetch: fetchOptions } = options ?? {};
+	const { query: queryOptions, request: requestOptions } = options ?? {};
 
 	const queryKey = queryOptions?.queryKey ?? getGetApiV1AuthMeQueryKey();
 
 	const queryFn: QueryFunction<Awaited<ReturnType<typeof getApiV1AuthMe>>> = ({
 		signal,
-	}) => getApiV1AuthMe({ signal, ...fetchOptions });
+	}) => getApiV1AuthMe({ signal, ...requestOptions });
 
 	return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
 		Awaited<ReturnType<typeof getApiV1AuthMe>>,
@@ -360,11 +341,11 @@ export const getGetApiV1AuthMeQueryOptions = <
 export type GetApiV1AuthMeQueryResult = NonNullable<
 	Awaited<ReturnType<typeof getApiV1AuthMe>>
 >;
-export type GetApiV1AuthMeQueryError = ApiError;
+export type GetApiV1AuthMeQueryError = ErrorType<ApiError>;
 
 export function useGetApiV1AuthMe<
 	TData = Awaited<ReturnType<typeof getApiV1AuthMe>>,
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 >(
 	options: {
 		query: Partial<
@@ -378,7 +359,7 @@ export function useGetApiV1AuthMe<
 				>,
 				"initialData"
 			>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): DefinedUseQueryResult<TData, TError> & {
@@ -386,7 +367,7 @@ export function useGetApiV1AuthMe<
 };
 export function useGetApiV1AuthMe<
 	TData = Awaited<ReturnType<typeof getApiV1AuthMe>>,
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 >(
 	options?: {
 		query?: Partial<
@@ -400,7 +381,7 @@ export function useGetApiV1AuthMe<
 				>,
 				"initialData"
 			>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & {
@@ -408,13 +389,13 @@ export function useGetApiV1AuthMe<
 };
 export function useGetApiV1AuthMe<
 	TData = Awaited<ReturnType<typeof getApiV1AuthMe>>,
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 >(
 	options?: {
 		query?: Partial<
 			UseQueryOptions<Awaited<ReturnType<typeof getApiV1AuthMe>>, TError, TData>
 		>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & {
@@ -426,13 +407,13 @@ export function useGetApiV1AuthMe<
 
 export function useGetApiV1AuthMe<
 	TData = Awaited<ReturnType<typeof getApiV1AuthMe>>,
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 >(
 	options?: {
 		query?: Partial<
 			UseQueryOptions<Awaited<ReturnType<typeof getApiV1AuthMe>>, TError, TData>
 		>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & {

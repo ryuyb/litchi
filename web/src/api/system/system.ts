@@ -18,8 +18,12 @@ import type {
 	UseQueryResult,
 } from "@tanstack/react-query";
 import { useQuery } from "@tanstack/react-query";
+import type { ErrorType } from "../../lib/custom-fetch";
 
+import { customFetch } from "../../lib/custom-fetch";
 import type { HealthCheck, HealthDetail } from "../schemas";
+
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 /**
  * Returns the basic API health status and version
@@ -43,19 +47,10 @@ export const getGetApiV1HealthUrl = () => {
 export const getApiV1Health = async (
 	options?: RequestInit,
 ): Promise<getApiV1HealthResponse> => {
-	const res = await fetch(getGetApiV1HealthUrl(), {
+	return customFetch<getApiV1HealthResponse>(getGetApiV1HealthUrl(), {
 		...options,
 		method: "GET",
 	});
-
-	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-	const data: getApiV1HealthResponse["data"] = body ? JSON.parse(body) : {};
-	return {
-		data,
-		status: res.status,
-		headers: res.headers,
-	} as getApiV1HealthResponse;
 };
 
 export const getGetApiV1HealthQueryKey = () => {
@@ -64,20 +59,20 @@ export const getGetApiV1HealthQueryKey = () => {
 
 export const getGetApiV1HealthQueryOptions = <
 	TData = Awaited<ReturnType<typeof getApiV1Health>>,
-	TError = unknown,
+	TError = ErrorType<unknown>,
 >(options?: {
 	query?: Partial<
 		UseQueryOptions<Awaited<ReturnType<typeof getApiV1Health>>, TError, TData>
 	>;
-	fetch?: RequestInit;
+	request?: SecondParameter<typeof customFetch>;
 }) => {
-	const { query: queryOptions, fetch: fetchOptions } = options ?? {};
+	const { query: queryOptions, request: requestOptions } = options ?? {};
 
 	const queryKey = queryOptions?.queryKey ?? getGetApiV1HealthQueryKey();
 
 	const queryFn: QueryFunction<Awaited<ReturnType<typeof getApiV1Health>>> = ({
 		signal,
-	}) => getApiV1Health({ signal, ...fetchOptions });
+	}) => getApiV1Health({ signal, ...requestOptions });
 
 	return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
 		Awaited<ReturnType<typeof getApiV1Health>>,
@@ -89,11 +84,11 @@ export const getGetApiV1HealthQueryOptions = <
 export type GetApiV1HealthQueryResult = NonNullable<
 	Awaited<ReturnType<typeof getApiV1Health>>
 >;
-export type GetApiV1HealthQueryError = unknown;
+export type GetApiV1HealthQueryError = ErrorType<unknown>;
 
 export function useGetApiV1Health<
 	TData = Awaited<ReturnType<typeof getApiV1Health>>,
-	TError = unknown,
+	TError = ErrorType<unknown>,
 >(
 	options: {
 		query: Partial<
@@ -107,7 +102,7 @@ export function useGetApiV1Health<
 				>,
 				"initialData"
 			>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): DefinedUseQueryResult<TData, TError> & {
@@ -115,7 +110,7 @@ export function useGetApiV1Health<
 };
 export function useGetApiV1Health<
 	TData = Awaited<ReturnType<typeof getApiV1Health>>,
-	TError = unknown,
+	TError = ErrorType<unknown>,
 >(
 	options?: {
 		query?: Partial<
@@ -129,7 +124,7 @@ export function useGetApiV1Health<
 				>,
 				"initialData"
 			>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & {
@@ -137,13 +132,13 @@ export function useGetApiV1Health<
 };
 export function useGetApiV1Health<
 	TData = Awaited<ReturnType<typeof getApiV1Health>>,
-	TError = unknown,
+	TError = ErrorType<unknown>,
 >(
 	options?: {
 		query?: Partial<
 			UseQueryOptions<Awaited<ReturnType<typeof getApiV1Health>>, TError, TData>
 		>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & {
@@ -155,13 +150,13 @@ export function useGetApiV1Health<
 
 export function useGetApiV1Health<
 	TData = Awaited<ReturnType<typeof getApiV1Health>>,
-	TError = unknown,
+	TError = ErrorType<unknown>,
 >(
 	options?: {
 		query?: Partial<
 			UseQueryOptions<Awaited<ReturnType<typeof getApiV1Health>>, TError, TData>
 		>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & {
@@ -200,21 +195,13 @@ export const getGetApiV1HealthDetailUrl = () => {
 export const getApiV1HealthDetail = async (
 	options?: RequestInit,
 ): Promise<getApiV1HealthDetailResponse> => {
-	const res = await fetch(getGetApiV1HealthDetailUrl(), {
-		...options,
-		method: "GET",
-	});
-
-	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-	const data: getApiV1HealthDetailResponse["data"] = body
-		? JSON.parse(body)
-		: {};
-	return {
-		data,
-		status: res.status,
-		headers: res.headers,
-	} as getApiV1HealthDetailResponse;
+	return customFetch<getApiV1HealthDetailResponse>(
+		getGetApiV1HealthDetailUrl(),
+		{
+			...options,
+			method: "GET",
+		},
+	);
 };
 
 export const getGetApiV1HealthDetailQueryKey = () => {
@@ -223,7 +210,7 @@ export const getGetApiV1HealthDetailQueryKey = () => {
 
 export const getGetApiV1HealthDetailQueryOptions = <
 	TData = Awaited<ReturnType<typeof getApiV1HealthDetail>>,
-	TError = unknown,
+	TError = ErrorType<unknown>,
 >(options?: {
 	query?: Partial<
 		UseQueryOptions<
@@ -232,15 +219,15 @@ export const getGetApiV1HealthDetailQueryOptions = <
 			TData
 		>
 	>;
-	fetch?: RequestInit;
+	request?: SecondParameter<typeof customFetch>;
 }) => {
-	const { query: queryOptions, fetch: fetchOptions } = options ?? {};
+	const { query: queryOptions, request: requestOptions } = options ?? {};
 
 	const queryKey = queryOptions?.queryKey ?? getGetApiV1HealthDetailQueryKey();
 
 	const queryFn: QueryFunction<
 		Awaited<ReturnType<typeof getApiV1HealthDetail>>
-	> = ({ signal }) => getApiV1HealthDetail({ signal, ...fetchOptions });
+	> = ({ signal }) => getApiV1HealthDetail({ signal, ...requestOptions });
 
 	return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
 		Awaited<ReturnType<typeof getApiV1HealthDetail>>,
@@ -252,11 +239,11 @@ export const getGetApiV1HealthDetailQueryOptions = <
 export type GetApiV1HealthDetailQueryResult = NonNullable<
 	Awaited<ReturnType<typeof getApiV1HealthDetail>>
 >;
-export type GetApiV1HealthDetailQueryError = unknown;
+export type GetApiV1HealthDetailQueryError = ErrorType<unknown>;
 
 export function useGetApiV1HealthDetail<
 	TData = Awaited<ReturnType<typeof getApiV1HealthDetail>>,
-	TError = unknown,
+	TError = ErrorType<unknown>,
 >(
 	options: {
 		query: Partial<
@@ -274,7 +261,7 @@ export function useGetApiV1HealthDetail<
 				>,
 				"initialData"
 			>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): DefinedUseQueryResult<TData, TError> & {
@@ -282,7 +269,7 @@ export function useGetApiV1HealthDetail<
 };
 export function useGetApiV1HealthDetail<
 	TData = Awaited<ReturnType<typeof getApiV1HealthDetail>>,
-	TError = unknown,
+	TError = ErrorType<unknown>,
 >(
 	options?: {
 		query?: Partial<
@@ -300,7 +287,7 @@ export function useGetApiV1HealthDetail<
 				>,
 				"initialData"
 			>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & {
@@ -308,7 +295,7 @@ export function useGetApiV1HealthDetail<
 };
 export function useGetApiV1HealthDetail<
 	TData = Awaited<ReturnType<typeof getApiV1HealthDetail>>,
-	TError = unknown,
+	TError = ErrorType<unknown>,
 >(
 	options?: {
 		query?: Partial<
@@ -318,7 +305,7 @@ export function useGetApiV1HealthDetail<
 				TData
 			>
 		>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & {
@@ -330,7 +317,7 @@ export function useGetApiV1HealthDetail<
 
 export function useGetApiV1HealthDetail<
 	TData = Awaited<ReturnType<typeof getApiV1HealthDetail>>,
-	TError = unknown,
+	TError = ErrorType<unknown>,
 >(
 	options?: {
 		query?: Partial<
@@ -340,7 +327,7 @@ export function useGetApiV1HealthDetail<
 				TData
 			>
 		>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & {
@@ -378,19 +365,10 @@ export const getGetHealthUrl = () => {
 export const getHealth = async (
 	options?: RequestInit,
 ): Promise<getHealthResponse> => {
-	const res = await fetch(getGetHealthUrl(), {
+	return customFetch<getHealthResponse>(getGetHealthUrl(), {
 		...options,
 		method: "GET",
 	});
-
-	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-	const data: getHealthResponse["data"] = body ? JSON.parse(body) : {};
-	return {
-		data,
-		status: res.status,
-		headers: res.headers,
-	} as getHealthResponse;
 };
 
 export const getGetHealthQueryKey = () => {
@@ -399,20 +377,20 @@ export const getGetHealthQueryKey = () => {
 
 export const getGetHealthQueryOptions = <
 	TData = Awaited<ReturnType<typeof getHealth>>,
-	TError = unknown,
+	TError = ErrorType<unknown>,
 >(options?: {
 	query?: Partial<
 		UseQueryOptions<Awaited<ReturnType<typeof getHealth>>, TError, TData>
 	>;
-	fetch?: RequestInit;
+	request?: SecondParameter<typeof customFetch>;
 }) => {
-	const { query: queryOptions, fetch: fetchOptions } = options ?? {};
+	const { query: queryOptions, request: requestOptions } = options ?? {};
 
 	const queryKey = queryOptions?.queryKey ?? getGetHealthQueryKey();
 
 	const queryFn: QueryFunction<Awaited<ReturnType<typeof getHealth>>> = ({
 		signal,
-	}) => getHealth({ signal, ...fetchOptions });
+	}) => getHealth({ signal, ...requestOptions });
 
 	return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
 		Awaited<ReturnType<typeof getHealth>>,
@@ -424,11 +402,11 @@ export const getGetHealthQueryOptions = <
 export type GetHealthQueryResult = NonNullable<
 	Awaited<ReturnType<typeof getHealth>>
 >;
-export type GetHealthQueryError = unknown;
+export type GetHealthQueryError = ErrorType<unknown>;
 
 export function useGetHealth<
 	TData = Awaited<ReturnType<typeof getHealth>>,
-	TError = unknown,
+	TError = ErrorType<unknown>,
 >(
 	options: {
 		query: Partial<
@@ -442,7 +420,7 @@ export function useGetHealth<
 				>,
 				"initialData"
 			>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): DefinedUseQueryResult<TData, TError> & {
@@ -450,7 +428,7 @@ export function useGetHealth<
 };
 export function useGetHealth<
 	TData = Awaited<ReturnType<typeof getHealth>>,
-	TError = unknown,
+	TError = ErrorType<unknown>,
 >(
 	options?: {
 		query?: Partial<
@@ -464,7 +442,7 @@ export function useGetHealth<
 				>,
 				"initialData"
 			>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & {
@@ -472,13 +450,13 @@ export function useGetHealth<
 };
 export function useGetHealth<
 	TData = Awaited<ReturnType<typeof getHealth>>,
-	TError = unknown,
+	TError = ErrorType<unknown>,
 >(
 	options?: {
 		query?: Partial<
 			UseQueryOptions<Awaited<ReturnType<typeof getHealth>>, TError, TData>
 		>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & {
@@ -490,13 +468,13 @@ export function useGetHealth<
 
 export function useGetHealth<
 	TData = Awaited<ReturnType<typeof getHealth>>,
-	TError = unknown,
+	TError = ErrorType<unknown>,
 >(
 	options?: {
 		query?: Partial<
 			UseQueryOptions<Awaited<ReturnType<typeof getHealth>>, TError, TData>
 		>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & {

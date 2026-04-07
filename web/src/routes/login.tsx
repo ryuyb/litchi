@@ -26,9 +26,6 @@ function LoginPage() {
 				toast.success("Login successful");
 				navigate({ to: "/" });
 			},
-			onError: (_error) => {
-				toast.error("Login failed. Please check your credentials.");
-			},
 		},
 	});
 

@@ -12,6 +12,12 @@ export default defineConfig({
       mock: false,
       clean: true,
       prettier: false,
+      override: {
+        mutator: {
+          path: "./src/lib/custom-fetch.ts",
+          name: "customFetch",
+        },
+      },
     },
     hooks: {
       afterAllFilesWrite: "pnpm exec biome check --write"

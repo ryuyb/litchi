@@ -18,7 +18,9 @@ import type {
 	UseQueryResult,
 } from "@tanstack/react-query";
 import { useQuery } from "@tanstack/react-query";
+import type { ErrorType } from "../../lib/custom-fetch";
 
+import { customFetch } from "../../lib/custom-fetch";
 import type {
 	ApiError,
 	AuditLog,
@@ -28,6 +30,8 @@ import type {
 	GetApiV1AuditSessionsSessionIdParams,
 	PaginatedResponseAuditLog,
 } from "../schemas";
+
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 /**
  * Retrieve audit logs with filtering by session, repository, actor, operation, result, and time range. Supports pagination.
@@ -82,19 +86,10 @@ export const getApiV1Audit = async (
 	params?: GetApiV1AuditParams,
 	options?: RequestInit,
 ): Promise<getApiV1AuditResponse> => {
-	const res = await fetch(getGetApiV1AuditUrl(params), {
+	return customFetch<getApiV1AuditResponse>(getGetApiV1AuditUrl(params), {
 		...options,
 		method: "GET",
 	});
-
-	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-	const data: getApiV1AuditResponse["data"] = body ? JSON.parse(body) : {};
-	return {
-		data,
-		status: res.status,
-		headers: res.headers,
-	} as getApiV1AuditResponse;
 };
 
 export const getGetApiV1AuditQueryKey = (params?: GetApiV1AuditParams) => {
@@ -103,23 +98,23 @@ export const getGetApiV1AuditQueryKey = (params?: GetApiV1AuditParams) => {
 
 export const getGetApiV1AuditQueryOptions = <
 	TData = Awaited<ReturnType<typeof getApiV1Audit>>,
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 >(
 	params?: GetApiV1AuditParams,
 	options?: {
 		query?: Partial<
 			UseQueryOptions<Awaited<ReturnType<typeof getApiV1Audit>>, TError, TData>
 		>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 ) => {
-	const { query: queryOptions, fetch: fetchOptions } = options ?? {};
+	const { query: queryOptions, request: requestOptions } = options ?? {};
 
 	const queryKey = queryOptions?.queryKey ?? getGetApiV1AuditQueryKey(params);
 
 	const queryFn: QueryFunction<Awaited<ReturnType<typeof getApiV1Audit>>> = ({
 		signal,
-	}) => getApiV1Audit(params, { signal, ...fetchOptions });
+	}) => getApiV1Audit(params, { signal, ...requestOptions });
 
 	return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
 		Awaited<ReturnType<typeof getApiV1Audit>>,
@@ -131,11 +126,11 @@ export const getGetApiV1AuditQueryOptions = <
 export type GetApiV1AuditQueryResult = NonNullable<
 	Awaited<ReturnType<typeof getApiV1Audit>>
 >;
-export type GetApiV1AuditQueryError = ApiError;
+export type GetApiV1AuditQueryError = ErrorType<ApiError>;
 
 export function useGetApiV1Audit<
 	TData = Awaited<ReturnType<typeof getApiV1Audit>>,
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 >(
 	params: undefined | GetApiV1AuditParams,
 	options: {
@@ -150,7 +145,7 @@ export function useGetApiV1Audit<
 				>,
 				"initialData"
 			>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): DefinedUseQueryResult<TData, TError> & {
@@ -158,7 +153,7 @@ export function useGetApiV1Audit<
 };
 export function useGetApiV1Audit<
 	TData = Awaited<ReturnType<typeof getApiV1Audit>>,
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 >(
 	params?: GetApiV1AuditParams,
 	options?: {
@@ -173,7 +168,7 @@ export function useGetApiV1Audit<
 				>,
 				"initialData"
 			>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & {
@@ -181,14 +176,14 @@ export function useGetApiV1Audit<
 };
 export function useGetApiV1Audit<
 	TData = Awaited<ReturnType<typeof getApiV1Audit>>,
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 >(
 	params?: GetApiV1AuditParams,
 	options?: {
 		query?: Partial<
 			UseQueryOptions<Awaited<ReturnType<typeof getApiV1Audit>>, TError, TData>
 		>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & {
@@ -200,14 +195,14 @@ export function useGetApiV1Audit<
 
 export function useGetApiV1Audit<
 	TData = Awaited<ReturnType<typeof getApiV1Audit>>,
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 >(
 	params?: GetApiV1AuditParams,
 	options?: {
 		query?: Partial<
 			UseQueryOptions<Awaited<ReturnType<typeof getApiV1Audit>>, TError, TData>
 		>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & {
@@ -281,24 +276,13 @@ export const getApiV1AuditRepositoriesRepository = async (
 	params?: GetApiV1AuditRepositoriesRepositoryParams,
 	options?: RequestInit,
 ): Promise<getApiV1AuditRepositoriesRepositoryResponse> => {
-	const res = await fetch(
+	return customFetch<getApiV1AuditRepositoriesRepositoryResponse>(
 		getGetApiV1AuditRepositoriesRepositoryUrl(repository, params),
 		{
 			...options,
 			method: "GET",
 		},
 	);
-
-	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-	const data: getApiV1AuditRepositoriesRepositoryResponse["data"] = body
-		? JSON.parse(body)
-		: {};
-	return {
-		data,
-		status: res.status,
-		headers: res.headers,
-	} as getApiV1AuditRepositoriesRepositoryResponse;
 };
 
 export const getGetApiV1AuditRepositoriesRepositoryQueryKey = (
@@ -313,7 +297,7 @@ export const getGetApiV1AuditRepositoriesRepositoryQueryKey = (
 
 export const getGetApiV1AuditRepositoriesRepositoryQueryOptions = <
 	TData = Awaited<ReturnType<typeof getApiV1AuditRepositoriesRepository>>,
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 >(
 	repository: string,
 	params?: GetApiV1AuditRepositoriesRepositoryParams,
@@ -325,10 +309,10 @@ export const getGetApiV1AuditRepositoriesRepositoryQueryOptions = <
 				TData
 			>
 		>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 ) => {
-	const { query: queryOptions, fetch: fetchOptions } = options ?? {};
+	const { query: queryOptions, request: requestOptions } = options ?? {};
 
 	const queryKey =
 		queryOptions?.queryKey ??
@@ -339,7 +323,7 @@ export const getGetApiV1AuditRepositoriesRepositoryQueryOptions = <
 	> = ({ signal }) =>
 		getApiV1AuditRepositoriesRepository(repository, params, {
 			signal,
-			...fetchOptions,
+			...requestOptions,
 		});
 
 	return {
@@ -357,11 +341,11 @@ export const getGetApiV1AuditRepositoriesRepositoryQueryOptions = <
 export type GetApiV1AuditRepositoriesRepositoryQueryResult = NonNullable<
 	Awaited<ReturnType<typeof getApiV1AuditRepositoriesRepository>>
 >;
-export type GetApiV1AuditRepositoriesRepositoryQueryError = ApiError;
+export type GetApiV1AuditRepositoriesRepositoryQueryError = ErrorType<ApiError>;
 
 export function useGetApiV1AuditRepositoriesRepository<
 	TData = Awaited<ReturnType<typeof getApiV1AuditRepositoriesRepository>>,
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 >(
 	repository: string,
 	params: undefined | GetApiV1AuditRepositoriesRepositoryParams,
@@ -381,7 +365,7 @@ export function useGetApiV1AuditRepositoriesRepository<
 				>,
 				"initialData"
 			>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): DefinedUseQueryResult<TData, TError> & {
@@ -389,7 +373,7 @@ export function useGetApiV1AuditRepositoriesRepository<
 };
 export function useGetApiV1AuditRepositoriesRepository<
 	TData = Awaited<ReturnType<typeof getApiV1AuditRepositoriesRepository>>,
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 >(
 	repository: string,
 	params?: GetApiV1AuditRepositoriesRepositoryParams,
@@ -409,7 +393,7 @@ export function useGetApiV1AuditRepositoriesRepository<
 				>,
 				"initialData"
 			>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & {
@@ -417,7 +401,7 @@ export function useGetApiV1AuditRepositoriesRepository<
 };
 export function useGetApiV1AuditRepositoriesRepository<
 	TData = Awaited<ReturnType<typeof getApiV1AuditRepositoriesRepository>>,
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 >(
 	repository: string,
 	params?: GetApiV1AuditRepositoriesRepositoryParams,
@@ -429,7 +413,7 @@ export function useGetApiV1AuditRepositoriesRepository<
 				TData
 			>
 		>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & {
@@ -441,7 +425,7 @@ export function useGetApiV1AuditRepositoriesRepository<
 
 export function useGetApiV1AuditRepositoriesRepository<
 	TData = Awaited<ReturnType<typeof getApiV1AuditRepositoriesRepository>>,
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 >(
 	repository: string,
 	params?: GetApiV1AuditRepositoriesRepositoryParams,
@@ -453,7 +437,7 @@ export function useGetApiV1AuditRepositoriesRepository<
 				TData
 			>
 		>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & {
@@ -531,24 +515,13 @@ export const getApiV1AuditSessionsSessionId = async (
 	params?: GetApiV1AuditSessionsSessionIdParams,
 	options?: RequestInit,
 ): Promise<getApiV1AuditSessionsSessionIdResponse> => {
-	const res = await fetch(
+	return customFetch<getApiV1AuditSessionsSessionIdResponse>(
 		getGetApiV1AuditSessionsSessionIdUrl(sessionId, params),
 		{
 			...options,
 			method: "GET",
 		},
 	);
-
-	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-	const data: getApiV1AuditSessionsSessionIdResponse["data"] = body
-		? JSON.parse(body)
-		: {};
-	return {
-		data,
-		status: res.status,
-		headers: res.headers,
-	} as getApiV1AuditSessionsSessionIdResponse;
 };
 
 export const getGetApiV1AuditSessionsSessionIdQueryKey = (
@@ -563,7 +536,7 @@ export const getGetApiV1AuditSessionsSessionIdQueryKey = (
 
 export const getGetApiV1AuditSessionsSessionIdQueryOptions = <
 	TData = Awaited<ReturnType<typeof getApiV1AuditSessionsSessionId>>,
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 >(
 	sessionId: string,
 	params?: GetApiV1AuditSessionsSessionIdParams,
@@ -575,10 +548,10 @@ export const getGetApiV1AuditSessionsSessionIdQueryOptions = <
 				TData
 			>
 		>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 ) => {
-	const { query: queryOptions, fetch: fetchOptions } = options ?? {};
+	const { query: queryOptions, request: requestOptions } = options ?? {};
 
 	const queryKey =
 		queryOptions?.queryKey ??
@@ -589,7 +562,7 @@ export const getGetApiV1AuditSessionsSessionIdQueryOptions = <
 	> = ({ signal }) =>
 		getApiV1AuditSessionsSessionId(sessionId, params, {
 			signal,
-			...fetchOptions,
+			...requestOptions,
 		});
 
 	return {
@@ -607,11 +580,11 @@ export const getGetApiV1AuditSessionsSessionIdQueryOptions = <
 export type GetApiV1AuditSessionsSessionIdQueryResult = NonNullable<
 	Awaited<ReturnType<typeof getApiV1AuditSessionsSessionId>>
 >;
-export type GetApiV1AuditSessionsSessionIdQueryError = ApiError;
+export type GetApiV1AuditSessionsSessionIdQueryError = ErrorType<ApiError>;
 
 export function useGetApiV1AuditSessionsSessionId<
 	TData = Awaited<ReturnType<typeof getApiV1AuditSessionsSessionId>>,
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 >(
 	sessionId: string,
 	params: undefined | GetApiV1AuditSessionsSessionIdParams,
@@ -631,7 +604,7 @@ export function useGetApiV1AuditSessionsSessionId<
 				>,
 				"initialData"
 			>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): DefinedUseQueryResult<TData, TError> & {
@@ -639,7 +612,7 @@ export function useGetApiV1AuditSessionsSessionId<
 };
 export function useGetApiV1AuditSessionsSessionId<
 	TData = Awaited<ReturnType<typeof getApiV1AuditSessionsSessionId>>,
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 >(
 	sessionId: string,
 	params?: GetApiV1AuditSessionsSessionIdParams,
@@ -659,7 +632,7 @@ export function useGetApiV1AuditSessionsSessionId<
 				>,
 				"initialData"
 			>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & {
@@ -667,7 +640,7 @@ export function useGetApiV1AuditSessionsSessionId<
 };
 export function useGetApiV1AuditSessionsSessionId<
 	TData = Awaited<ReturnType<typeof getApiV1AuditSessionsSessionId>>,
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 >(
 	sessionId: string,
 	params?: GetApiV1AuditSessionsSessionIdParams,
@@ -679,7 +652,7 @@ export function useGetApiV1AuditSessionsSessionId<
 				TData
 			>
 		>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & {
@@ -691,7 +664,7 @@ export function useGetApiV1AuditSessionsSessionId<
 
 export function useGetApiV1AuditSessionsSessionId<
 	TData = Awaited<ReturnType<typeof getApiV1AuditSessionsSessionId>>,
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 >(
 	sessionId: string,
 	params?: GetApiV1AuditSessionsSessionIdParams,
@@ -703,7 +676,7 @@ export function useGetApiV1AuditSessionsSessionId<
 				TData
 			>
 		>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & {
@@ -767,24 +740,13 @@ export const getApiV1AuditSessionsSessionIdSummary = async (
 	sessionId: string,
 	options?: RequestInit,
 ): Promise<getApiV1AuditSessionsSessionIdSummaryResponse> => {
-	const res = await fetch(
+	return customFetch<getApiV1AuditSessionsSessionIdSummaryResponse>(
 		getGetApiV1AuditSessionsSessionIdSummaryUrl(sessionId),
 		{
 			...options,
 			method: "GET",
 		},
 	);
-
-	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-	const data: getApiV1AuditSessionsSessionIdSummaryResponse["data"] = body
-		? JSON.parse(body)
-		: {};
-	return {
-		data,
-		status: res.status,
-		headers: res.headers,
-	} as getApiV1AuditSessionsSessionIdSummaryResponse;
 };
 
 export const getGetApiV1AuditSessionsSessionIdSummaryQueryKey = (
@@ -795,7 +757,7 @@ export const getGetApiV1AuditSessionsSessionIdSummaryQueryKey = (
 
 export const getGetApiV1AuditSessionsSessionIdSummaryQueryOptions = <
 	TData = Awaited<ReturnType<typeof getApiV1AuditSessionsSessionIdSummary>>,
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 >(
 	sessionId: string,
 	options?: {
@@ -806,10 +768,10 @@ export const getGetApiV1AuditSessionsSessionIdSummaryQueryOptions = <
 				TData
 			>
 		>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 ) => {
-	const { query: queryOptions, fetch: fetchOptions } = options ?? {};
+	const { query: queryOptions, request: requestOptions } = options ?? {};
 
 	const queryKey =
 		queryOptions?.queryKey ??
@@ -820,7 +782,7 @@ export const getGetApiV1AuditSessionsSessionIdSummaryQueryOptions = <
 	> = ({ signal }) =>
 		getApiV1AuditSessionsSessionIdSummary(sessionId, {
 			signal,
-			...fetchOptions,
+			...requestOptions,
 		});
 
 	return {
@@ -838,11 +800,12 @@ export const getGetApiV1AuditSessionsSessionIdSummaryQueryOptions = <
 export type GetApiV1AuditSessionsSessionIdSummaryQueryResult = NonNullable<
 	Awaited<ReturnType<typeof getApiV1AuditSessionsSessionIdSummary>>
 >;
-export type GetApiV1AuditSessionsSessionIdSummaryQueryError = ApiError;
+export type GetApiV1AuditSessionsSessionIdSummaryQueryError =
+	ErrorType<ApiError>;
 
 export function useGetApiV1AuditSessionsSessionIdSummary<
 	TData = Awaited<ReturnType<typeof getApiV1AuditSessionsSessionIdSummary>>,
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 >(
 	sessionId: string,
 	options: {
@@ -861,7 +824,7 @@ export function useGetApiV1AuditSessionsSessionIdSummary<
 				>,
 				"initialData"
 			>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): DefinedUseQueryResult<TData, TError> & {
@@ -869,7 +832,7 @@ export function useGetApiV1AuditSessionsSessionIdSummary<
 };
 export function useGetApiV1AuditSessionsSessionIdSummary<
 	TData = Awaited<ReturnType<typeof getApiV1AuditSessionsSessionIdSummary>>,
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 >(
 	sessionId: string,
 	options?: {
@@ -888,7 +851,7 @@ export function useGetApiV1AuditSessionsSessionIdSummary<
 				>,
 				"initialData"
 			>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & {
@@ -896,7 +859,7 @@ export function useGetApiV1AuditSessionsSessionIdSummary<
 };
 export function useGetApiV1AuditSessionsSessionIdSummary<
 	TData = Awaited<ReturnType<typeof getApiV1AuditSessionsSessionIdSummary>>,
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 >(
 	sessionId: string,
 	options?: {
@@ -907,7 +870,7 @@ export function useGetApiV1AuditSessionsSessionIdSummary<
 				TData
 			>
 		>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & {
@@ -919,7 +882,7 @@ export function useGetApiV1AuditSessionsSessionIdSummary<
 
 export function useGetApiV1AuditSessionsSessionIdSummary<
 	TData = Awaited<ReturnType<typeof getApiV1AuditSessionsSessionIdSummary>>,
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 >(
 	sessionId: string,
 	options?: {
@@ -930,7 +893,7 @@ export function useGetApiV1AuditSessionsSessionIdSummary<
 				TData
 			>
 		>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & {
@@ -996,19 +959,10 @@ export const getApiV1AuditId = async (
 	id: string,
 	options?: RequestInit,
 ): Promise<getApiV1AuditIdResponse> => {
-	const res = await fetch(getGetApiV1AuditIdUrl(id), {
+	return customFetch<getApiV1AuditIdResponse>(getGetApiV1AuditIdUrl(id), {
 		...options,
 		method: "GET",
 	});
-
-	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-	const data: getApiV1AuditIdResponse["data"] = body ? JSON.parse(body) : {};
-	return {
-		data,
-		status: res.status,
-		headers: res.headers,
-	} as getApiV1AuditIdResponse;
 };
 
 export const getGetApiV1AuditIdQueryKey = (id: string) => {
@@ -1017,7 +971,7 @@ export const getGetApiV1AuditIdQueryKey = (id: string) => {
 
 export const getGetApiV1AuditIdQueryOptions = <
 	TData = Awaited<ReturnType<typeof getApiV1AuditId>>,
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 >(
 	id: string,
 	options?: {
@@ -1028,16 +982,16 @@ export const getGetApiV1AuditIdQueryOptions = <
 				TData
 			>
 		>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 ) => {
-	const { query: queryOptions, fetch: fetchOptions } = options ?? {};
+	const { query: queryOptions, request: requestOptions } = options ?? {};
 
 	const queryKey = queryOptions?.queryKey ?? getGetApiV1AuditIdQueryKey(id);
 
 	const queryFn: QueryFunction<Awaited<ReturnType<typeof getApiV1AuditId>>> = ({
 		signal,
-	}) => getApiV1AuditId(id, { signal, ...fetchOptions });
+	}) => getApiV1AuditId(id, { signal, ...requestOptions });
 
 	return {
 		queryKey,
@@ -1054,11 +1008,11 @@ export const getGetApiV1AuditIdQueryOptions = <
 export type GetApiV1AuditIdQueryResult = NonNullable<
 	Awaited<ReturnType<typeof getApiV1AuditId>>
 >;
-export type GetApiV1AuditIdQueryError = ApiError;
+export type GetApiV1AuditIdQueryError = ErrorType<ApiError>;
 
 export function useGetApiV1AuditId<
 	TData = Awaited<ReturnType<typeof getApiV1AuditId>>,
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 >(
 	id: string,
 	options: {
@@ -1077,7 +1031,7 @@ export function useGetApiV1AuditId<
 				>,
 				"initialData"
 			>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): DefinedUseQueryResult<TData, TError> & {
@@ -1085,7 +1039,7 @@ export function useGetApiV1AuditId<
 };
 export function useGetApiV1AuditId<
 	TData = Awaited<ReturnType<typeof getApiV1AuditId>>,
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 >(
 	id: string,
 	options?: {
@@ -1104,7 +1058,7 @@ export function useGetApiV1AuditId<
 				>,
 				"initialData"
 			>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & {
@@ -1112,7 +1066,7 @@ export function useGetApiV1AuditId<
 };
 export function useGetApiV1AuditId<
 	TData = Awaited<ReturnType<typeof getApiV1AuditId>>,
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 >(
 	id: string,
 	options?: {
@@ -1123,7 +1077,7 @@ export function useGetApiV1AuditId<
 				TData
 			>
 		>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & {
@@ -1135,7 +1089,7 @@ export function useGetApiV1AuditId<
 
 export function useGetApiV1AuditId<
 	TData = Awaited<ReturnType<typeof getApiV1AuditId>>,
-	TError = ApiError,
+	TError = ErrorType<ApiError>,
 >(
 	id: string,
 	options?: {
@@ -1146,7 +1100,7 @@ export function useGetApiV1AuditId<
 				TData
 			>
 		>;
-		fetch?: RequestInit;
+		request?: SecondParameter<typeof customFetch>;
 	},
 	queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & {
