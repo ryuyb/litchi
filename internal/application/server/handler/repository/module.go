@@ -4,6 +4,7 @@ package repository
 import (
 	"go.uber.org/fx"
 
+	authmiddleware "github.com/ryuyb/litchi/internal/application/server/middleware/auth"
 	"github.com/ryuyb/litchi/internal/application/server/router"
 )
 
@@ -13,7 +14,7 @@ var Module = fx.Module("repository-handler",
 	fx.Provide(NewHandler),
 
 	// Invoke - register routes with APIRouter
-	fx.Invoke(func(apiRouter router.APIRouter, h *Handler) {
-		RegisterRoutes(apiRouter, h)
+	fx.Invoke(func(apiRouter router.APIRouter, h *Handler, auth *authmiddleware.Middleware) {
+		RegisterRoutes(apiRouter, h, auth)
 	}),
 )

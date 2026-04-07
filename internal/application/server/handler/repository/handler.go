@@ -6,6 +6,7 @@ import (
 	"go.uber.org/fx"
 
 	"github.com/ryuyb/litchi/internal/application/dto"
+	authmiddleware "github.com/ryuyb/litchi/internal/application/server/middleware/auth"
 	"github.com/ryuyb/litchi/internal/application/service"
 	"github.com/ryuyb/litchi/internal/domain/entity"
 	domainrepo "github.com/ryuyb/litchi/internal/domain/repository"
@@ -171,13 +172,16 @@ func (h *Handler) CreateRepository(c fiber.Ctx) error {
 		}
 	}
 
+	// Get authenticated user from context
+	user := authmiddleware.GetUserFromContext(c)
+	actorUsername := user.Username
+
 	// Create repository via service
-	// TODO: Replace "api_user" with actual user from auth context after implementing auth middleware
 	repo, err := h.repoService.CreateRepository(
 		ctx,
 		req.Name,
 		configOverrides,
-		"api_user", // Default actor for API operations
+		actorUsername,
 		valueobject.ActorRoleAdmin,
 	)
 	if err != nil {
@@ -230,12 +234,16 @@ func (h *Handler) UpdateRepository(c fiber.Ctx) error {
 		TaskRetryLimit:      req.Config.TaskRetryLimit,
 	}
 
+	// Get authenticated user from context
+	user := authmiddleware.GetUserFromContext(c)
+	actorUsername := user.Username
+
 	// Update repository via service
 	repo, err := h.repoService.UpdateRepository(
 		ctx,
 		name,
 		configOverrides,
-		"api_user",
+		actorUsername,
 		valueobject.ActorRoleAdmin,
 	)
 	if err != nil {
@@ -270,10 +278,14 @@ func (h *Handler) DeleteRepository(c fiber.Ctx) error {
 			WithDetail("repository name is required")
 	}
 
+	// Get authenticated user from context
+	user := authmiddleware.GetUserFromContext(c)
+	actorUsername := user.Username
+
 	err := h.repoService.DeleteRepository(
 		ctx,
 		name,
-		"api_user",
+		actorUsername,
 		valueobject.ActorRoleAdmin,
 	)
 	if err != nil {
@@ -310,10 +322,14 @@ func (h *Handler) EnableRepository(c fiber.Ctx) error {
 			WithDetail("repository name is required")
 	}
 
+	// Get authenticated user from context
+	user := authmiddleware.GetUserFromContext(c)
+	actorUsername := user.Username
+
 	err := h.repoService.EnableRepository(
 		ctx,
 		name,
-		"api_user",
+		actorUsername,
 		valueobject.ActorRoleAdmin,
 	)
 	if err != nil {
@@ -350,10 +366,14 @@ func (h *Handler) DisableRepository(c fiber.Ctx) error {
 			WithDetail("repository name is required")
 	}
 
+	// Get authenticated user from context
+	user := authmiddleware.GetUserFromContext(c)
+	actorUsername := user.Username
+
 	err := h.repoService.DisableRepository(
 		ctx,
 		name,
-		"api_user",
+		actorUsername,
 		valueobject.ActorRoleAdmin,
 	)
 	if err != nil {
@@ -480,12 +500,16 @@ func (h *Handler) UpdateValidationConfig(c fiber.Ctx) error {
 	// Convert DTO to domain value object
 	config := dto.ToValidationConfig(req.Config)
 
+	// Get authenticated user from context
+	user := authmiddleware.GetUserFromContext(c)
+	actorUsername := user.Username
+
 	// Update validation config via service
 	updatedConfig, err := h.repoService.UpdateValidationConfig(
 		ctx,
 		name,
 		config,
-		"api_user",
+		actorUsername,
 		valueobject.ActorRoleAdmin,
 	)
 	if err != nil {

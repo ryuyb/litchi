@@ -3,6 +3,8 @@ package repository
 
 import (
 	"github.com/gofiber/fiber/v3"
+
+	authmiddleware "github.com/ryuyb/litchi/internal/application/server/middleware/auth"
 )
 
 // RegisterRoutes registers repository management routes on the router.
@@ -20,8 +22,13 @@ import (
 //   - PUT    /repositories/:name/validation-config  - UpdateValidationConfig
 //   - GET    /repositories/:name/detection   - GetDetectionResult
 //   - POST   /repositories/:name/detection   - RunDetection
-func RegisterRoutes(router fiber.Router, handler *Handler) {
+//
+// All routes require authentication and admin role.
+func RegisterRoutes(router fiber.Router, handler *Handler, authMiddleware *authmiddleware.Middleware) {
 	repos := router.Group("/repositories")
+
+	// All repository routes require authentication and admin role
+	repos.Use(authMiddleware.RequireAuth(), authMiddleware.RequireAdmin())
 
 	// CRUD operations
 	repos.Get("/", handler.ListRepositories)
