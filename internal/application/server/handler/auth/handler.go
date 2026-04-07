@@ -44,12 +44,12 @@ func NewHandler(p HandlerParams) *Handler {
 type LoginRequest struct {
 	Username string `json:"username" validate:"required,min=3,max=50"`
 	Password string `json:"password" validate:"required,min=6"`
-}
+} // @name AuthLoginRequest
 
 // LoginResponse represents the login response.
 type LoginResponse struct {
 	User *UserResponse `json:"user"`
-}
+} // @name AuthLoginResponse
 
 // UserResponse represents user information in responses.
 type UserResponse struct {
@@ -57,7 +57,7 @@ type UserResponse struct {
 	Username  string `json:"username"`
 	Role      string `json:"role"`
 	CreatedAt string `json:"createdAt"`
-}
+} // @name AuthUserResponse
 
 // Login handles user login.
 // @Summary        User login

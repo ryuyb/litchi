@@ -9,6 +9,7 @@ export {
 	STORAGE_KEYS,
 	sidebarActions,
 } from "./app-store";
+export { authActions, authStore } from "./auth-store";
 export {
 	createPersistentStore,
 	loadFromStorage,

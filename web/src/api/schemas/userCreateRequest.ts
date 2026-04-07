@@ -5,12 +5,12 @@
  * Automated development agent system - from GitHub Issue to Pull Request
  * OpenAPI spec version: 0.1.0
  */
-import type { InternalApplicationServerHandlerUserCreateUserRequestRole } from "./internalApplicationServerHandlerUserCreateUserRequestRole";
+import type { UserCreateRequestRole } from "./userCreateRequestRole";
 
-export interface InternalApplicationServerHandlerUserCreateUserRequest {
+export interface UserCreateRequest {
 	/** @minLength 6 */
 	password: string;
-	role: InternalApplicationServerHandlerUserCreateUserRequestRole;
+	role: UserCreateRequestRole;
 	/**
 	 * @minLength 3
 	 * @maxLength 50

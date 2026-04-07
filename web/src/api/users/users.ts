@@ -27,10 +27,10 @@ import { customFetch } from "../../lib/custom-fetch";
 import type {
 	ApiError,
 	GetApiV1UsersParams,
-	GithubComRyuybLitchiInternalApplicationServerHandlerUserUserListResponse,
-	GithubComRyuybLitchiInternalApplicationServerHandlerUserUserResponse,
 	PostApiV1UsersBody,
 	PutApiV1UsersIdBody,
+	UserListResponse,
+	UserResponse,
 } from "../schemas";
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
@@ -40,7 +40,7 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  * @summary List users
  */
 export type getApiV1UsersResponse200 = {
-	data: GithubComRyuybLitchiInternalApplicationServerHandlerUserUserListResponse;
+	data: UserListResponse;
 	status: 200;
 };
 
@@ -231,7 +231,7 @@ export function useGetApiV1Users<
  * @summary Create user
  */
 export type postApiV1UsersResponse201 = {
-	data: GithubComRyuybLitchiInternalApplicationServerHandlerUserUserResponse;
+	data: UserResponse;
 	status: 201;
 };
 
@@ -505,7 +505,7 @@ export const useDeleteApiV1UsersId = <
  * @summary Update user
  */
 export type putApiV1UsersIdResponse200 = {
-	data: GithubComRyuybLitchiInternalApplicationServerHandlerUserUserResponse;
+	data: UserResponse;
 	status: 200;
 };
 

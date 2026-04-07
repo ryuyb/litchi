@@ -174,6 +174,49 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
+            "AuthLoginRequest": {
+                "properties": {
+                    "password": {
+                        "minLength": 6,
+                        "type": "string"
+                    },
+                    "username": {
+                        "maxLength": 50,
+                        "minLength": 3,
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "password",
+                    "username"
+                ],
+                "type": "object"
+            },
+            "AuthLoginResponse": {
+                "properties": {
+                    "user": {
+                        "$ref": "#/components/schemas/AuthUserResponse"
+                    }
+                },
+                "type": "object"
+            },
+            "AuthUserResponse": {
+                "properties": {
+                    "createdAt": {
+                        "type": "string"
+                    },
+                    "id": {
+                        "type": "string"
+                    },
+                    "role": {
+                        "type": "string"
+                    },
+                    "username": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
             "AutoDetectionConfig": {
                 "properties": {
                     "detectedProject": {
@@ -1256,6 +1299,88 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
+            "UserCreateRequest": {
+                "properties": {
+                    "password": {
+                        "minLength": 6,
+                        "type": "string"
+                    },
+                    "role": {
+                        "enum": [
+                            "admin",
+                            "viewer"
+                        ],
+                        "type": "string"
+                    },
+                    "username": {
+                        "maxLength": 50,
+                        "minLength": 3,
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "password",
+                    "role",
+                    "username"
+                ],
+                "type": "object"
+            },
+            "UserListResponse": {
+                "properties": {
+                    "data": {
+                        "items": {
+                            "$ref": "#/components/schemas/UserResponse"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "pagination": {
+                        "$ref": "#/components/schemas/Pagination"
+                    }
+                },
+                "type": "object"
+            },
+            "UserResponse": {
+                "properties": {
+                    "createdAt": {
+                        "type": "string"
+                    },
+                    "id": {
+                        "type": "string"
+                    },
+                    "role": {
+                        "type": "string"
+                    },
+                    "updatedAt": {
+                        "type": "string"
+                    },
+                    "username": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "UserUpdateRequest": {
+                "properties": {
+                    "password": {
+                        "minLength": 6,
+                        "type": "string"
+                    },
+                    "role": {
+                        "enum": [
+                            "admin",
+                            "viewer"
+                        ],
+                        "type": "string"
+                    },
+                    "username": {
+                        "maxLength": 50,
+                        "minLength": 3,
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
             "ValidationConfig": {
                 "properties": {
                     "autoDetection": {
@@ -1334,256 +1459,6 @@ const docTemplate = `{
                     },
                     "status": {
                         "example": "processed",
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "github_com_ryuyb_litchi_internal_application_server_handler_auth.LoginRequest": {
-                "properties": {
-                    "password": {
-                        "minLength": 6,
-                        "type": "string"
-                    },
-                    "username": {
-                        "maxLength": 50,
-                        "minLength": 3,
-                        "type": "string"
-                    }
-                },
-                "required": [
-                    "password",
-                    "username"
-                ],
-                "type": "object"
-            },
-            "github_com_ryuyb_litchi_internal_application_server_handler_auth.LoginResponse": {
-                "properties": {
-                    "user": {
-                        "$ref": "#/components/schemas/github_com_ryuyb_litchi_internal_application_server_handler_auth.UserResponse"
-                    }
-                },
-                "type": "object"
-            },
-            "github_com_ryuyb_litchi_internal_application_server_handler_auth.UserResponse": {
-                "properties": {
-                    "createdAt": {
-                        "type": "string"
-                    },
-                    "id": {
-                        "type": "string"
-                    },
-                    "role": {
-                        "type": "string"
-                    },
-                    "username": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "github_com_ryuyb_litchi_internal_application_server_handler_user.CreateUserRequest": {
-                "properties": {
-                    "password": {
-                        "minLength": 6,
-                        "type": "string"
-                    },
-                    "role": {
-                        "enum": [
-                            "admin",
-                            "viewer"
-                        ],
-                        "type": "string"
-                    },
-                    "username": {
-                        "maxLength": 50,
-                        "minLength": 3,
-                        "type": "string"
-                    }
-                },
-                "required": [
-                    "password",
-                    "role",
-                    "username"
-                ],
-                "type": "object"
-            },
-            "github_com_ryuyb_litchi_internal_application_server_handler_user.UpdateUserRequest": {
-                "properties": {
-                    "password": {
-                        "minLength": 6,
-                        "type": "string"
-                    },
-                    "role": {
-                        "enum": [
-                            "admin",
-                            "viewer"
-                        ],
-                        "type": "string"
-                    },
-                    "username": {
-                        "maxLength": 50,
-                        "minLength": 3,
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "github_com_ryuyb_litchi_internal_application_server_handler_user.UserListResponse": {
-                "properties": {
-                    "data": {
-                        "items": {
-                            "$ref": "#/components/schemas/github_com_ryuyb_litchi_internal_application_server_handler_user.UserResponse"
-                        },
-                        "type": "array",
-                        "uniqueItems": false
-                    },
-                    "pagination": {
-                        "$ref": "#/components/schemas/Pagination"
-                    }
-                },
-                "type": "object"
-            },
-            "github_com_ryuyb_litchi_internal_application_server_handler_user.UserResponse": {
-                "properties": {
-                    "createdAt": {
-                        "type": "string"
-                    },
-                    "id": {
-                        "type": "string"
-                    },
-                    "role": {
-                        "type": "string"
-                    },
-                    "updatedAt": {
-                        "type": "string"
-                    },
-                    "username": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "internal_application_server_handler_auth.LoginRequest": {
-                "properties": {
-                    "password": {
-                        "minLength": 6,
-                        "type": "string"
-                    },
-                    "username": {
-                        "maxLength": 50,
-                        "minLength": 3,
-                        "type": "string"
-                    }
-                },
-                "required": [
-                    "password",
-                    "username"
-                ],
-                "type": "object"
-            },
-            "internal_application_server_handler_auth.LoginResponse": {
-                "properties": {
-                    "user": {
-                        "$ref": "#/components/schemas/internal_application_server_handler_auth.UserResponse"
-                    }
-                },
-                "type": "object"
-            },
-            "internal_application_server_handler_auth.UserResponse": {
-                "properties": {
-                    "createdAt": {
-                        "type": "string"
-                    },
-                    "id": {
-                        "type": "string"
-                    },
-                    "role": {
-                        "type": "string"
-                    },
-                    "username": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "internal_application_server_handler_user.CreateUserRequest": {
-                "properties": {
-                    "password": {
-                        "minLength": 6,
-                        "type": "string"
-                    },
-                    "role": {
-                        "enum": [
-                            "admin",
-                            "viewer"
-                        ],
-                        "type": "string"
-                    },
-                    "username": {
-                        "maxLength": 50,
-                        "minLength": 3,
-                        "type": "string"
-                    }
-                },
-                "required": [
-                    "password",
-                    "role",
-                    "username"
-                ],
-                "type": "object"
-            },
-            "internal_application_server_handler_user.UpdateUserRequest": {
-                "properties": {
-                    "password": {
-                        "minLength": 6,
-                        "type": "string"
-                    },
-                    "role": {
-                        "enum": [
-                            "admin",
-                            "viewer"
-                        ],
-                        "type": "string"
-                    },
-                    "username": {
-                        "maxLength": 50,
-                        "minLength": 3,
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "internal_application_server_handler_user.UserListResponse": {
-                "properties": {
-                    "data": {
-                        "items": {
-                            "$ref": "#/components/schemas/internal_application_server_handler_user.UserResponse"
-                        },
-                        "type": "array",
-                        "uniqueItems": false
-                    },
-                    "pagination": {
-                        "$ref": "#/components/schemas/Pagination"
-                    }
-                },
-                "type": "object"
-            },
-            "internal_application_server_handler_user.UserResponse": {
-                "properties": {
-                    "createdAt": {
-                        "type": "string"
-                    },
-                    "id": {
-                        "type": "string"
-                    },
-                    "role": {
-                        "type": "string"
-                    },
-                    "updatedAt": {
-                        "type": "string"
-                    },
-                    "username": {
                         "type": "string"
                     }
                 },
@@ -2004,7 +1879,7 @@ const docTemplate = `{
                                         "type": "object"
                                     },
                                     {
-                                        "$ref": "#/components/schemas/github_com_ryuyb_litchi_internal_application_server_handler_auth.LoginRequest",
+                                        "$ref": "#/components/schemas/AuthLoginRequest",
                                         "summary": "body",
                                         "description": "Login credentials"
                                     }
@@ -2020,7 +1895,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_ryuyb_litchi_internal_application_server_handler_auth.LoginResponse"
+                                    "$ref": "#/components/schemas/AuthLoginResponse"
                                 }
                             }
                         },
@@ -2105,7 +1980,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_ryuyb_litchi_internal_application_server_handler_auth.UserResponse"
+                                    "$ref": "#/components/schemas/AuthUserResponse"
                                 }
                             }
                         },
@@ -4040,7 +3915,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_ryuyb_litchi_internal_application_server_handler_user.UserListResponse"
+                                    "$ref": "#/components/schemas/UserListResponse"
                                 }
                             }
                         },
@@ -4093,7 +3968,7 @@ const docTemplate = `{
                                         "type": "object"
                                     },
                                     {
-                                        "$ref": "#/components/schemas/github_com_ryuyb_litchi_internal_application_server_handler_user.CreateUserRequest",
+                                        "$ref": "#/components/schemas/UserCreateRequest",
                                         "summary": "body",
                                         "description": "User creation request"
                                     }
@@ -4109,7 +3984,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_ryuyb_litchi_internal_application_server_handler_user.UserResponse"
+                                    "$ref": "#/components/schemas/UserResponse"
                                 }
                             }
                         },
@@ -4268,7 +4143,7 @@ const docTemplate = `{
                                         "type": "object"
                                     },
                                     {
-                                        "$ref": "#/components/schemas/github_com_ryuyb_litchi_internal_application_server_handler_user.UpdateUserRequest",
+                                        "$ref": "#/components/schemas/UserUpdateRequest",
                                         "summary": "body",
                                         "description": "User update request"
                                     }
@@ -4284,7 +4159,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_ryuyb_litchi_internal_application_server_handler_user.UserResponse"
+                                    "$ref": "#/components/schemas/UserResponse"
                                 }
                             }
                         },

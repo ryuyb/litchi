@@ -4,19 +4,20 @@ import {
 	Outlet,
 	redirect,
 } from "@tanstack/react-router";
-import { getApiV1AuthMe } from "#/api/auth/auth";
+import { authActions, authStore } from "#/stores";
 
 export const Route = createFileRoute("/_authenticated")({
 	beforeLoad: async ({ location }) => {
 		try {
-			const response = await getApiV1AuthMe();
+			// Use auth store to check authentication
+			const isAuthenticated = await authActions.checkAuth();
 
-			// Check if response is successful (status 200)
-			if (response.status === 200) {
-				return { user: response.data };
+			if (isAuthenticated) {
+				// Return user from store for route context
+				return { user: authStore.state.user };
 			}
 
-			// Any non-200 status means unauthenticated
+			// Not authenticated, redirect to login
 			throw redirect({
 				to: "/login",
 				search: { redirect: location.href },

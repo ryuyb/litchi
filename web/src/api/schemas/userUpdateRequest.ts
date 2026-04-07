@@ -5,13 +5,15 @@
  * Automated development agent system - from GitHub Issue to Pull Request
  * OpenAPI spec version: 0.1.0
  */
+import type { UserUpdateRequestRole } from "./userUpdateRequestRole";
 
-export interface GithubComRyuybLitchiInternalApplicationServerHandlerAuthLoginRequest {
+export interface UserUpdateRequest {
 	/** @minLength 6 */
-	password: string;
+	password?: string;
+	role?: UserUpdateRequestRole;
 	/**
 	 * @minLength 3
 	 * @maxLength 50
 	 */
-	username: string;
+	username?: string;
 }

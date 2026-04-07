@@ -7,10 +7,10 @@ import {
 import { Loader2, TerminalIcon } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
-import { usePostApiV1AuthLogin } from "#/api/auth/auth";
 import { Button } from "#/components/ui/button";
 import { Input } from "#/components/ui/input";
 import { Label } from "#/components/ui/label";
+import { authActions, authStore, useStore } from "#/stores";
 
 const loginSearchSchema = z.object({
 	redirect: z.string().optional(),
@@ -29,15 +29,7 @@ const loginSchema = z.object({
 function LoginPage() {
 	const navigate = useNavigate();
 	const search = useSearch({ from: "/login" });
-
-	const loginMutation = usePostApiV1AuthLogin({
-		mutation: {
-			onSuccess: () => {
-				toast.success("Login successful");
-				navigate({ to: search.redirect ?? "/" });
-			},
-		},
-	});
+	const isLoading = useStore(authStore, (state) => state.isLoading);
 
 	const form = useForm({
 		defaultValues: {
@@ -48,9 +40,12 @@ function LoginPage() {
 			onChange: loginSchema,
 		},
 		onSubmit: async ({ value }) => {
-			loginMutation.mutate({
-				data: { username: value.username, password: value.password },
-			});
+			const success = await authActions.login(value.username, value.password);
+			if (success) {
+				toast.success("Login successful");
+				navigate({ to: search.redirect ?? "/" });
+			}
+			// Error is already stored in authStore, global handler will show toast
 		},
 	});
 
@@ -98,7 +93,7 @@ function LoginPage() {
 											onChange={(e) => field.handleChange(e.target.value)}
 											onBlur={field.handleBlur}
 											className={`bg-background/50 border-border/50 text-foreground placeholder:text-muted-foreground/70 rounded-xl h-12 px-4 focus-visible:ring-primary/50 focus-visible:border-primary ${field.state.meta.errors.length > 0 ? "border-destructive/50 focus-visible:ring-destructive/30" : ""}`}
-											disabled={loginMutation.isPending}
+											disabled={isLoading}
 										/>
 										{field.state.meta.errors.length > 0 && (
 											<p className="text-destructive text-sm font-medium flex items-center gap-1.5 animate-slide-up-fade">
@@ -133,7 +128,7 @@ function LoginPage() {
 											onChange={(e) => field.handleChange(e.target.value)}
 											onBlur={field.handleBlur}
 											className={`bg-background/50 border-border/50 text-foreground placeholder:text-muted-foreground/70 rounded-xl h-12 px-4 focus-visible:ring-primary/50 focus-visible:border-primary ${field.state.meta.errors.length > 0 ? "border-destructive/50 focus-visible:ring-destructive/30" : ""}`}
-											disabled={loginMutation.isPending}
+											disabled={isLoading}
 										/>
 										{field.state.meta.errors.length > 0 && (
 											<p className="text-destructive text-sm font-medium flex items-center gap-1.5 animate-slide-up-fade">
@@ -155,11 +150,9 @@ function LoginPage() {
 								<Button
 									type="submit"
 									className="w-full h-12 text-base font-bold rounded-xl shadow-lg shadow-primary/25 transition-all duration-300 transform active:scale-[0.98]"
-									disabled={
-										!canSubmit || isSubmitting || loginMutation.isPending
-									}
+									disabled={!canSubmit || isSubmitting || isLoading}
 								>
-									{isSubmitting || loginMutation.isPending ? (
+									{isSubmitting || isLoading ? (
 										<>
 											<Loader2 className="mr-2 h-5 w-5 animate-spin" />
 											Signing in...

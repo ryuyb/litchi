@@ -6,9 +6,10 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface InternalApplicationServerHandlerAuthUserResponse {
+export interface UserResponse {
 	createdAt?: string;
 	id?: string;
 	role?: string;
+	updatedAt?: string;
 	username?: string;
 }

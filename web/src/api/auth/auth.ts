@@ -26,8 +26,8 @@ import type { ErrorType } from "../../lib/custom-fetch";
 import { customFetch } from "../../lib/custom-fetch";
 import type {
 	ApiError,
-	GithubComRyuybLitchiInternalApplicationServerHandlerAuthLoginResponse,
-	GithubComRyuybLitchiInternalApplicationServerHandlerAuthUserResponse,
+	AuthLoginResponse,
+	AuthUserResponse,
 	PostApiV1AuthLoginBody,
 	PostApiV1AuthLogout200,
 } from "../schemas";
@@ -39,7 +39,7 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  * @summary User login
  */
 export type postApiV1AuthLoginResponse200 = {
-	data: GithubComRyuybLitchiInternalApplicationServerHandlerAuthLoginResponse;
+	data: AuthLoginResponse;
 	status: 200;
 };
 
@@ -277,7 +277,7 @@ export const usePostApiV1AuthLogout = <
  * @summary Get current user
  */
 export type getApiV1AuthMeResponse200 = {
-	data: GithubComRyuybLitchiInternalApplicationServerHandlerAuthUserResponse;
+	data: AuthUserResponse;
 	status: 200;
 };
 

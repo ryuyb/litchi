@@ -5,10 +5,10 @@
  * Automated development agent system - from GitHub Issue to Pull Request
  * OpenAPI spec version: 0.1.0
  */
-import type { InternalApplicationServerHandlerUserUserResponse } from "./internalApplicationServerHandlerUserUserResponse";
 import type { Pagination } from "./pagination";
+import type { UserResponse } from "./userResponse";
 
-export interface InternalApplicationServerHandlerUserUserListResponse {
-	data?: InternalApplicationServerHandlerUserUserResponse[];
+export interface UserListResponse {
+	data?: UserResponse[];
 	pagination?: Pagination;
 }

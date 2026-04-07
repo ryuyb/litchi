@@ -41,14 +41,14 @@ type CreateUserRequest struct {
 	Username string `json:"username" validate:"required,min=3,max=50"`
 	Password string `json:"password" validate:"required,min=6"`
 	Role     string `json:"role" validate:"required,oneof=admin viewer"`
-}
+} // @name UserCreateRequest
 
 // UpdateUserRequest represents the update user request body.
 type UpdateUserRequest struct {
 	Username *string `json:"username" validate:"omitempty,min=3,max=50"`
 	Password *string `json:"password" validate:"omitempty,min=6"`
 	Role     *string `json:"role" validate:"omitempty,oneof=admin viewer"`
-}
+} // @name UserUpdateRequest
 
 // UserResponse represents user information in responses.
 type UserResponse struct {
@@ -57,13 +57,13 @@ type UserResponse struct {
 	Role      string `json:"role"`
 	CreatedAt string `json:"createdAt"`
 	UpdatedAt string `json:"updatedAt"`
-}
+} // @name UserResponse
 
 // UserListResponse represents a paginated list of users.
 type UserListResponse struct {
 	Data       []UserResponse    `json:"data"`
 	Pagination dto.PaginationDTO `json:"pagination"`
-}
+} // @name UserListResponse
 
 // ListUsers lists all users with pagination.
 // @Summary        List users

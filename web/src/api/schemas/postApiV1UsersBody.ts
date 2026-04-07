@@ -5,8 +5,6 @@
  * Automated development agent system - from GitHub Issue to Pull Request
  * OpenAPI spec version: 0.1.0
  */
-import type { GithubComRyuybLitchiInternalApplicationServerHandlerUserCreateUserRequest } from "./githubComRyuybLitchiInternalApplicationServerHandlerUserCreateUserRequest";
+import type { UserCreateRequest } from "./userCreateRequest";
 
-export type PostApiV1UsersBody =
-	| { [key: string]: unknown }
-	| GithubComRyuybLitchiInternalApplicationServerHandlerUserCreateUserRequest;
+export type PostApiV1UsersBody = { [key: string]: unknown } | UserCreateRequest;
