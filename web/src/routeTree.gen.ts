@@ -10,94 +10,106 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as SettingsIndexRouteImport } from './routes/settings/index'
-import { Route as RepositoriesIndexRouteImport } from './routes/repositories/index'
-import { Route as IssuesIndexRouteImport } from './routes/issues/index'
-import { Route as AuditLogsIndexRouteImport } from './routes/audit-logs/index'
-import { Route as RepositoriesNameRouteImport } from './routes/repositories/$name'
-import { Route as IssuesIdRouteImport } from './routes/issues/$id'
-import { Route as AuditLogsIdRouteImport } from './routes/audit-logs/$id'
+import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
+import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
+import { Route as AuthenticatedSettingsIndexRouteImport } from './routes/_authenticated/settings/index'
+import { Route as AuthenticatedRepositoriesIndexRouteImport } from './routes/_authenticated/repositories/index'
+import { Route as AuthenticatedIssuesIndexRouteImport } from './routes/_authenticated/issues/index'
+import { Route as AuthenticatedAuditLogsIndexRouteImport } from './routes/_authenticated/audit-logs/index'
+import { Route as AuthenticatedRepositoriesNameRouteImport } from './routes/_authenticated/repositories/$name'
+import { Route as AuthenticatedIssuesIdRouteImport } from './routes/_authenticated/issues/$id'
+import { Route as AuthenticatedAuditLogsIdRouteImport } from './routes/_authenticated/audit-logs/$id'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
+const AuthenticatedRoute = AuthenticatedRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthenticatedRoute,
 } as any)
-const SettingsIndexRoute = SettingsIndexRouteImport.update({
-  id: '/settings/',
-  path: '/settings/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RepositoriesIndexRoute = RepositoriesIndexRouteImport.update({
-  id: '/repositories/',
-  path: '/repositories/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const IssuesIndexRoute = IssuesIndexRouteImport.update({
-  id: '/issues/',
-  path: '/issues/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuditLogsIndexRoute = AuditLogsIndexRouteImport.update({
-  id: '/audit-logs/',
-  path: '/audit-logs/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RepositoriesNameRoute = RepositoriesNameRouteImport.update({
-  id: '/repositories/$name',
-  path: '/repositories/$name',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const IssuesIdRoute = IssuesIdRouteImport.update({
+const AuthenticatedSettingsIndexRoute =
+  AuthenticatedSettingsIndexRouteImport.update({
+    id: '/settings/',
+    path: '/settings/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedRepositoriesIndexRoute =
+  AuthenticatedRepositoriesIndexRouteImport.update({
+    id: '/repositories/',
+    path: '/repositories/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedIssuesIndexRoute =
+  AuthenticatedIssuesIndexRouteImport.update({
+    id: '/issues/',
+    path: '/issues/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedAuditLogsIndexRoute =
+  AuthenticatedAuditLogsIndexRouteImport.update({
+    id: '/audit-logs/',
+    path: '/audit-logs/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedRepositoriesNameRoute =
+  AuthenticatedRepositoriesNameRouteImport.update({
+    id: '/repositories/$name',
+    path: '/repositories/$name',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedIssuesIdRoute = AuthenticatedIssuesIdRouteImport.update({
   id: '/issues/$id',
   path: '/issues/$id',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthenticatedRoute,
 } as any)
-const AuditLogsIdRoute = AuditLogsIdRouteImport.update({
-  id: '/audit-logs/$id',
-  path: '/audit-logs/$id',
-  getParentRoute: () => rootRouteImport,
-} as any)
+const AuthenticatedAuditLogsIdRoute =
+  AuthenticatedAuditLogsIdRouteImport.update({
+    id: '/audit-logs/$id',
+    path: '/audit-logs/$id',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
+  '/': typeof AuthenticatedIndexRoute
   '/login': typeof LoginRoute
-  '/audit-logs/$id': typeof AuditLogsIdRoute
-  '/issues/$id': typeof IssuesIdRoute
-  '/repositories/$name': typeof RepositoriesNameRoute
-  '/audit-logs/': typeof AuditLogsIndexRoute
-  '/issues/': typeof IssuesIndexRoute
-  '/repositories/': typeof RepositoriesIndexRoute
-  '/settings/': typeof SettingsIndexRoute
+  '/audit-logs/$id': typeof AuthenticatedAuditLogsIdRoute
+  '/issues/$id': typeof AuthenticatedIssuesIdRoute
+  '/repositories/$name': typeof AuthenticatedRepositoriesNameRoute
+  '/audit-logs/': typeof AuthenticatedAuditLogsIndexRoute
+  '/issues/': typeof AuthenticatedIssuesIndexRoute
+  '/repositories/': typeof AuthenticatedRepositoriesIndexRoute
+  '/settings/': typeof AuthenticatedSettingsIndexRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
   '/login': typeof LoginRoute
-  '/audit-logs/$id': typeof AuditLogsIdRoute
-  '/issues/$id': typeof IssuesIdRoute
-  '/repositories/$name': typeof RepositoriesNameRoute
-  '/audit-logs': typeof AuditLogsIndexRoute
-  '/issues': typeof IssuesIndexRoute
-  '/repositories': typeof RepositoriesIndexRoute
-  '/settings': typeof SettingsIndexRoute
+  '/': typeof AuthenticatedIndexRoute
+  '/audit-logs/$id': typeof AuthenticatedAuditLogsIdRoute
+  '/issues/$id': typeof AuthenticatedIssuesIdRoute
+  '/repositories/$name': typeof AuthenticatedRepositoriesNameRoute
+  '/audit-logs': typeof AuthenticatedAuditLogsIndexRoute
+  '/issues': typeof AuthenticatedIssuesIndexRoute
+  '/repositories': typeof AuthenticatedRepositoriesIndexRoute
+  '/settings': typeof AuthenticatedSettingsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
-  '/audit-logs/$id': typeof AuditLogsIdRoute
-  '/issues/$id': typeof IssuesIdRoute
-  '/repositories/$name': typeof RepositoriesNameRoute
-  '/audit-logs/': typeof AuditLogsIndexRoute
-  '/issues/': typeof IssuesIndexRoute
-  '/repositories/': typeof RepositoriesIndexRoute
-  '/settings/': typeof SettingsIndexRoute
+  '/_authenticated/': typeof AuthenticatedIndexRoute
+  '/_authenticated/audit-logs/$id': typeof AuthenticatedAuditLogsIdRoute
+  '/_authenticated/issues/$id': typeof AuthenticatedIssuesIdRoute
+  '/_authenticated/repositories/$name': typeof AuthenticatedRepositoriesNameRoute
+  '/_authenticated/audit-logs/': typeof AuthenticatedAuditLogsIndexRoute
+  '/_authenticated/issues/': typeof AuthenticatedIssuesIndexRoute
+  '/_authenticated/repositories/': typeof AuthenticatedRepositoriesIndexRoute
+  '/_authenticated/settings/': typeof AuthenticatedSettingsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -113,8 +125,8 @@ export interface FileRouteTypes {
     | '/settings/'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/'
     | '/login'
+    | '/'
     | '/audit-logs/$id'
     | '/issues/$id'
     | '/repositories/$name'
@@ -124,27 +136,21 @@ export interface FileRouteTypes {
     | '/settings'
   id:
     | '__root__'
-    | '/'
+    | '/_authenticated'
     | '/login'
-    | '/audit-logs/$id'
-    | '/issues/$id'
-    | '/repositories/$name'
-    | '/audit-logs/'
-    | '/issues/'
-    | '/repositories/'
-    | '/settings/'
+    | '/_authenticated/'
+    | '/_authenticated/audit-logs/$id'
+    | '/_authenticated/issues/$id'
+    | '/_authenticated/repositories/$name'
+    | '/_authenticated/audit-logs/'
+    | '/_authenticated/issues/'
+    | '/_authenticated/repositories/'
+    | '/_authenticated/settings/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
+  AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   LoginRoute: typeof LoginRoute
-  AuditLogsIdRoute: typeof AuditLogsIdRoute
-  IssuesIdRoute: typeof IssuesIdRoute
-  RepositoriesNameRoute: typeof RepositoriesNameRoute
-  AuditLogsIndexRoute: typeof AuditLogsIndexRoute
-  IssuesIndexRoute: typeof IssuesIndexRoute
-  RepositoriesIndexRoute: typeof RepositoriesIndexRoute
-  SettingsIndexRoute: typeof SettingsIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -156,75 +162,101 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/': {
+      id: '/_authenticated/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthenticatedIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
-    '/settings/': {
-      id: '/settings/'
+    '/_authenticated/settings/': {
+      id: '/_authenticated/settings/'
       path: '/settings'
       fullPath: '/settings/'
-      preLoaderRoute: typeof SettingsIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthenticatedSettingsIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
-    '/repositories/': {
-      id: '/repositories/'
+    '/_authenticated/repositories/': {
+      id: '/_authenticated/repositories/'
       path: '/repositories'
       fullPath: '/repositories/'
-      preLoaderRoute: typeof RepositoriesIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthenticatedRepositoriesIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
-    '/issues/': {
-      id: '/issues/'
+    '/_authenticated/issues/': {
+      id: '/_authenticated/issues/'
       path: '/issues'
       fullPath: '/issues/'
-      preLoaderRoute: typeof IssuesIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthenticatedIssuesIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
-    '/audit-logs/': {
-      id: '/audit-logs/'
+    '/_authenticated/audit-logs/': {
+      id: '/_authenticated/audit-logs/'
       path: '/audit-logs'
       fullPath: '/audit-logs/'
-      preLoaderRoute: typeof AuditLogsIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthenticatedAuditLogsIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
-    '/repositories/$name': {
-      id: '/repositories/$name'
+    '/_authenticated/repositories/$name': {
+      id: '/_authenticated/repositories/$name'
       path: '/repositories/$name'
       fullPath: '/repositories/$name'
-      preLoaderRoute: typeof RepositoriesNameRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthenticatedRepositoriesNameRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
-    '/issues/$id': {
-      id: '/issues/$id'
+    '/_authenticated/issues/$id': {
+      id: '/_authenticated/issues/$id'
       path: '/issues/$id'
       fullPath: '/issues/$id'
-      preLoaderRoute: typeof IssuesIdRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthenticatedIssuesIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
-    '/audit-logs/$id': {
-      id: '/audit-logs/$id'
+    '/_authenticated/audit-logs/$id': {
+      id: '/_authenticated/audit-logs/$id'
       path: '/audit-logs/$id'
       fullPath: '/audit-logs/$id'
-      preLoaderRoute: typeof AuditLogsIdRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthenticatedAuditLogsIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
   }
 }
 
+interface AuthenticatedRouteChildren {
+  AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
+  AuthenticatedAuditLogsIdRoute: typeof AuthenticatedAuditLogsIdRoute
+  AuthenticatedIssuesIdRoute: typeof AuthenticatedIssuesIdRoute
+  AuthenticatedRepositoriesNameRoute: typeof AuthenticatedRepositoriesNameRoute
+  AuthenticatedAuditLogsIndexRoute: typeof AuthenticatedAuditLogsIndexRoute
+  AuthenticatedIssuesIndexRoute: typeof AuthenticatedIssuesIndexRoute
+  AuthenticatedRepositoriesIndexRoute: typeof AuthenticatedRepositoriesIndexRoute
+  AuthenticatedSettingsIndexRoute: typeof AuthenticatedSettingsIndexRoute
+}
+
+const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedIndexRoute: AuthenticatedIndexRoute,
+  AuthenticatedAuditLogsIdRoute: AuthenticatedAuditLogsIdRoute,
+  AuthenticatedIssuesIdRoute: AuthenticatedIssuesIdRoute,
+  AuthenticatedRepositoriesNameRoute: AuthenticatedRepositoriesNameRoute,
+  AuthenticatedAuditLogsIndexRoute: AuthenticatedAuditLogsIndexRoute,
+  AuthenticatedIssuesIndexRoute: AuthenticatedIssuesIndexRoute,
+  AuthenticatedRepositoriesIndexRoute: AuthenticatedRepositoriesIndexRoute,
+  AuthenticatedSettingsIndexRoute: AuthenticatedSettingsIndexRoute,
+}
+
+const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
+  AuthenticatedRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
+  AuthenticatedRoute: AuthenticatedRouteWithChildren,
   LoginRoute: LoginRoute,
-  AuditLogsIdRoute: AuditLogsIdRoute,
-  IssuesIdRoute: IssuesIdRoute,
-  RepositoriesNameRoute: RepositoriesNameRoute,
-  AuditLogsIndexRoute: AuditLogsIndexRoute,
-  IssuesIndexRoute: IssuesIndexRoute,
-  RepositoriesIndexRoute: RepositoriesIndexRoute,
-  SettingsIndexRoute: SettingsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

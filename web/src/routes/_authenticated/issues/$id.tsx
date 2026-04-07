@@ -38,7 +38,7 @@ import {
 } from "#/components/ui/select";
 import { rollbackStages, statusConfig } from "#/lib/session-config";
 
-export const Route = createFileRoute("/issues/$id")({
+export const Route = createFileRoute("/_authenticated/issues/$id")({
 	component: IssueDetailPage,
 });
 
@@ -66,7 +66,7 @@ function StatusBadge({ status }: { status: SessionStatus | undefined }) {
 		>
 			{config.label}
 		</span>
-	);
+	)
 }
 
 function IssueDetailPage() {
@@ -90,51 +90,51 @@ function IssueDetailPage() {
 			onSuccess: () => {
 				queryClient.invalidateQueries({
 					queryKey: getGetApiV1SessionsIdDetailQueryKey(id),
-				});
+				})
 			},
 		},
-	});
+	})
 
 	const resumeMutation = usePostApiV1SessionsIdResume({
 		mutation: {
 			onSuccess: () => {
 				queryClient.invalidateQueries({
 					queryKey: getGetApiV1SessionsIdDetailQueryKey(id),
-				});
+				})
 			},
 		},
-	});
+	})
 
 	const rollbackMutation = usePostApiV1SessionsIdRollback({
 		mutation: {
 			onSuccess: () => {
 				queryClient.invalidateQueries({
 					queryKey: getGetApiV1SessionsIdDetailQueryKey(id),
-				});
+				})
 				setRollbackStage(null);
 			},
 		},
-	});
+	})
 
 	const terminateMutation = usePostApiV1SessionsIdTerminate({
 		mutation: {
 			onSuccess: () => {
 				queryClient.invalidateQueries({
 					queryKey: getGetApiV1SessionsIdDetailQueryKey(id),
-				});
+				})
 			},
 		},
-	});
+	})
 
 	const restartMutation = usePostApiV1SessionsIdRestart({
 		mutation: {
 			onSuccess: () => {
 				queryClient.invalidateQueries({
 					queryKey: getGetApiV1SessionsIdDetailQueryKey(id),
-				});
+				})
 			},
 		},
-	});
+	})
 
 	// Loading state
 	if (isLoading) {
@@ -143,7 +143,7 @@ function IssueDetailPage() {
 				<LoaderIcon className="size-8 animate-spin text-muted-foreground" />
 				<span className="text-muted-foreground">Loading session...</span>
 			</div>
-		);
+		)
 	}
 
 	// Error state
@@ -163,7 +163,7 @@ function IssueDetailPage() {
 					</Link>
 				</Button>
 			</div>
-		);
+		)
 	}
 
 	// No session found or error response
@@ -181,7 +181,7 @@ function IssueDetailPage() {
 					</Link>
 				</Button>
 			</div>
-		);
+		)
 	}
 
 	const issue = session.issue;
@@ -375,5 +375,5 @@ function IssueDetailPage() {
 				<TaskList sessionId={id} tasks={tasks} />
 			</section>
 		</div>
-	);
+	)
 }

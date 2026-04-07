@@ -18,7 +18,7 @@ import { Label } from "#/components/ui/label";
 import { Slider } from "#/components/ui/slider";
 import { Switch } from "#/components/ui/switch";
 
-export const Route = createFileRoute("/repositories/$name")({
+export const Route = createFileRoute("/_authenticated/repositories/$name")({
 	component: RepositoryConfigPage,
 });
 
@@ -69,13 +69,13 @@ function RepositoryConfigPage() {
 				// Invalidate queries to refresh data
 				queryClient.invalidateQueries({
 					queryKey: getGetApiV1RepositoriesNameQueryKey(name),
-				});
+				})
 				queryClient.invalidateQueries({
 					queryKey: getGetApiV1RepositoriesNameEffectiveConfigQueryKey(name),
-				});
+				})
 			},
 		},
-	});
+	})
 
 	// Form state
 	const [config, setConfig] = useState<RepoConfig>({});
@@ -104,30 +104,30 @@ function RepositoryConfigPage() {
 		setConfig((prev) => ({
 			...prev,
 			[field]: numValue,
-		}));
-	};
+		}))
+	}
 
 	const handleStringChange = (field: keyof RepoConfig, value: string) => {
 		setConfig((prev) => ({
 			...prev,
 			[field]: value === "" ? undefined : value,
-		}));
-	};
+		}))
+	}
 
 	const handleBooleanChange = (field: keyof RepoConfig, value: boolean) => {
 		setConfig((prev) => ({
 			...prev,
 			[field]: value,
-		}));
-	};
+		}))
+	}
 
 	// Handle save
 	const handleSave = () => {
 		updateMutation.mutate({
 			name,
 			data: { config },
-		});
-	};
+		})
+	}
 
 	// Loading state
 	if (isLoadingRepo || isLoadingEffective) {
@@ -136,7 +136,7 @@ function RepositoryConfigPage() {
 				<LoaderIcon className="size-8 animate-spin text-muted-foreground" />
 				<span className="text-muted-foreground">Loading configuration...</span>
 			</div>
-		);
+		)
 	}
 
 	// Error state
@@ -160,7 +160,7 @@ function RepositoryConfigPage() {
 					</Button>
 				</section>
 			</div>
-		);
+		)
 	}
 
 	// No repository found
@@ -178,7 +178,7 @@ function RepositoryConfigPage() {
 					</Link>
 				</Button>
 			</div>
-		);
+		)
 	}
 
 	return (
@@ -462,5 +462,5 @@ function RepositoryConfigPage() {
 				</section>
 			)}
 		</div>
-	);
+	)
 }

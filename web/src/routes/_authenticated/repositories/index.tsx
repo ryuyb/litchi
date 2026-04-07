@@ -57,7 +57,7 @@ const repositorySchema = z.object({
 		}),
 });
 
-export const Route = createFileRoute("/repositories/")({
+export const Route = createFileRoute("/_authenticated/repositories/")({
 	component: RepositoriesPage,
 });
 
@@ -75,20 +75,20 @@ function RepositoryRowActions({ repository }: RepositoryRowActionsProps) {
 			onSuccess: () => {
 				queryClient.invalidateQueries({
 					queryKey: ["getApiV1Repositories"],
-				});
+				})
 			},
 		},
-	});
+	})
 
 	const disableMutation = usePostApiV1RepositoriesNameDisable({
 		mutation: {
 			onSuccess: () => {
 				queryClient.invalidateQueries({
 					queryKey: ["getApiV1Repositories"],
-				});
+				})
 			},
 		},
-	});
+	})
 
 	return (
 		<div className="flex gap-2 items-center">
@@ -127,7 +127,7 @@ function RepositoryRowActions({ repository }: RepositoryRowActionsProps) {
 				</Button>
 			)}
 		</div>
-	);
+	)
 }
 
 const columns: ColumnDef<Repository>[] = [
@@ -156,14 +156,14 @@ const columns: ColumnDef<Repository>[] = [
 						<span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_5px_rgba(16,185,129,0.8)]"></span>
 						Active
 					</span>
-				);
+				)
 			}
 			return (
 				<span className="relative inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
 					<span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
 					Inactive
 				</span>
-			);
+			)
 		},
 	},
 	{
@@ -177,14 +177,14 @@ const columns: ColumnDef<Repository>[] = [
 						<CheckCircleIcon size={12} />
 						Installed
 					</span>
-				);
+				)
 			}
 			return (
 				<span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
 					<XCircleIcon size={12} />
 					Not Installed
 				</span>
-			);
+			)
 		},
 	},
 	{
@@ -209,10 +209,10 @@ function AddRepositorySheet({ open, onOpenChange }: AddRepositorySheetProps) {
 				form.reset();
 				queryClient.invalidateQueries({
 					queryKey: ["getApiV1Repositories"],
-				});
+				})
 			},
 		},
-	});
+	})
 
 	const form = useForm({
 		defaultValues: {
@@ -224,7 +224,7 @@ function AddRepositorySheet({ open, onOpenChange }: AddRepositorySheetProps) {
 		onSubmit: async ({ value }) => {
 			createMutation.mutate({ data: { name: value.name } });
 		},
-	});
+	})
 
 	return (
 		<Sheet open={open} onOpenChange={onOpenChange}>
@@ -344,7 +344,7 @@ function AddRepositorySheet({ open, onOpenChange }: AddRepositorySheetProps) {
 				</form>
 			</SheetContent>
 		</Sheet>
-	);
+	)
 }
 
 function RepositoriesPage() {
@@ -356,7 +356,7 @@ function RepositoriesPage() {
 	const { data, isLoading, isError, error } = useGetApiV1Repositories({
 		page,
 		pageSize,
-	});
+	})
 
 	const isSuccess = data?.status === 200;
 	const repositories: Repository[] = isSuccess ? (data.data.data ?? []) : [];
@@ -447,10 +447,10 @@ function RepositoriesPage() {
 							Rows per page
 						</span>
 						<Select
-							value={`${pageSize}`}
+							value={"${pageSize}"}
 							onValueChange={(value) => {
 								setPageSize(Number(value));
-								setPage(1);
+								setPage(1)
 							}}
 						>
 							<SelectTrigger className="h-8 w-[70px] bg-background border-border/50">
@@ -502,5 +502,5 @@ function RepositoriesPage() {
 				onOpenChange={setIsAddSheetOpen}
 			/>
 		</div>
-	);
+	)
 }

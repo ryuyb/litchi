@@ -20,7 +20,7 @@ import {
 	workflowStages,
 } from "#/lib/session-config";
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/_authenticated/")({
 	component: Dashboard,
 });
 
@@ -38,7 +38,7 @@ function calculateStats(sessions: Session[] | undefined) {
 			pendingIssues: 0,
 			completedPRs: 0,
 			successRate: 0,
-		};
+		}
 	}
 	const activeCount = sessions.filter(
 		(s) => s.status === SessionStatus.active,
@@ -65,7 +65,7 @@ function calculateStats(sessions: Session[] | undefined) {
 		pendingIssues: pendingCount,
 		completedPRs: completedPRCount,
 		successRate,
-	};
+	}
 }
 
 function StatsCard({
@@ -114,7 +114,7 @@ function StatsCard({
 				</div>
 			</div>
 		</div>
-	);
+	)
 }
 
 function ActivityItem({ session, index }: { session: Session; index: number }) {
@@ -158,13 +158,13 @@ function ActivityItem({ session, index }: { session: Session; index: number }) {
 				/>
 			</div>
 		</div>
-	);
+	)
 }
 
 function Dashboard() {
 	const { data, isLoading, isError, error } = useGetApiV1Sessions({
 		pageSize: 100,
-	});
+	})
 
 	const sessions = data?.status === 200 ? data.data.data : undefined;
 	const stats = calculateStats(sessions);
@@ -284,7 +284,7 @@ function Dashboard() {
 								<div className="space-y-4">
 									{skeletonIds.map((id) => (
 										<div
-											key={`active-${id}`}
+											key={"active-${id}"}
 											className="glass-card rounded-xl p-4 flex justify-between items-center"
 										>
 											<div className="flex gap-4 items-center">
@@ -335,7 +335,7 @@ function Dashboard() {
 								<div className="space-y-4">
 									{skeletonIds.map((id) => (
 										<div
-											key={`activity-${id}`}
+											key={"activity-${id}"}
 											className="glass-card rounded-xl p-4 flex justify-between items-center"
 										>
 											<div className="flex gap-4 items-center">
@@ -426,5 +426,5 @@ function Dashboard() {
 				</div>
 			</div>
 		</div>
-	);
+	)
 }

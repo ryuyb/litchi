@@ -37,7 +37,7 @@ import {
 	statusConfig,
 } from "#/lib/session-config";
 
-export const Route = createFileRoute("/issues/")({
+export const Route = createFileRoute("/_authenticated/issues/")({
 	component: IssuesPage,
 });
 
@@ -82,7 +82,7 @@ const columns: ColumnDef<Session>[] = [
 				>
 					{stage ? stageConfig[stage].label : "unknown"}
 				</span>
-			);
+			)
 		},
 	},
 	{
@@ -97,7 +97,7 @@ const columns: ColumnDef<Session>[] = [
 				>
 					{status ? statusConfig[status].label : "unknown"}
 				</span>
-			);
+			)
 		},
 	},
 ];
@@ -122,7 +122,7 @@ function IssuesPage() {
 				? (stageFilter as GetApiV1SessionsStage)
 				: undefined,
 		repo: repoSearch || undefined,
-	};
+	}
 
 	const {
 		data: response,
@@ -141,7 +141,7 @@ function IssuesPage() {
 
 	const handleRowClick = (session: Session) => {
 		navigate({ to: `/issues/${session.id}` });
-	};
+	}
 
 	const canPreviousPage = page > 1;
 	const canNextPage = page < totalPages;
@@ -251,10 +251,10 @@ function IssuesPage() {
 							Rows per page
 						</span>
 						<Select
-							value={`${pageSize}`}
+							value={"${pageSize}"}
 							onValueChange={(value) => {
 								setPageSize(Number(value));
-								setPage(1);
+								setPage(1)
 							}}
 						>
 							<SelectTrigger className="h-8 w-[70px] bg-background border-border/50">
@@ -301,5 +301,5 @@ function IssuesPage() {
 				</div>
 			</section>
 		</div>
-	);
+	)
 }

@@ -1,5 +1,9 @@
 import { useForm } from "@tanstack/react-form";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import {
+	createFileRoute,
+	useNavigate,
+	useSearch,
+} from "@tanstack/react-router";
 import { Loader2, TerminalIcon } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -8,8 +12,13 @@ import { Button } from "#/components/ui/button";
 import { Input } from "#/components/ui/input";
 import { Label } from "#/components/ui/label";
 
+const loginSearchSchema = z.object({
+	redirect: z.string().optional(),
+});
+
 export const Route = createFileRoute("/login")({
 	component: LoginPage,
+	validateSearch: loginSearchSchema,
 });
 
 const loginSchema = z.object({
@@ -19,12 +28,13 @@ const loginSchema = z.object({
 
 function LoginPage() {
 	const navigate = useNavigate();
+	const search = useSearch({ from: "/login" });
 
 	const loginMutation = usePostApiV1AuthLogin({
 		mutation: {
 			onSuccess: () => {
 				toast.success("Login successful");
-				navigate({ to: "/" });
+				navigate({ to: search.redirect ?? "/" });
 			},
 		},
 	});

@@ -13,7 +13,7 @@ import {
 } from "#/lib/audit-config";
 import { formatDateTime } from "#/lib/date-utils";
 
-export const Route = createFileRoute("/audit-logs/$id")({
+export const Route = createFileRoute("/_authenticated/audit-logs/$id")({
 	component: AuditLogDetailPage,
 });
 
@@ -41,7 +41,7 @@ function AuditLogDetailPage() {
 				<LoaderIcon className="size-8 animate-spin text-muted-foreground" />
 				<span className="text-muted-foreground">Loading audit log...</span>
 			</div>
-		);
+		)
 	}
 
 	// Error state
@@ -61,7 +61,7 @@ function AuditLogDetailPage() {
 					</Link>
 				</Button>
 			</div>
-		);
+		)
 	}
 
 	// No log found
@@ -79,7 +79,7 @@ function AuditLogDetailPage() {
 					</Link>
 				</Button>
 			</div>
-		);
+		)
 	}
 
 	const operationDisplay = getOperationDisplay(log.operation);
@@ -292,5 +292,5 @@ function AuditLogDetailPage() {
 				</section>
 			)}
 		</div>
-	);
+	)
 }

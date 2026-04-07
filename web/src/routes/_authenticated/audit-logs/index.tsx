@@ -37,7 +37,7 @@ import {
 } from "#/lib/audit-config";
 import { formatRelativeTime } from "#/lib/date-utils";
 
-export const Route = createFileRoute("/audit-logs/")({
+export const Route = createFileRoute("/_authenticated/audit-logs/")({
 	component: AuditLogsPage,
 });
 
@@ -63,7 +63,7 @@ const columns: ColumnDef<AuditLog>[] = [
 				>
 					{display.label}
 				</span>
-			);
+			)
 		},
 	},
 	{
@@ -118,7 +118,7 @@ const columns: ColumnDef<AuditLog>[] = [
 				>
 					{display.label}
 				</span>
-			);
+			)
 		},
 	},
 	{
@@ -148,7 +148,7 @@ function AuditLogsPage() {
 		result: resultFilter !== "all" ? resultFilter : undefined,
 		repository: repoSearch || undefined,
 		actor: actorSearch || undefined,
-	};
+	}
 
 	const {
 		data: response,
@@ -169,7 +169,7 @@ function AuditLogsPage() {
 		if (log.id) {
 			navigate({ to: `/audit-logs/${log.id}` });
 		}
-	};
+	}
 
 	const handleExport = () => {
 		if (auditLogs.length === 0) return;
@@ -187,7 +187,7 @@ function AuditLogsPage() {
 			"Result",
 			"Duration (ms)",
 			"Error",
-		];
+		]
 
 		const rows = auditLogs.map((log) => [
 			log.timestamp ?? "",
@@ -202,7 +202,7 @@ function AuditLogsPage() {
 			log.result ?? "",
 			log.duration?.toString() ?? "",
 			log.error ?? "",
-		]);
+		])
 
 		const csvContent = [
 			headers.join(","),
@@ -218,7 +218,7 @@ function AuditLogsPage() {
 		link.download = `audit-logs-${new Date().toISOString().split("T")[0]}.csv`;
 		link.click();
 		URL.revokeObjectURL(url);
-	};
+	}
 
 	const canPreviousPage = page > 1;
 	const canNextPage = page < totalPages;
@@ -355,10 +355,10 @@ function AuditLogsPage() {
 							Rows per page
 						</span>
 						<Select
-							value={`${pageSize}`}
+							value={"${pageSize}"}
 							onValueChange={(value) => {
 								setPageSize(Number(value));
-								setPage(1);
+								setPage(1)
 							}}
 						>
 							<SelectTrigger className="h-8 w-[70px] bg-background border-border/50">
@@ -405,5 +405,5 @@ function AuditLogsPage() {
 				</div>
 			</section>
 		</div>
-	);
+	)
 }

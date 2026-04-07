@@ -13,7 +13,7 @@ import {
 } from "#/components/settings";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "#/components/ui/tabs";
 
-export const Route = createFileRoute("/settings/")({
+export const Route = createFileRoute("/_authenticated/settings/")({
 	component: SettingsPage,
 });
 
@@ -123,5 +123,5 @@ function SettingsPage() {
 				</Tabs>
 			</div>
 		</div>
-	);
+	)
 }
