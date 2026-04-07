@@ -5,19 +5,9 @@ import (
 	"io"
 
 	"github.com/ryuyb/litchi/internal/infrastructure/config"
-	"github.com/ryuyb/litchi/internal/pkg/fxutil"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
-
-func init() {
-	fxutil.RegisterModule(fxutil.ModuleInfo{
-		Name:     "logger",
-		Provides: []string{"*zap.Logger", "*zap.SugaredLogger", "[]io.Writer"},
-		Invokes:  []string{"RegisterLifecycle"},
-		Depends:  []string{"*config.Config"},
-	})
-}
 
 // Module provides the logger module for Fx.
 var Module = fx.Module("logger",

@@ -4,19 +4,9 @@ import (
 	"github.com/gofiber/fiber/v3"
 	"github.com/ryuyb/litchi/internal/application/server/handler"
 	"github.com/ryuyb/litchi/internal/infrastructure/config"
-	"github.com/ryuyb/litchi/internal/pkg/fxutil"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
-
-func init() {
-	fxutil.RegisterModule(fxutil.ModuleInfo{
-		Name:     "server",
-		Provides: []string{"*fiber.App"},
-		Invokes:  []string{"StartAppHook"},
-		Depends:  []string{"*zap.Logger", "*middleware.ErrorHandler", "api-handlers"},
-	})
-}
 
 // Module provides the HTTP server module for Fx.
 var Module = fx.Module("server",

@@ -16,7 +16,6 @@
 *.out
 /bin/
 /dist/
-server
 
 # Go workspace
 go.work

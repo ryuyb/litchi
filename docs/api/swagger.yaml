@@ -931,6 +931,178 @@ components:
           example: processed
           type: string
       type: object
+    github_com_ryuyb_litchi_internal_application_server_handler_auth.LoginRequest:
+      properties:
+        password:
+          minLength: 6
+          type: string
+        username:
+          maxLength: 50
+          minLength: 3
+          type: string
+      required:
+      - password
+      - username
+      type: object
+    github_com_ryuyb_litchi_internal_application_server_handler_auth.LoginResponse:
+      properties:
+        user:
+          $ref: '#/components/schemas/github_com_ryuyb_litchi_internal_application_server_handler_auth.UserResponse'
+      type: object
+    github_com_ryuyb_litchi_internal_application_server_handler_auth.UserResponse:
+      properties:
+        createdAt:
+          type: string
+        id:
+          type: string
+        role:
+          type: string
+        username:
+          type: string
+      type: object
+    github_com_ryuyb_litchi_internal_application_server_handler_user.CreateUserRequest:
+      properties:
+        password:
+          minLength: 6
+          type: string
+        role:
+          enum:
+          - admin
+          - viewer
+          type: string
+        username:
+          maxLength: 50
+          minLength: 3
+          type: string
+      required:
+      - password
+      - role
+      - username
+      type: object
+    github_com_ryuyb_litchi_internal_application_server_handler_user.UpdateUserRequest:
+      properties:
+        password:
+          minLength: 6
+          type: string
+        role:
+          enum:
+          - admin
+          - viewer
+          type: string
+        username:
+          maxLength: 50
+          minLength: 3
+          type: string
+      type: object
+    github_com_ryuyb_litchi_internal_application_server_handler_user.UserListResponse:
+      properties:
+        data:
+          items:
+            $ref: '#/components/schemas/github_com_ryuyb_litchi_internal_application_server_handler_user.UserResponse'
+          type: array
+          uniqueItems: false
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+      type: object
+    github_com_ryuyb_litchi_internal_application_server_handler_user.UserResponse:
+      properties:
+        createdAt:
+          type: string
+        id:
+          type: string
+        role:
+          type: string
+        updatedAt:
+          type: string
+        username:
+          type: string
+      type: object
+    internal_application_server_handler_auth.LoginRequest:
+      properties:
+        password:
+          minLength: 6
+          type: string
+        username:
+          maxLength: 50
+          minLength: 3
+          type: string
+      required:
+      - password
+      - username
+      type: object
+    internal_application_server_handler_auth.LoginResponse:
+      properties:
+        user:
+          $ref: '#/components/schemas/internal_application_server_handler_auth.UserResponse'
+      type: object
+    internal_application_server_handler_auth.UserResponse:
+      properties:
+        createdAt:
+          type: string
+        id:
+          type: string
+        role:
+          type: string
+        username:
+          type: string
+      type: object
+    internal_application_server_handler_user.CreateUserRequest:
+      properties:
+        password:
+          minLength: 6
+          type: string
+        role:
+          enum:
+          - admin
+          - viewer
+          type: string
+        username:
+          maxLength: 50
+          minLength: 3
+          type: string
+      required:
+      - password
+      - role
+      - username
+      type: object
+    internal_application_server_handler_user.UpdateUserRequest:
+      properties:
+        password:
+          minLength: 6
+          type: string
+        role:
+          enum:
+          - admin
+          - viewer
+          type: string
+        username:
+          maxLength: 50
+          minLength: 3
+          type: string
+      type: object
+    internal_application_server_handler_user.UserListResponse:
+      properties:
+        data:
+          items:
+            $ref: '#/components/schemas/internal_application_server_handler_user.UserResponse'
+          type: array
+          uniqueItems: false
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+      type: object
+    internal_application_server_handler_user.UserResponse:
+      properties:
+        createdAt:
+          type: string
+        id:
+          type: string
+        role:
+          type: string
+        updatedAt:
+          type: string
+        username:
+          type: string
+      type: object
 externalDocs:
   description: ""
   url: ""
@@ -1192,6 +1364,88 @@ paths:
       summary: Get session audit summary
       tags:
       - audit
+  /api/v1/auth/login:
+    post:
+      description: Authenticates a user and creates a session
+      requestBody:
+        content:
+          application/json:
+            schema:
+              oneOf:
+              - type: object
+              - $ref: '#/components/schemas/github_com_ryuyb_litchi_internal_application_server_handler_auth.LoginRequest'
+                description: Login credentials
+                summary: body
+        description: Login credentials
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/github_com_ryuyb_litchi_internal_application_server_handler_auth.LoginResponse'
+          description: Login successful
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+          description: Invalid request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+          description: Invalid credentials
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+          description: Internal server error
+      summary: User login
+      tags:
+      - auth
+  /api/v1/auth/logout:
+    post:
+      description: Clears the user session
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                additionalProperties:
+                  type: string
+                type: object
+          description: Logout successful
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+          description: Internal server error
+      summary: User logout
+      tags:
+      - auth
+  /api/v1/auth/me:
+    get:
+      description: Returns the currently authenticated user's information
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/github_com_ryuyb_litchi_internal_application_server_handler_auth.UserResponse'
+          description: Current user info
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+          description: Unauthorized
+      summary: Get current user
+      tags:
+      - auth
   /api/v1/config:
     get:
       description: Returns the current application configuration (sensitive fields
@@ -2360,6 +2614,215 @@ paths:
       summary: Skip task
       tags:
       - tasks
+  /api/v1/users:
+    get:
+      description: Retrieves a paginated list of users (admin only)
+      parameters:
+      - description: Page number (1-based)
+        in: query
+        name: page
+        schema:
+          default: 1
+          type: integer
+      - description: Items per page
+        in: query
+        name: pageSize
+        schema:
+          default: 20
+          type: integer
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/github_com_ryuyb_litchi_internal_application_server_handler_user.UserListResponse'
+          description: Users retrieved successfully
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+          description: Internal server error
+      summary: List users
+      tags:
+      - users
+    post:
+      description: Creates a new user (admin only)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              oneOf:
+              - type: object
+              - $ref: '#/components/schemas/github_com_ryuyb_litchi_internal_application_server_handler_user.CreateUserRequest'
+                description: User creation request
+                summary: body
+        description: User creation request
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/github_com_ryuyb_litchi_internal_application_server_handler_user.UserResponse'
+          description: User created successfully
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+          description: Invalid request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+          description: Forbidden
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+          description: User already exists
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+          description: Internal server error
+      summary: Create user
+      tags:
+      - users
+  /api/v1/users/{id}:
+    delete:
+      description: Deletes a user (admin only)
+      parameters:
+      - description: User ID (UUID)
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: User deleted successfully
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+          description: Invalid user ID
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+          description: User not found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+          description: Internal server error
+      summary: Delete user
+      tags:
+      - users
+    put:
+      description: Updates an existing user (admin only)
+      parameters:
+      - description: User ID (UUID)
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              oneOf:
+              - type: object
+              - $ref: '#/components/schemas/github_com_ryuyb_litchi_internal_application_server_handler_user.UpdateUserRequest'
+                description: User update request
+                summary: body
+        description: User update request
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/github_com_ryuyb_litchi_internal_application_server_handler_user.UserResponse'
+          description: User updated successfully
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+          description: Invalid request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+          description: User not found
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+          description: Username already exists
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+          description: Internal server error
+      summary: Update user
+      tags:
+      - users
   /api/v1/webhooks/github:
     post:
       description: Receives and processes GitHub webhook events with signature verification

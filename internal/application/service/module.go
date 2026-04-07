@@ -5,18 +5,9 @@ import (
 
 	"github.com/ryuyb/litchi/internal/domain/event"
 	domainservice "github.com/ryuyb/litchi/internal/domain/service"
-	"github.com/ryuyb/litchi/internal/pkg/fxutil"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
-
-func init() {
-	fxutil.RegisterModule(fxutil.ModuleInfo{
-		Name:     "application-service",
-		Provides: []string{"*IssueService", "*ConsistencyService", "*ClarificationService", "*DesignService", "*TaskService", "*PRService", "*RepositoryService", "*AuditService", "*RecoveryService", "*domainservice.DefaultSessionControlService"},
-		Depends:  []string{"*zap.Logger", "*config.Config", "*event.Dispatcher", "*repository.WorkSessionRepository", "*repository.RepositoryRepository", "*repository.AuditLogRepository", "*github.IssueService", "*github.PullRequestService", "AgentRunner", "ConflictDetector", "BranchService"},
-	})
-}
 
 // Module provides application services for Fx.
 var Module = fx.Module("application-service",

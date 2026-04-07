@@ -22,6 +22,12 @@ type PaginationDTO struct {
 	TotalPages int   `json:"totalPages" example:"5"`
 } // @name Pagination
 
+// PaginationRequest represents common pagination query parameters.
+type PaginationRequest struct {
+	Page     int `query:"page" example:"1"`
+	PageSize int `query:"pageSize" example:"20"`
+} // @name PaginationRequest
+
 // PaginatedResponse represents a paginated list response with generic data type.
 type PaginatedResponse[T any] struct {
 	Data       []T           `json:"data"`

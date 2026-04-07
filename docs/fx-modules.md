@@ -7,19 +7,15 @@
 3. **生命周期管理**：通过 fx.Lifecycle 管理资源启动和停止
 4. **可测试性**：模块可独立测试，依赖可 mock
 
-## 模块注册
+## 模块定义
 
-每个模块通过 `init()` 函数自动注册到 `fxutil.Registry`：
+每个模块通过 `fx.Module()` 定义，包含 Provider 和 Invoke：
 
 ```go
-func init() {
-    fxutil.RegisterModule(fxutil.ModuleInfo{
-        Name:     "module_name",
-        Provides: []string{"*Type"},
-        Invokes:  []string{"HookFunction"},
-        Depends:  []string{"*DependencyType"},
-    })
-}
+var Module = fx.Module("module_name",
+    fx.Provide(NewProvider),
+    fx.Invoke(RegisterLifecycle),
+)
 ```
 
 ## 当前模块列表

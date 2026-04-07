@@ -8,6 +8,7 @@ import (
 	"github.com/gofiber/fiber/v3"
 	"github.com/gofiber/fiber/v3/middleware/compress"
 	"github.com/gofiber/fiber/v3/middleware/cors"
+	"github.com/gofiber/fiber/v3/middleware/csrf"
 	"github.com/gofiber/fiber/v3/middleware/helmet"
 	"github.com/gofiber/fiber/v3/middleware/limiter"
 	"github.com/gofiber/fiber/v3/middleware/recover"
@@ -17,6 +18,7 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
+	"github.com/ryuyb/litchi/internal/application/server/middleware/auth"
 	"github.com/ryuyb/litchi/internal/infrastructure/config"
 	litchierrors "github.com/ryuyb/litchi/internal/pkg/errors"
 )
@@ -25,6 +27,8 @@ import (
 var Module = fx.Module("middleware",
 	fx.Provide(NewErrorHandler),
 	fx.Invoke(RegisterMiddlewares),
+	// Include auth module
+	fx.Options(auth.Module),
 )
 
 // MiddlewareParams contains dependencies for middleware registration.
@@ -37,7 +41,7 @@ type MiddlewareParams struct {
 }
 
 // RegisterMiddlewares registers all middlewares on the Fiber app.
-// Middlewares are registered in order: recover -> requestid -> logger -> cors -> helmet -> compress -> limiter
+// Middlewares are registered in order: recover -> requestid -> logger -> cors -> helmet -> compress -> limiter -> csrf
 func RegisterMiddlewares(p MiddlewareParams) {
 	p.Logger.Info("registering core middlewares")
 
@@ -79,6 +83,12 @@ func RegisterMiddlewares(p MiddlewareParams) {
 	if cfg.Limiter.Enabled {
 		p.App.Use(createLimiterMiddleware(p.Logger, cfg.Limiter))
 		p.Logger.Debug("middleware registered: limiter")
+	}
+
+	// 8. CSRF middleware (protects against Cross-Site Request Forgery)
+	if cfg.CSRF.Enabled {
+		p.App.Use(createCSRFMiddleware(p.Config, cfg.CSRF, p.Logger))
+		p.Logger.Debug("middleware registered: csrf")
 	}
 
 	p.Logger.Info("core middlewares registered successfully")
@@ -246,4 +256,69 @@ func createLimiterMiddleware(logger *zap.Logger, cfg config.LimiterMiddlewareCon
 			return litchierrors.New(litchierrors.ErrRateLimitExceeded)
 		},
 	})
+}
+
+// createCSRFMiddleware creates CSRF protection middleware.
+// It protects against Cross-Site Request Forgery attacks.
+func createCSRFMiddleware(appCfg *config.Config, cfg config.CSRFMiddlewareConfig, logger *zap.Logger) fiber.Handler {
+	// Default excluded paths (login, webhooks, etc.)
+	defaultExcluded := []string{
+		"/api/v1/auth/login",
+		"/api/v1/webhooks",
+	}
+
+	// Merge with configured excluded paths
+	excludedPaths := append(defaultExcluded, cfg.ExcludedPaths...)
+
+	// Parse idle timeout
+	idleTimeout := 30 * time.Minute
+	if cfg.IdleTimeout != "" {
+		if dur, err := time.ParseDuration(cfg.IdleTimeout); err == nil {
+			idleTimeout = dur
+		}
+	}
+
+	// Build CSRF config
+	csrfConfig := csrf.Config{
+		CookieName:     cfg.CookieName,
+		IdleTimeout:    idleTimeout,
+		TrustedOrigins: cfg.TrustedOrigins,
+		CookieSecure:   appCfg.Server.Mode == "release",
+		CookieHTTPOnly: true,
+		CookieSameSite: "Lax",
+		Next: func(c fiber.Ctx) bool {
+			// Skip CSRF for safe methods
+			method := c.Method()
+			if method == "GET" || method == "HEAD" || method == "OPTIONS" || method == "TRACE" {
+				return true
+			}
+
+			// Skip CSRF for excluded paths
+			path := c.Path()
+			for _, excluded := range excludedPaths {
+				if strings.HasPrefix(path, excluded) {
+					return true
+				}
+			}
+
+			return false
+		},
+		ErrorHandler: func(c fiber.Ctx, err error) error {
+			logger.Warn("csrf validation failed",
+				zap.String("ip", c.IP()),
+				zap.String("path", c.Path()),
+				zap.String("method", c.Method()),
+				zap.Error(err),
+			)
+			return litchierrors.New(litchierrors.ErrBadRequest).
+				WithDetail("CSRF token invalid or missing")
+		},
+	}
+
+	// Set defaults
+	if csrfConfig.CookieName == "" {
+		csrfConfig.CookieName = "csrf_"
+	}
+
+	return csrf.New(csrfConfig)
 }

@@ -5,11 +5,13 @@ import (
 	"go.uber.org/fx"
 
 	"github.com/ryuyb/litchi/internal/application/server/handler/audit"
+	"github.com/ryuyb/litchi/internal/application/server/handler/auth"
 	"github.com/ryuyb/litchi/internal/application/server/handler/config"
 	"github.com/ryuyb/litchi/internal/application/server/handler/health"
 	"github.com/ryuyb/litchi/internal/application/server/handler/repository"
 	"github.com/ryuyb/litchi/internal/application/server/handler/session"
 	"github.com/ryuyb/litchi/internal/application/server/handler/task"
+	"github.com/ryuyb/litchi/internal/application/server/handler/user"
 	"github.com/ryuyb/litchi/internal/application/server/handler/websocket"
 	"github.com/ryuyb/litchi/internal/application/server/middleware"
 	"github.com/ryuyb/litchi/internal/application/server/router"
@@ -25,6 +27,8 @@ var Module = fx.Module("api-handlers",
 
 	// Handler sub-modules (each handler as independent Fx Module)
 	fx.Options(
+		auth.Module,      // Auth handler (login, logout, me)
+		user.Module,      // User handler (user management)
 		session.Module,
 		task.Module,
 		config.Module,

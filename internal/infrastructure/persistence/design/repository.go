@@ -12,20 +12,10 @@ import (
 	"github.com/ryuyb/litchi/internal/domain/valueobject"
 	"github.com/ryuyb/litchi/internal/infrastructure/persistence/models"
 	"github.com/ryuyb/litchi/internal/pkg/errors"
-	"github.com/ryuyb/litchi/internal/pkg/fxutil"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 )
-
-func init() {
-	fxutil.RegisterModule(fxutil.ModuleInfo{
-		Name:     "design_repository",
-		Provides: []string{"repository.DesignRepository"},
-		Invokes:  []string{},
-		Depends:  []string{"*gorm.DB", "*zap.Logger"},
-	})
-}
 
 // Module provides the DesignRepository module for Fx.
 var Module = fx.Module("design_repository",

@@ -272,3 +272,13 @@ type WebhookDelivery struct {
 	CreatedAt      time.Time  `gorm:"autoCreateTime;index"`
 	ExpiresAt      *time.Time `gorm:"type:timestamp with time zone;index"` // expiration time (default 24h)
 }
+
+// User represents a web UI user for authentication.
+type User struct {
+	ID           uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
+	Username     string    `gorm:"type:varchar(50);unique;not null;index"`
+	PasswordHash string    `gorm:"type:varchar(255);not null"`
+	Role         string    `gorm:"type:varchar(20);not null;default:'viewer'"`
+	CreatedAt    time.Time `gorm:"autoCreateTime"`
+	UpdatedAt    time.Time `gorm:"autoUpdateTime"`
+}

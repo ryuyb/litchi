@@ -202,6 +202,13 @@ var (
 	ErrRateLimitExceeded      = ErrorCode{Code: "L4API0006", Message: "Rate limit exceeded", Category: "API", Severity: 4}
 	ErrDependencyNotMet       = ErrorCode{Code: "L4TASK0004", Message: "Task dependencies not met", Category: "DOM", Severity: 4}
 	ErrRetryLimitExceeded     = ErrorCode{Code: "L4TASK0005", Message: "Task retry limit exceeded", Category: "DOM", Severity: 4}
+	ErrUserNotFound           = ErrorCode{Code: "L4DOM0016", Message: "User not found", Category: "DOM", Severity: 4}
+	ErrUserAlreadyExists      = ErrorCode{Code: "L4DOM0017", Message: "User already exists", Category: "DOM", Severity: 4}
+	ErrInvalidCredentials     = ErrorCode{Code: "L4API0007", Message: "Invalid credentials", Category: "API", Severity: 4}
+	ErrUnauthorized           = ErrorCode{Code: "L4API0008", Message: "Unauthorized", Category: "API", Severity: 4}
+	ErrSessionExpired         = ErrorCode{Code: "L4API0009", Message: "Session expired", Category: "API", Severity: 4}
+	ErrSessionOperation      = ErrorCode{Code: "L4API0010", Message: "Session operation failed", Category: "API", Severity: 4}
+	ErrPasswordHashFailed    = ErrorCode{Code: "L4API0011", Message: "Password hashing failed", Category: "API", Severity: 4}
 
 	// Git naming convention errors
 	ErrGitBranchNamingViolation = ErrorCode{Code: "L4GIT0001", Message: "Git branch naming convention violation", Category: "GIT", Severity: 4}
@@ -255,17 +262,22 @@ func ToAPIError(err error) APIErrorCode {
 					Is(err, ErrInvalidQueryParam) || Is(err, ErrInvalidRequestBody) {
 					return APIErrBadRequest
 				}
+				// Auth errors
+				if Is(err, ErrInvalidCredentials) || Is(err, ErrUnauthorized) || Is(err, ErrSessionExpired) {
+					return APIErrUnauthorized
+				}
 			}
 			// Not found errors
 			if Is(err, ErrSessionNotFound) || Is(err, ErrIssueNotFound) ||
 				Is(err, ErrTaskNotFound) || Is(err, ErrRepositoryNotFound) ||
-				Is(err, ErrAuditLogNotFound) {
+				Is(err, ErrAuditLogNotFound) || Is(err, ErrUserNotFound) {
 				return APIErrNotFound
 			}
 			// Conflict errors
 			if Is(err, ErrVersionConflict) || Is(err, ErrSessionAlreadyExists) ||
 				Is(err, ErrSessionPaused) || Is(err, ErrSessionNotPaused) ||
-				Is(err, ErrSessionTerminated) || Is(err, ErrSessionActive) {
+				Is(err, ErrSessionTerminated) || Is(err, ErrSessionActive) ||
+				Is(err, ErrUserAlreadyExists) {
 				return APIErrConflict
 			}
 			return APIErrBadRequest

@@ -11,19 +11,9 @@ import (
 	"github.com/ryuyb/litchi/internal/infrastructure/agent/permission"
 	"github.com/ryuyb/litchi/internal/infrastructure/agent/retry"
 	"github.com/ryuyb/litchi/internal/infrastructure/config"
-	"github.com/ryuyb/litchi/internal/pkg/fxutil"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
-
-func init() {
-	fxutil.RegisterModule(fxutil.ModuleInfo{
-		Name:     "agent",
-		Provides: []string{"service.AgentRunner", "parser.OutputParser", "permission.PermissionController", "retry.RetryHandler"},
-		Invokes:  []string{"RegisterAgentLifecycle"},
-		Depends:  []string{"*config.Config", "*zap.Logger", "CacheRepository"},
-	})
-}
 
 // Module provides Agent execution via Fx.
 var Module = fx.Module("agent",

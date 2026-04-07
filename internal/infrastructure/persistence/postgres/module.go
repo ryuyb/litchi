@@ -4,18 +4,8 @@ package postgres
 import (
 	"github.com/ryuyb/litchi/internal/domain/repository"
 	"github.com/ryuyb/litchi/internal/infrastructure/persistence/postgres/repositories"
-	"github.com/ryuyb/litchi/internal/pkg/fxutil"
 	"go.uber.org/fx"
 )
-
-func init() {
-	fxutil.RegisterModule(fxutil.ModuleInfo{
-		Name:     "repositories",
-		Provides: []string{"repository.AuditLogRepository", "repository.WebhookDeliveryRepository", "repository.RepositoryRepository"},
-		Invokes:  []string{},
-		Depends:  []string{"*gorm.DB", "*zap.Logger", "*config.Config"},
-	})
-}
 
 // RepositoriesModule provides repository implementations via Fx.
 var RepositoriesModule = fx.Module("repositories",
@@ -34,6 +24,11 @@ var RepositoriesModule = fx.Module("repositories",
 		fx.Annotate(
 			repositories.NewRepositoryRepo,
 			fx.As(new(repository.RepositoryRepository)),
+		),
+		// Provide UserRepository with proper interface binding
+		fx.Annotate(
+			repositories.NewUserRepo,
+			fx.As(new(repository.UserRepository)),
 		),
 	),
 )

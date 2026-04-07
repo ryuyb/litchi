@@ -24,6 +24,7 @@ type Config struct {
 	Logging    LoggingConfig    `mapstructure:"logging"`
 	Middleware MiddlewareConfig `mapstructure:"middleware"`
 	Redis      RedisConfig      `mapstructure:"redis"`
+	Session    SessionConfig    `mapstructure:"session"`
 
 	// env holds the current environment (dev, uat, prod, etc.)
 	env Environment
@@ -53,6 +54,9 @@ func (c *Config) Validate() error {
 	}
 	if err := c.Logging.Validate(); err != nil {
 		return fmt.Errorf("logging config: %w", err)
+	}
+	if err := c.Session.Validate(); err != nil {
+		return fmt.Errorf("session config: %w", err)
 	}
 	return nil
 }
@@ -488,6 +492,43 @@ type MiddlewareConfig struct {
 	CORS      CORSMiddlewareConfig      `mapstructure:"cors"`
 	Limiter   LimiterMiddlewareConfig   `mapstructure:"limiter"`
 	Compress  CompressMiddlewareConfig  `mapstructure:"compress"`
+	CSRF      CSRFMiddlewareConfig      `mapstructure:"csrf"`
+}
+
+// SessionConfig holds session configuration.
+type SessionConfig struct {
+	IdleTimeout string `mapstructure:"idle_timeout"` // Session idle timeout (default: 24h)
+}
+
+// Validate validates session configuration.
+func (c *SessionConfig) Validate() error {
+	if c.IdleTimeout != "" {
+		if _, err := time.ParseDuration(c.IdleTimeout); err != nil {
+			return fmt.Errorf("session.idle_timeout: %w", err)
+		}
+	}
+	return nil
+}
+
+// GetIdleTimeout returns the parsed idle timeout duration with default.
+func (c *SessionConfig) GetIdleTimeout() time.Duration {
+	if c.IdleTimeout == "" {
+		return 24 * time.Hour
+	}
+	d, err := time.ParseDuration(c.IdleTimeout)
+	if err != nil {
+		return 24 * time.Hour
+	}
+	return d
+}
+
+// CSRFMiddlewareConfig holds CSRF middleware configuration.
+type CSRFMiddlewareConfig struct {
+	Enabled       bool     `mapstructure:"enabled"`
+	CookieName    string   `mapstructure:"cookie_name"`     // CSRF cookie name (default: csrf_)
+	IdleTimeout   string   `mapstructure:"idle_timeout"`    // Token idle timeout (default: 30m)
+	ExcludedPaths []string `mapstructure:"excluded_paths"`  // Paths excluded from CSRF check
+	TrustedOrigins []string `mapstructure:"trusted_origins"` // Trusted origins for unsafe requests
 }
 
 // Validate validates middleware configuration.

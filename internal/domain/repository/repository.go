@@ -217,3 +217,35 @@ type RepositoryRepository interface {
 type RepositoryFilter struct {
 	Enabled *bool // Filter by enabled status (nil means all)
 }
+
+// UserRepository defines the repository interface for User entity.
+type UserRepository interface {
+	// Create creates a new user in the database.
+	Create(ctx context.Context, user *entity.User) error
+
+	// Update updates an existing user in the database.
+	Update(ctx context.Context, user *entity.User) error
+
+	// Delete deletes a user by its ID.
+	Delete(ctx context.Context, id uuid.UUID) error
+
+	// FindByID finds a user by its ID.
+	// Returns nil if not found (no error).
+	FindByID(ctx context.Context, id uuid.UUID) (*entity.User, error)
+
+	// FindByUsername finds a user by username.
+	// Returns nil if not found (no error).
+	FindByUsername(ctx context.Context, username string) (*entity.User, error)
+
+	// ExistsByUsername checks if a user exists by username.
+	ExistsByUsername(ctx context.Context, username string) (bool, error)
+
+	// FindAll finds all users.
+	FindAll(ctx context.Context) ([]*entity.User, error)
+
+	// ListWithPagination lists users with pagination.
+	ListWithPagination(ctx context.Context, params PaginationParams) ([]*entity.User, *PaginationResult, error)
+
+	// Count returns the total number of users.
+	Count(ctx context.Context) (int64, error)
+}

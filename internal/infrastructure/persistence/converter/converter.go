@@ -711,3 +711,39 @@ func RepositoryFromModel(m *models.Repository) *entity.Repository {
 
 	return repo
 }
+
+// ============================================
+// User Conversion
+// ============================================
+
+// UserToModel converts a domain User entity to a GORM model.
+func UserToModel(user *entity.User) *models.User {
+	if user == nil {
+		return nil
+	}
+
+	return &models.User{
+		ID:           user.ID,
+		Username:     user.Username,
+		PasswordHash: user.PasswordHash,
+		Role:         string(user.Role),
+		CreatedAt:    user.CreatedAt,
+		UpdatedAt:    user.UpdatedAt,
+	}
+}
+
+// UserFromModel converts a GORM User model to a domain entity.
+func UserFromModel(m *models.User) *entity.User {
+	if m == nil {
+		return nil
+	}
+
+	return &entity.User{
+		ID:           m.ID,
+		Username:     m.Username,
+		PasswordHash: m.PasswordHash,
+		Role:         entity.UserRole(m.Role),
+		CreatedAt:    m.CreatedAt,
+		UpdatedAt:    m.UpdatedAt,
+	}
+}

@@ -176,6 +176,7 @@ middleware:
       - "Accept"
       - "Authorization"
       - "X-Request-ID"
+      - "X-Csrf-Token"
     allow_credentials: false
     expose_headers:
       - "Content-Length"
@@ -188,6 +189,18 @@ middleware:
   compress:
     enabled: true
     level: 0  # LevelDefault
+  csrf:
+    enabled: true
+    cookie_name: "csrf_"
+    idle_timeout: "30m"
+    excluded_paths:
+      - "/api/v1/auth/login"
+      - "/api/v1/webhooks"
+    trusted_origins: []
+
+# Session configuration
+session:
+  idle_timeout: "24h"  # Session idle timeout duration
 
 redis:
   enabled: false
