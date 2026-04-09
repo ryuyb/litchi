@@ -2,7 +2,7 @@
 
 **Litchi** - 自动化开发 Agent 系统，实现从 GitHub Issue 到 Pull Request 的全流程自动化。
 
-当前状态：**设计阶段**，仅有文档，尚无代码实现。
+当前状态：**开发阶段**，后端基础服务和前端框架已搭建。
 
 ## Architecture
 
@@ -21,7 +21,7 @@
 - **Data Fetching**: TanStack Query (via Orval-generated hooks)
 - **Tables/Forms**: TanStack Table + Form
 - **Styling**: Tailwind CSS + shadcn/ui
-- **State**: Zustand (client) + TanStack Query (server)
+- **State**: TanStack Store (client) + TanStack Query (server)
 - **API Generation**: Orval (from Swagger/OpenAPI)
 
 ### Layered Architecture (DDD)
@@ -50,6 +50,26 @@ Each stage supports pause/resume/rollback.
 | `docs/design/state-machine.md` | State transition rules |
 | `docs/tasks/index.md` | Task index (dependencies, progress) |
 | `docs/tasks/phases/phase-*.md` | Detailed task specs per phase |
+
+## Build & Test
+
+```bash
+# Backend
+go build ./...
+go test -short ./...          # skip integration tests (testcontainers)
+go test ./...                  # include integration tests
+go vet ./...
+
+# Frontend
+cd web && pnpm build
+cd web && pnpm test
+cd web && pnpm lint
+cd web && pnpm check           # type check (tsc --noEmit)
+cd web && pnpm orval:generate  # regenerate API client from Swagger
+
+# Swagger
+make swagger-gen               # generate OpenAPI docs + Swagger UI
+```
 
 ## Implementation Rules
 
