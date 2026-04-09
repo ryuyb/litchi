@@ -87,6 +87,7 @@ docker run -p 8080:8080 -v ./config:/app/config litchi
 
 ## Documentation
 
+- [`docs/setup.md`](docs/setup.md) — Setup guide (GitHub App, config, running locally)
 - [`docs/requirements.md`](docs/requirements.md) — Requirements spec
 - [`docs/design/architecture.md`](docs/design/architecture.md) — System architecture
 - [`docs/design/ddd.md`](docs/design/ddd.md) — Domain model
