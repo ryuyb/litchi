@@ -44,7 +44,5 @@
       "mcp__tavily__tavily-extract"
     ]
   },
-  "enabledPlugins": {
-    "cc-skills-golang@samber": true
-  }
+  "enabledPlugins": {}
 }
