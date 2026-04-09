@@ -9,6 +9,7 @@ import (
 	"github.com/ryuyb/litchi/internal/infrastructure/github"
 	"github.com/ryuyb/litchi/internal/infrastructure/persistence"
 	"github.com/ryuyb/litchi/internal/infrastructure/persistence/postgres"
+	"github.com/ryuyb/litchi/internal/infrastructure/validation"
 	"go.uber.org/fx"
 )
 
@@ -32,4 +33,6 @@ var Module = fx.Module("infrastructure",
 	agent.Module,
 	// Cache
 	cache.CacheModule,
+	// Validation (project detection, execution validation)
+	validation.Module,
 )

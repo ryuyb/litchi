@@ -1,6 +1,7 @@
 package detector
 
 import (
+	"go.uber.org/fx"
 	"context"
 	"encoding/json"
 	"slices"
@@ -20,6 +21,7 @@ type NodeJSProjectDetector struct {
 
 // NodeJSProjectDetectorParams contains dependencies for NodeJSProjectDetector.
 type NodeJSProjectDetectorParams struct {
+		fx.In
 	Executor *command.Executor
 	Logger   *zap.Logger
 }

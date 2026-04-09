@@ -1,6 +1,7 @@
 package detector
 
 import (
+	"go.uber.org/fx"
 	"context"
 	"slices"
 	"strings"
@@ -19,6 +20,7 @@ type GoProjectDetector struct {
 
 // GoProjectDetectorParams contains dependencies for GoProjectDetector.
 type GoProjectDetectorParams struct {
+		fx.In
 	Executor *command.Executor
 	Logger   *zap.Logger
 }

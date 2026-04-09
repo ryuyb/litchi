@@ -22,12 +22,12 @@ var Module = fx.Module("validation",
 	// Output parser
 	fx.Provide(validator.NewDefaultOutputParser),
 
-	// Language detectors (not exposed as interfaces, used internally)
+	// Language detectors (grouped for injection into CompositeDetector)
 	fx.Provide(
-		detector.NewGoProjectDetector,
-		detector.NewNodeJSProjectDetector,
-		detector.NewPythonProjectDetector,
-		detector.NewRustProjectDetector,
+		fx.Annotate(detector.NewGoProjectDetector, fx.ResultTags(`group:"detectors"`)),
+		fx.Annotate(detector.NewNodeJSProjectDetector, fx.ResultTags(`group:"detectors"`)),
+		fx.Annotate(detector.NewPythonProjectDetector, fx.ResultTags(`group:"detectors"`)),
+		fx.Annotate(detector.NewRustProjectDetector, fx.ResultTags(`group:"detectors"`)),
 	),
 
 	// Composite detector
@@ -68,6 +68,7 @@ var Module = fx.Module("validation",
 // CommandExecutorParams contains config for CommandExecutor.
 type CommandExecutorParams struct {
 	fx.In
+
 	Config *config.Config
 	Logger *zap.Logger
 }
@@ -95,6 +96,7 @@ func NewCommandExecutorFromConfig(p CommandExecutorParams) *command.Executor {
 // ValidationResultRepoParams contains dependencies for ValidationResultRepository.
 type ValidationResultRepoParams struct {
 	fx.In
+
 	DB     *gorm.DB
 	Logger *zap.Logger
 }

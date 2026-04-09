@@ -9,6 +9,7 @@ import (
 
 	"github.com/ryuyb/litchi/internal/domain/service"
 	"github.com/ryuyb/litchi/internal/domain/valueobject"
+	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
@@ -21,7 +22,9 @@ type CompositeDetector struct {
 
 // CompositeDetectorParams contains dependencies for CompositeDetector.
 type CompositeDetectorParams struct {
-	Detectors []service.ProjectDetector
+	fx.In
+
+	Detectors []service.ProjectDetector `group:"detectors"`
 	Logger    *zap.Logger
 }
 

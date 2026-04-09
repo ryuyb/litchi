@@ -1,6 +1,7 @@
 package detector
 
 import (
+	"go.uber.org/fx"
 	"context"
 	"slices"
 	"strings"
@@ -19,7 +20,8 @@ type PythonProjectDetector struct {
 
 // PythonProjectDetectorParams contains dependencies for PythonProjectDetector.
 type PythonProjectDetectorParams struct {
-	Executor *command.Executor
+		fx.In
+		Executor *command.Executor
 	Logger   *zap.Logger
 }
 
