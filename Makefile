@@ -76,8 +76,8 @@ clean-mocks:
 	find ./internal -name "mocks.go" -path "*/domain/*" -type f -delete
 	@echo "Mock files cleaned"
 
-# Clean all generated files including frontend dist
-clean: clean-mocks
+# Clean frontend dist
+clean-dist:
 	@echo "Cleaning frontend dist..."
 	rm -rf internal/infrastructure/static/dist
 	mkdir -p internal/infrastructure/static/dist
