@@ -1,6 +1,6 @@
 # Litchi Project Makefile
 
-.PHONY: help generate-mocks test test-short build clean swagger-gen build-embed frontend-build copy-dist dev
+.PHONY: help generate-mocks test test-short build clean swagger-gen build-embed frontend-build copy-dist dev docker-build
 
 # Default target
 help:
@@ -13,6 +13,7 @@ help:
 	@echo "  make test-short      Run short tests (skip integration tests)"
 	@echo "  make build           Build backend binary (development mode)"
 	@echo "  make build-embed     Build production binary with embedded frontend"
+	@echo "  make docker-build    Build Docker image"
 	@echo "  make frontend-build  Build frontend (TanStack Start SPA mode)"
 	@echo "  make dev             Run backend in development mode"
 	@echo "  make clean           Clean generated files"
@@ -65,6 +66,17 @@ build-embed: frontend-build copy-dist
 	@echo "Building production binary with embedded frontend..."
 	go build -tags embed -ldflags "-X main.Version=$(shell git describe --tags --always --dirty 2>/dev/null || echo dev) -X main.GitCommit=$(shell git rev-parse --short HEAD 2>/dev/null || echo unknown) -X main.BuildDate=$(shell date -u +%Y-%m-%dT%H:%M:%SZ)" ./cmd/litchi
 	@echo "Production binary ready"
+
+# Build Docker image
+docker-build:
+	@echo "Building Docker image..."
+	docker build \
+		--build-arg VERSION=$(shell git describe --tags --always --dirty 2>/dev/null || echo dev) \
+		--build-arg GIT_COMMIT=$(shell git rev-parse --short HEAD 2>/dev/null || echo unknown) \
+		--build-arg BUILD_DATE=$(shell date -u +%Y-%m-%dT%H:%M:%SZ) \
+		-t litchi:$(shell git describe --tags --always --dirty 2>/dev/null || echo dev) \
+		.
+	@echo "Docker image built: litchi:$(shell git describe --tags --always --dirty 2>/dev/null || echo dev)"
 
 # Run backend in development mode
 dev:
