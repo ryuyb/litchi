@@ -13,7 +13,7 @@ import (
 var distFS embed.FS
 
 func getFileSystem() (http.FileSystem, error) {
-	fsys, err := fs.Sub(distFS, "dist")
+	fsys, err := fs.Sub(distFS, "dist/client")
 	if err != nil {
 		return nil, fmt.Errorf("failed to create sub filesystem from embedded dist: %w", err)
 	}
