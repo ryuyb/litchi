@@ -61,8 +61,14 @@ copy-dist:
 	cp -r web/dist internal/infrastructure/static/dist
 	@echo "Frontend copied to internal/infrastructure/static/dist"
 
+# Copy swagger.json to server package for embedding
+copy-swagger:
+	@echo "Copying swagger.json to server package..."
+	cp docs/api/swagger.json internal/application/server/swagger.json
+	@echo "Swagger spec copied"
+
 # Build production binary with embedded frontend
-build-embed: frontend-build copy-dist
+build-embed: swagger-gen frontend-build copy-dist copy-swagger
 	@echo "Building production binary with embedded frontend..."
 	go build -tags embed -ldflags "-X main.Version=$(shell git describe --tags --always --dirty 2>/dev/null || echo dev) -X main.GitCommit=$(shell git rev-parse --short HEAD 2>/dev/null || echo unknown) -X main.BuildDate=$(shell date -u +%Y-%m-%dT%H:%M:%SZ)" ./cmd/litchi
 	@echo "Production binary ready"

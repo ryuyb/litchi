@@ -92,8 +92,13 @@ func (m *Middleware) RequireAuth() fiber.Handler {
 		}
 
 		// Get user claims from session with safe type assertions
-		userIDTyped, ok := userID.(uuid.UUID)
+		userIDStr, ok := userID.(string)
 		if !ok {
+			return litchierrors.New(litchierrors.ErrUnauthorized).
+				WithDetail("Invalid session: corrupted user ID")
+		}
+		userIDTyped, err := uuid.Parse(userIDStr)
+		if err != nil {
 			return litchierrors.New(litchierrors.ErrUnauthorized).
 				WithDetail("Invalid session: corrupted user ID")
 		}
@@ -184,7 +189,7 @@ func (m *Middleware) SetUserSession(c fiber.Ctx, user *entity.User) error {
 		return err
 	}
 
-	sess.Set("user_id", user.ID)
+	sess.Set("user_id", user.ID.String())
 	sess.Set("username", user.Username)
 	sess.Set("role", string(user.Role))
 

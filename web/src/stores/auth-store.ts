@@ -131,9 +131,7 @@ export const authActions = {
 		authStore.setState((prev) => ({ ...prev, isLoading: true, error: null }));
 
 		try {
-			const response = await postApiV1AuthLogin({
-				data: { username, password },
-			});
+			const response = await postApiV1AuthLogin({ username, password });
 
 			if (response.status === 200) {
 				// After successful login, fetch user info

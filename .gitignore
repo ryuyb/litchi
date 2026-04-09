@@ -77,6 +77,9 @@ ehthumbs.db
 internal/infrastructure/static/dist/*
 !internal/infrastructure/static/dist/.gitkeep
 
+# Embedded swagger spec (copied from docs/api for production build)
+internal/application/server/swagger.json
+
 # ==================== Config & Secrets ====================
 
 # Local config overrides (per-environment and developer-specific)

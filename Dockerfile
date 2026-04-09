@@ -23,10 +23,11 @@ RUN go mod download
 
 COPY . .
 
-# Generate Swagger docs
+# Generate Swagger docs and copy spec for embedding
 RUN go install github.com/swaggo/swag/v2/cmd/swag@latest && \
     swag init --v3.1 -g cmd/litchi/server.go -d . -o ./docs/api \
-    --parseInternal --parseDependencyLevel 3 --outputTypes go,json,yaml --propertyStrategy camelcase
+    --parseInternal --parseDependencyLevel 3 --outputTypes go,json,yaml --propertyStrategy camelcase && \
+    cp docs/api/swagger.json internal/application/server/swagger.json
 
 # Copy frontend build output into static embed path
 COPY --from=frontend-builder /app/web/dist internal/infrastructure/static/dist

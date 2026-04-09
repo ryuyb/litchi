@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	_ "embed"
 	"fmt"
 	"net"
 
@@ -12,6 +13,9 @@ import (
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+//go:embed swagger.json
+var swaggerSpec []byte
 
 // Params for NewApp.
 type Params struct {
@@ -35,10 +39,10 @@ func NewApp(p Params) *fiber.App {
 	// Swagger UI - controlled by configuration
 	if p.Config.Server.EnableSwaggerUI {
 		app.Use(swaggerui.New(swaggerui.Config{
-			BasePath: "/",
-			FilePath: "./docs/api/swagger.json",
-			Path:     "swagger",
-			Title:    "Litchi API Documentation",
+			BasePath:    "/",
+			FileContent: swaggerSpec,
+			Path:        "swagger",
+			Title:       "Litchi API Documentation",
 		}))
 		p.Logger.Info("Swagger UI enabled at /swagger")
 	}

@@ -5,6 +5,7 @@ import (
 
 	"github.com/ryuyb/litchi/internal/domain/event"
 	domainservice "github.com/ryuyb/litchi/internal/domain/service"
+	"github.com/ryuyb/litchi/internal/infrastructure/github/webhook"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -13,6 +14,12 @@ import (
 var Module = fx.Module("application-service",
 	// Application services
 	fx.Provide(NewIssueService),
+	// Provide IssueService as webhook.IssueProcessor for webhook handler
+	fx.Provide(
+		fx.Annotate(
+			func(s *IssueService) webhook.IssueProcessor { return s },
+		),
+	),
 	fx.Provide(NewConsistencyService),
 	fx.Provide(NewClarificationService),
 	fx.Provide(NewDesignService),

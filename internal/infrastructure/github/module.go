@@ -49,6 +49,7 @@ var Module = fx.Module("github",
 		RegisterWebhookRoutes,
 		StartWebhookCleanup,
 		RegisterInstallationHandler,
+		RegisterIssueHandler,
 	),
 )
 
@@ -139,4 +140,18 @@ func RegisterInstallationHandler(
 	dispatcher.Register(webhook.EventTypeInstallationRepositories, handler)
 
 	logger.Info("installation event handlers registered")
+}
+
+// RegisterIssueHandler registers the issue and issue_comment event handlers.
+func RegisterIssueHandler(
+	dispatcher *webhook.EventDispatcher,
+	issueProcessor webhook.IssueProcessor,
+	logger *zap.Logger,
+) {
+	handler := webhook.NewIssueHandler(issueProcessor, logger)
+
+	dispatcher.Register(webhook.EventTypeIssues, handler)
+	dispatcher.Register(webhook.EventTypeIssueComment, handler)
+
+	logger.Info("issue event handlers registered")
 }

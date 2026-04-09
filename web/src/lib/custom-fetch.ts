@@ -37,9 +37,10 @@ export const customFetch = async <T>(
 
 	// Handle empty responses (204, 205, 304)
 	if ([204, 205, 304].includes(response.status)) {
-		return {} as T;
+		return { data: {}, status: response.status, headers: response.headers } as T;
 	}
 
 	const body = await response.text();
-	return body ? JSON.parse(body) : ({} as T);
+	const data = body ? JSON.parse(body) : {};
+	return { data, status: response.status, headers: response.headers } as T;
 };

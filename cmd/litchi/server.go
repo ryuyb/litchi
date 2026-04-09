@@ -15,8 +15,6 @@ import (
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
 	"go.uber.org/fx/fxevent"
-
-	_ "github.com/ryuyb/litchi/docs/api" // Import generated docs for Swagger embedding
 )
 
 // serverMode controls the server runtime mode (debug, release, test) from CLI flag
