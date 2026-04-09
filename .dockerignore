@@ -1,0 +1,59 @@
+# Binaries
+bin/
+dist/
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Frontend
+web/node_modules/
+web/.pnpm-store/
+web/.vite/
+web/.output/
+web/.tanstack/
+web/dist/
+
+# IDE
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Claude / Agent
+.claude/
+.litchi/
+.worktrees/
+
+# Local config
+config/config.local.yaml
+*.local.yaml
+
+# Secrets
+.env
+.env.*
+
+# Logs
+logs/
+*.log
+
+# Test & coverage
+*.test
+*.out
+coverage.out
+*.coverprofile
+*.prof
+*.pprof
+
+# Misc
+*.tmp
+*.swp
+*.swo
+README.md
+docs/
