@@ -273,20 +273,22 @@ func (h *Handler) ResumeSession(c fiber.Ctx) error {
 
 	// Parse request body
 	req := dto.ResumeSessionRequest{}
-	if err := c.Bind().Body(&req); err != nil {
-		// Resume request body is optional, use default action if empty
-		req.Action = "manual_resume"
-	}
-
-	// Default action
-	if req.Action == "" {
-		req.Action = "manual_resume"
-	}
+	_ = c.Bind().Body(&req) // Resume request body is optional
 
 	// Retrieve session
 	session, err := h.getSession(ctx, sessionID, "resume")
 	if err != nil {
 		return err
+	}
+
+	// Determine resume action: if not specified, use the first valid recovery action
+	if req.Action == "" {
+		validActions := h.sessionControlService.GetValidResumeActions(session)
+		if len(validActions) > 0 {
+			req.Action = validActions[0]
+		} else {
+			req.Action = "admin_force"
+		}
 	}
 
 	// Check if session can be resumed

@@ -139,6 +139,16 @@ func createLoggerMiddleware(logger *zap.Logger) fiber.Handler {
 		path := c.Path()
 		ip := c.IP()
 
+		// If handler returned an error, the global ErrorHandler hasn't run yet,
+		// so c.Response().StatusCode() is still 200 (default). Derive the actual
+		// status code from the error itself.
+		if err != nil {
+			apiErr := litchierrors.ToAPIError(err)
+			if apiErr.Code > 0 {
+				status = apiErr.Code
+			}
+		}
+
 		// Determine log level based on status code
 		var logLevel zapcore.Level
 		switch {

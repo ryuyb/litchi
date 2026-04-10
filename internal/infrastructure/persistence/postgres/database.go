@@ -4,6 +4,7 @@ package postgres
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/url"
 	"time"
@@ -296,12 +297,21 @@ func (l *GormLogger) Trace(ctx context.Context, begin time.Time, fc func() (sql 
 	sql, rows := fc()
 
 	if err != nil {
-		l.zapLogger.Error("sql error",
-			zap.Error(err),
-			zap.Duration("duration", elapsed),
-			zap.Int64("rows", rows),
-			zap.String("sql", sql),
-		)
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			l.zapLogger.Debug("sql",
+				zap.Error(err),
+				zap.Duration("duration", elapsed),
+				zap.Int64("rows", rows),
+				zap.String("sql", sql),
+			)
+		} else {
+			l.zapLogger.Error("sql error",
+				zap.Error(err),
+				zap.Duration("duration", elapsed),
+				zap.Int64("rows", rows),
+				zap.String("sql", sql),
+			)
+		}
 		return
 	}
 
